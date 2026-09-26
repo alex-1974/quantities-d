@@ -45,3 +45,28 @@ necessary result, not a design selection.
 The first attempted run used an invalid `std.traits.isSame` assumption. That was
 a probe error and was replaced by D's built-in `is(T == U)`; it is not evidence
 against any candidate.
+
+
+## Geodesy consumer result — 2026-09-27
+
+A projection-boundary probe derived from current geodesy-d semantics passed on DMD
+2.111 and LDC 1.41.
+
+The probe exposes a policy distinction rather than a feasibility distinction:
+
+- B can encode one caller-selected linear unit across an operation and reject
+  mixed-unit projection parameters statically.
+- C can accept explicitly constructed quantities from different source units
+  and canonicalize them before the numerical operation.
+
+Neither result selects B or C. It establishes that choosing between them changes
+public boundary semantics, not merely internal representation.
+
+### Interim R01 assessment
+
+- A remains useful as a minimal representation reference, but by itself has no
+  independent quantity-specification axis and therefore cannot express the
+  Length/Radius distinction tested here.
+- B and C both satisfy the baseline D constraints tested so far.
+- B versus C requires additional consumer and cost evidence before selection:
+  geometry, raster/imagery, optimized code generation, and compile-time scaling.
