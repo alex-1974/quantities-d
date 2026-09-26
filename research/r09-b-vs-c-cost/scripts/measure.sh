@@ -20,23 +20,21 @@ measure_one() {
     local compiler="$1"
     local config="$2"
     local run="$3"
-    local build_dir="/tmp/quantities-r09-${compiler}-${config}-${run}"
     local time_file="${RAW}/${compiler}-${config}-${run}.time"
     local target="probe-${config}"
     local binary="${ROOT}/${target}"
 
-    rm -rf "${build_dir}"
     rm -f "${binary}" "${binary}.stripped"
 
-    /usr/bin/time -f '%e\t%M' -o "${time_file}" \
-        dub build \
-            --root="${ROOT}" \
-            --compiler="${compiler}" \
-            --config="${config}" \
-            --build=release \
-            --force \
-            --cache=local \
-            --temp-build             --build-mode=allAtOnce
+    (
+        cd "${ROOT}"
+        /usr/bin/time -f '%e\t%M' -o "${time_file}" \
+            dub build \
+                --compiler="${compiler}" \
+                --config="${config}" \
+                --build=release \
+                --force
+    )
 
     test -x "${binary}"
 
@@ -45,6 +43,7 @@ measure_one() {
 
     cp "${binary}" "${binary}.stripped"
     strip "${binary}.stripped"
+
     local stripped_bytes
     stripped_bytes="$(stat -c '%s' "${binary}.stripped")"
 
@@ -70,7 +69,6 @@ measure_one() {
 
 for compiler in dmd ldc2; do
     for run in $(seq 1 "${RUNS}"); do
-        # Alternate B/C order across runs to reduce systematic warm-cache bias.
         if (( run % 2 == 1 )); then
             configs=(b c)
         else
