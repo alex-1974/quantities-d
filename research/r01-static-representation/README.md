@@ -29,3 +29,19 @@ dub run --compiler=ldc2 --force
 ```
 
 The executable contains compile-time assertions; success is the baseline result. Compiler/version and later performance measurements must be recorded separately rather than inferred from source shape.
+
+
+## Baseline result — 2026-09-27
+
+Corrected baseline probe passed with both supported compiler baselines:
+
+- DMD 2.111: build/link/run PASS;
+- LDC 1.41: build/link/run PASS.
+
+The baseline therefore does not discriminate A/B/C: each candidate can satisfy the
+tested zero-storage, type-identity, CTFE, and attribute constraints. This is a
+necessary result, not a design selection.
+
+The first attempted run used an invalid `std.traits.isSame` assumption. That was
+a probe error and was replaced by D's built-in `is(T == U)`; it is not evidence
+against any candidate.
