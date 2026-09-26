@@ -1,0 +1,17 @@
+name "quantities-r09-cost"
+description "B versus C research cost probe"
+license "MIT"
+
+configuration "b" {
+    targetType "executable"
+    targetName "probe-b"
+    sourcePaths "source"
+    mainSourceFile "source/app_b.d"
+}
+
+configuration "c" {
+    targetType "executable"
+    targetName "probe-c"
+    sourcePaths "source"
+    mainSourceFile "source/app_c.d"
+}
