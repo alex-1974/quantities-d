@@ -431,3 +431,122 @@ bool runtimeFloatingCollapseProbe()
 // This is not a proof against C. It demonstrates that C requires an explicit
 // representation/conversion policy: canonical unit choice and Rep choice can
 // affect exact integer-coordinate semantics before geometry sees the values.
+
+
+// ---------------------------------------------------------------------------
+// Consumer probe 3: imagery georeferencing resolution.
+//
+// raster-d's resident x/y coordinates are element/sample coordinates and are
+// intentionally not physical quantities. Unit-bearing resolution belongs at
+// a higher georeferencing/imagery metadata boundary.
+//
+// A projected CRS can express model-space resolution as length per pixel,
+// while a geographic CRS can express it as angle per pixel. The pixel divisor
+// is conceptually dimensionless/count-like here; this probe focuses on the
+// model-space numerator semantics.
+//
+// Research-only sketches; not proposed public API.
+// ---------------------------------------------------------------------------
+
+struct LinearResolutionSpec
+{
+}
+
+struct AngularResolutionSpec
+{
+}
+
+struct Degree
+{
+}
+
+// B keeps source unit in the resolution type.
+alias BLinearResolutionMetre =
+    QuantityB!(LinearResolutionSpec, Metre, double);
+alias BLinearResolutionKilometre =
+    QuantityB!(LinearResolutionSpec, Kilometre, double);
+alias BAngularResolutionDegree =
+    QuantityB!(AngularResolutionSpec, Degree, double);
+
+struct BProjectedGrid(Unit)
+{
+    QuantityB!(LinearResolutionSpec, Unit, double) xResolution;
+    QuantityB!(LinearResolutionSpec, Unit, double) yResolution;
+}
+
+struct BGeographicGrid
+{
+    BAngularResolutionDegree xResolution;
+    BAngularResolutionDegree yResolution;
+}
+
+enum bProjectedGrid = BProjectedGrid!Metre(
+    BLinearResolutionMetre(10.0),
+    BLinearResolutionMetre(10.0));
+
+enum bGeographicGrid = BGeographicGrid(
+    BAngularResolutionDegree(0.0001),
+    BAngularResolutionDegree(0.0001));
+
+static assert(bProjectedGrid.xResolution.value == 10.0);
+static assert(bGeographicGrid.xResolution.value == 0.0001);
+
+// Quantity Spec prevents accidental interchange of linear and angular
+// resolution even though both are scalar-valued metadata.
+static assert(!__traits(compiles,
+    BProjectedGrid!Degree(
+        BAngularResolutionDegree(0.0001),
+        BAngularResolutionDegree(0.0001))));
+
+// C canonicalizes within a Spec but does not erase the Spec distinction.
+alias CLinearResolution =
+    QuantityC!(LinearResolutionSpec, double);
+alias CAngularResolution =
+    QuantityC!(AngularResolutionSpec, double);
+
+@safe pure nothrow @nogc
+CLinearResolution cLinearResolutionMetres(double value)
+{
+    return CLinearResolution(value);
+}
+
+@safe pure nothrow @nogc
+CLinearResolution cLinearResolutionKilometres(double value)
+{
+    return CLinearResolution(value * 1000.0);
+}
+
+@safe pure nothrow @nogc
+CAngularResolution cAngularResolutionDegrees(double value)
+{
+    return CAngularResolution(value);
+}
+
+struct CProjectedGrid
+{
+    CLinearResolution xResolution;
+    CLinearResolution yResolution;
+}
+
+struct CGeographicGrid
+{
+    CAngularResolution xResolution;
+    CAngularResolution yResolution;
+}
+
+enum cProjectedGridMixedSourceUnits = CProjectedGrid(
+    cLinearResolutionMetres(10.0),
+    cLinearResolutionKilometres(0.01));
+
+enum cGeographicGrid = CGeographicGrid(
+    cAngularResolutionDegrees(0.0001),
+    cAngularResolutionDegrees(0.0001));
+
+static assert(cProjectedGridMixedSourceUnits.xResolution.value == 10.0);
+static assert(cProjectedGridMixedSourceUnits.yResolution.value == 10.0);
+static assert(cGeographicGrid.xResolution.value == 0.0001);
+
+static assert(!__traits(compiles,
+    CProjectedGrid(
+        cAngularResolutionDegrees(0.0001),
+        cAngularResolutionDegrees(0.0001))));
