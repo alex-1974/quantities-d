@@ -161,3 +161,57 @@ double mixedUnitProbe()
 }
 
 static assert(mixedUnitProbe() == 4500.0);
+
+
+// ---------------------------------------------------------------------------
+// Semantic probe 2: integer exactness and representation pressure.
+//
+// B preserves the source-unit value. C canonicalizes at the boundary. Metre /
+// millimetre is used because it exposes a bidirectional integer problem without
+// relying on floating-point approximation.
+// ---------------------------------------------------------------------------
+
+struct Millimetre
+{
+}
+
+alias BLengthMetreLong = QuantityB!(LengthSpec, Metre, long);
+alias BLengthMillimetreLong = QuantityB!(LengthSpec, Millimetre, long);
+alias CLengthLong = QuantityC!(LengthSpec, long);
+
+enum bOneMetreLong = BLengthMetreLong(1);
+enum bOneMillimetreLong = BLengthMillimetreLong(1);
+
+static assert(bOneMetreLong.value == 1);
+static assert(bOneMillimetreLong.value == 1);
+
+// Canonical metres with an integral Rep cannot exactly represent 1 mm.
+// The boundary conversion would require 1 / 1000, which truncates for long.
+@safe pure nothrow @nogc
+CLengthLong cMillimetresLong(long value)
+{
+    return CLengthLong(value / 1000);
+}
+
+enum cOneMillimetreLong = cMillimetresLong(1);
+static assert(cOneMillimetreLong.value == 0);
+
+// Canonical millimetres would solve this particular example but simply moves
+// the representation choice into the canonical-unit policy. A generic library
+// must therefore decide what exactness guarantees canonical storage makes for
+// integral Rep values.
+@safe pure nothrow @nogc
+long metreToMillimetreExact(long value)
+{
+    return value * 1000;
+}
+
+static assert(metreToMillimetreExact(1) == 1000);
+
+// B can retain both integral source representations exactly without choosing a
+// common storage unit at construction. Conversion/arithmetic still needs an
+// explicit result/loss policy later; this probe makes no claim that B solves
+// those questions automatically.
+static assert(BLengthMetreLong.sizeof == long.sizeof);
+static assert(BLengthMillimetreLong.sizeof == long.sizeof);
+static assert(CLengthLong.sizeof == long.sizeof);
