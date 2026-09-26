@@ -413,19 +413,20 @@ CCoordinateDouble cCoordinateMetresFromMillimetres(long value)
 enum long floatingCollapseCoordinate =
     9_007_199_254_740_992L; // 2^53
 
-static assert(
-    cast(double) floatingCollapseCoordinate
-        == cast(double) (floatingCollapseCoordinate + 1),
-    "probe requires a source-adjacent long pair that collapses in double");
+@safe pure nothrow @nogc
+bool runtimeFloatingCollapseProbe()
+{
+    const long a = floatingCollapseCoordinate;
+    const long b = floatingCollapseCoordinate + 1;
 
-enum cFloatingLarge =
-    cCoordinateMetresFromMillimetres(floatingCollapseCoordinate);
-enum cFloatingAdjacent =
-    cCoordinateMetresFromMillimetres(floatingCollapseCoordinate + 1);
+    const double da = cast(double) a;
+    const double db = cast(double) b;
 
-static assert(
-    cFloatingAdjacent.value == cFloatingLarge.value,
-    "early floating canonicalization must preserve the already-collapsed pair");
+    const auto ca = cCoordinateMetresFromMillimetres(a);
+    const auto cb = cCoordinateMetresFromMillimetres(b);
+
+    return da == db && ca.value == cb.value;
+}
 
 // This is not a proof against C. It demonstrates that C requires an explicit
 // representation/conversion policy: canonical unit choice and Rep choice can
