@@ -70,3 +70,25 @@ public boundary semantics, not merely internal representation.
 - B and C both satisfy the baseline D constraints tested so far.
 - B versus C requires additional consumer and cost evidence before selection:
   geometry, raster/imagery, optimized code generation, and compile-time scaling.
+
+
+## Geometry consumer result — 2026-09-27
+
+A geo-d/geo3-d-oriented integer-coordinate probe passed on DMD 2.111 and
+LDC 1.41 after an unrelated CTFE conversion assumption was removed from the
+gate.
+
+The relevant result is narrower than an argument for either representation:
+
+- B can retain source-unit integral coordinates and permit exact differencing
+  before later metric floating-point conversion.
+- C can retain the same property when its canonical unit is represented
+  exactly by an integral Rep.
+- Canonical storage therefore does not by itself destroy the integer-coordinate
+  exactness relied on by geo-d/geo3-d.
+- Loss introduced by changing Rep or by a non-integral source-to-canonical
+  conversion is a conversion/exactness-policy concern and must be resolved by
+  R02/R03.
+
+The failed CTFE cast assumptions are recorded as harness findings, not quantity
+representation evidence.
