@@ -42,3 +42,30 @@ Runtime microbenchmarks are deferred unless optimized code generation shows a
 reason to expect a material difference.
 
 No code here is proposed public API.
+
+
+## Measurement protocol
+
+After the semantic control workload passes without diagnostics, collect release
+build evidence with `scripts/measure.sh`.
+
+The script:
+
+- measures DMD and LDC separately;
+- measures B and C in separate builds;
+- defaults to five repetitions;
+- alternates B/C order to reduce systematic warm-cache bias;
+- records `/usr/bin/time` elapsed time and peak RSS;
+- records normal and stripped executable size;
+- records compiler/DUB/system environment;
+- retains raw TSV data under `results/`.
+
+Run:
+
+```bash
+RUNS=5 ./scripts/measure.sh
+```
+
+Do not commit generated `results/` until the run has been inspected for
+methodological problems. The first measurement series is evidence collection,
+not yet a performance conclusion.
