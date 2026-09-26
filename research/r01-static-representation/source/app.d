@@ -411,7 +411,7 @@ CCoordinateDouble cCoordinateMetresFromMillimetres(long value)
 }
 
 enum long floatingCollapseCoordinate =
-    9_223_372_036_854_000_000L;
+    9_007_199_254_740_992L; // 2^53
 
 static assert(
     cast(double) floatingCollapseCoordinate
