@@ -1,0 +1,5 @@
+name "quantities-r02-exact-unit-conversion"
+description "Research probe for exact unit ratios and conversion policy"
+license "MIT"
+targetType "executable"
+sourcePaths "source"
