@@ -175,9 +175,6 @@ static assert(mixedUnitProbe() == 4500.0);
 // relying on floating-point approximation.
 // ---------------------------------------------------------------------------
 
-struct Millimetre
-{
-}
 
 alias BLengthMetreLong = QuantityB!(LengthSpec, Metre, long);
 alias BLengthMillimetreLong = QuantityB!(LengthSpec, Millimetre, long);
