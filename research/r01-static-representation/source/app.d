@@ -85,3 +85,79 @@ void main() @safe pure nothrow @nogc
 {
     assert(boundaryProbe() == 6.0);
 }
+
+
+// ---------------------------------------------------------------------------
+// Semantic probe 1: equivalent mixed-unit length arithmetic.
+//
+// These helpers are intentionally probe-local. They model only enough policy
+// to expose what information each representation carries; they are not API
+// proposals.
+// ---------------------------------------------------------------------------
+
+@safe pure nothrow @nogc
+QuantityA!(Metre, Rep) addA(Rep)(
+    QuantityA!(Metre, Rep) lhs,
+    QuantityA!(Kilometre, Rep) rhs)
+{
+    return QuantityA!(Metre, Rep)(lhs.value + rhs.value * Rep(1000));
+}
+
+@safe pure nothrow @nogc
+QuantityB!(Spec, Metre, Rep) addB(Spec, Rep)(
+    QuantityB!(Spec, Metre, Rep) lhs,
+    QuantityB!(Spec, Kilometre, Rep) rhs)
+{
+    return QuantityB!(Spec, Metre, Rep)(lhs.value + rhs.value * Rep(1000));
+}
+
+@safe pure nothrow @nogc
+QuantityC!(Spec, Rep) addC(Spec, Rep)(
+    QuantityC!(Spec, Rep) lhs,
+    QuantityC!(Spec, Rep) rhs)
+{
+    return QuantityC!(Spec, Rep)(lhs.value + rhs.value);
+}
+
+enum aMixed = addA(AMetre(500.0), AKilometre(1.0));
+enum bMixed = addB(BLengthMetre(500.0), BLengthKilometre(1.0));
+
+// C is canonical-storage in this probe: construct both source units explicitly
+// at the boundary, then arithmetic no longer carries unit conversion policy.
+@safe pure nothrow @nogc
+CLength cMetres(double value)
+{
+    return CLength(value);
+}
+
+@safe pure nothrow @nogc
+CLength cKilometres(double value)
+{
+    return CLength(value * 1000.0);
+}
+
+enum cMixed = addC(cMetres(500.0), cKilometres(1.0));
+
+static assert(aMixed.value == 1500.0);
+static assert(bMixed.value == 1500.0);
+static assert(cMixed.value == 1500.0);
+
+// A can distinguish units but has no independent Spec axis: AMetre alone cannot
+// encode whether the value is Length, Radius, Height, etc.
+//
+// B rejects a Radius/Length addition by template deduction because Spec differs.
+static assert(!__traits(compiles,
+    addB(BLengthMetre(500.0), QuantityB!(RadiusSpec, Kilometre, double)(1.0))));
+
+// C likewise rejects cross-Spec arithmetic even though unit identity has already
+// been normalized away at the construction boundary.
+static assert(!__traits(compiles,
+    addC(CLength(500.0), CRadius(1000.0))));
+
+@safe pure nothrow @nogc
+double mixedUnitProbe()
+{
+    return aMixed.value + bMixed.value + cMixed.value;
+}
+
+static assert(mixedUnitProbe() == 4500.0);
