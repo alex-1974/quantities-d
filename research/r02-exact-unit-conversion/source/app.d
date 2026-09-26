@@ -45,3 +45,94 @@ static assert(
 void main()
 {
 }
+
+
+// ---------------------------------------------------------------------------
+// Probe 2: normalization and cross-cancelled exact composition.
+// ---------------------------------------------------------------------------
+
+@safe pure nothrow @nogc
+long absLong(long value)
+{
+    return value < 0 ? -value : value;
+}
+
+@safe pure nothrow @nogc
+long gcd(long a, long b)
+{
+    a = absLong(a);
+    b = absLong(b);
+
+    while (b != 0)
+    {
+        const remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+
+    return a;
+}
+
+struct NormalizedRatio(long Num, long Den)
+{
+    static assert(Den != 0);
+
+private:
+    enum long sign = Den < 0 ? -1 : 1;
+    enum long positiveDen = Den * sign;
+    enum long signedNum = Num * sign;
+    enum long divisor = gcd(signedNum, positiveDen);
+
+public:
+    enum long numerator = signedNum / divisor;
+    enum long denominator = positiveDen / divisor;
+}
+
+alias ReducedFootCross = NormalizedRatio!(1_499_997, 1_500_000);
+
+static assert(ReducedFootCross.numerator == 499_999);
+static assert(ReducedFootCross.denominator == 500_000);
+
+template MultiplyRatio(
+    long ANum,
+    long ADen,
+    long BNum,
+    long BDen)
+{
+    static assert(ADen != 0);
+    static assert(BDen != 0);
+
+private:
+    // Cross-cancel before multiplication:
+    //
+    //   (a/b) * (c/d)
+    //
+    // reduce a against d, and c against b. This lowers intermediate magnitude
+    // and therefore lowers avoidable overflow risk.
+    enum long g1 = gcd(ANum, BDen);
+    enum long g2 = gcd(BNum, ADen);
+
+    enum long a = ANum / g1;
+    enum long d = BDen / g1;
+    enum long c = BNum / g2;
+    enum long b = ADen / g2;
+
+public:
+    alias Result = NormalizedRatio!(a * c, b * d);
+}
+
+alias FootToMetreThenMetreToFoot =
+    MultiplyRatio!(381, 1250, 1250, 381).Result;
+
+static assert(FootToMetreThenMetreToFoot.numerator == 1);
+static assert(FootToMetreThenMetreToFoot.denominator == 1);
+
+// Deliberately large factors that would create a much larger naive
+// intermediate product, while cross-cancellation reduces them first.
+alias CrossCancelledLarge =
+    MultiplyRatio!(
+        3_000_000_000L, 7,
+        7, 3_000_000_000L).Result;
+
+static assert(CrossCancelledLarge.numerator == 1);
+static assert(CrossCancelledLarge.denominator == 1);
