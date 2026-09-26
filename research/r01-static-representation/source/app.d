@@ -1,7 +1,5 @@
 module app;
 
-import std.traits : isSame;
-
 struct LengthSpec
 {
 }
@@ -59,10 +57,10 @@ static assert(AMetre.alignof == double.alignof);
 static assert(BLengthMetre.alignof == double.alignof);
 static assert(CLength.alignof == double.alignof);
 
-static assert(!isSame!(AMetre, AKilometre));
-static assert(!isSame!(BLengthMetre, BLengthKilometre));
-static assert(!isSame!(BLengthMetre, BRadiusMetre));
-static assert(!isSame!(CLength, CRadius));
+static assert(!is(AMetre == AKilometre));
+static assert(!is(BLengthMetre == BLengthKilometre));
+static assert(!is(BLengthMetre == BRadiusMetre));
+static assert(!is(CLength == CRadius));
 
 enum aCtfe = AMetre(3.0);
 enum bCtfe = BLengthMetre(3.0);
