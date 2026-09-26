@@ -92,3 +92,50 @@ The relevant result is narrower than an argument for either representation:
 
 The failed CTFE cast assumptions are recorded as harness findings, not quantity
 representation evidence.
+
+
+## Imagery/georeferencing consumer result — 2026-09-27
+
+The resolution consumer probe passed on DMD 2.111 and LDC 1.41.
+
+The probe deliberately keeps resident raster coordinates outside physical
+quantity semantics. Unit-bearing resolution appears only at the higher
+georeferencing/imagery metadata boundary.
+
+The tested cases were:
+
+- projected model-space resolution as linear resolution, e.g. 10 m/pixel;
+- geographic model-space resolution as angular resolution, e.g. 0.0001 degree/pixel.
+
+Both B and C can represent these safely when linear and angular resolution are
+different Specs.
+
+B preserves the source unit in the quantity type. C canonicalizes within the
+Spec and can accept mixed source units before storage.
+
+This consumer therefore does not select B or C, but it strengthens two R01
+conclusions:
+
+1. Spec is an independent semantic axis; Unit alone is insufficient.
+2. Not every numeric coordinate/index belongs in quantities-d.
+
+## R01 interim hypothesis
+
+The current evidence makes A useful mainly as a minimal/reference model rather
+than the leading public representation because it cannot independently encode
+quantity Spec.
+
+B and C remain viable leading candidates.
+
+B makes source unit part of quantity identity and naturally preserves
+source-unit representation. This directly expresses same-unit contracts such
+as the current geodesy-d projection boundary.
+
+C makes canonical storage part of the Spec contract. It can simplify consumers
+by normalizing mixed source units at explicit boundaries, but its correctness
+depends on the still-open canonical-unit, Rep, representability, loss and
+rounding policies.
+
+Therefore R01 must not select B or C in isolation. The decision is coupled to
+R02/R03. Performance and compile-time evidence also remain required before an
+ADR can select the M1 representation.
