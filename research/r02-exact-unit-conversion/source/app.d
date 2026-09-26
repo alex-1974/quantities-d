@@ -219,3 +219,123 @@ static assert(!__traits(compiles,
         CheckedMultiplyRatio!(longMax, 1, 2, 1).Result;
     enum forceInstantiation = TooLarge.numerator;
 }));
+
+
+// ---------------------------------------------------------------------------
+// Probe 4: value conversion policy.
+//
+// First policy slice:
+// - integral -> integral conversion succeeds only when the mathematical result
+//   is exactly representable in long;
+// - inexact division is reported, never silently truncated;
+// - overflow is reported, never silently wrapped;
+// - floating conversion keeps the unit ratio exact until the final arithmetic.
+// ---------------------------------------------------------------------------
+
+enum ConversionStatus
+{
+    exact,
+    inexact,
+    overflow,
+}
+
+struct LongConversion
+{
+    ConversionStatus status;
+    long value;
+}
+
+@safe pure nothrow @nogc
+LongConversion convertLongByRatio(
+    long value,
+    long numerator,
+    long denominator)
+{
+    assert(numerator >= 0);
+    assert(denominator > 0);
+    assert(value >= 0); // first probe slice; signed values follow separately
+
+    // Reduce the input value against the denominator before multiplication.
+    // This both exposes exact divisibility and minimizes intermediate size.
+    const common = gcd(value, denominator);
+    const reducedValue = value / common;
+    const reducedDenominator = denominator / common;
+
+    if (reducedDenominator != 1)
+    {
+        return LongConversion(ConversionStatus.inexact, 0);
+    }
+
+    if (!canMultiplyNonNegative(reducedValue, numerator))
+    {
+        return LongConversion(ConversionStatus.overflow, 0);
+    }
+
+    return LongConversion(
+        ConversionStatus.exact,
+        reducedValue * numerator);
+}
+
+// metre -> kilometre: ratio 1/1000
+enum oneThousandMetresToKilometres =
+    convertLongByRatio(1000, 1, 1000);
+static assert(oneThousandMetresToKilometres.status
+    == ConversionStatus.exact);
+static assert(oneThousandMetresToKilometres.value == 1);
+
+enum oneMetreToKilometres =
+    convertLongByRatio(1, 1, 1000);
+static assert(oneMetreToKilometres.status
+    == ConversionStatus.inexact);
+
+// kilometre -> metre: ratio 1000/1
+enum twoKilometresToMetres =
+    convertLongByRatio(2, 1000, 1);
+static assert(twoKilometresToMetres.status
+    == ConversionStatus.exact);
+static assert(twoKilometresToMetres.value == 2000);
+
+enum overflowingKilometresToMetres =
+    convertLongByRatio(longMax, 1000, 1);
+static assert(overflowingKilometresToMetres.status
+    == ConversionStatus.overflow);
+
+// Exact foot definitions exercise non-decimal rational conversion.
+//
+// 1250 international feet = 381 metres exactly.
+enum internationalFeetToMetres =
+    convertLongByRatio(1250, 381, 1250);
+static assert(internationalFeetToMetres.status
+    == ConversionStatus.exact);
+static assert(internationalFeetToMetres.value == 381);
+
+// 3937 US survey feet = 1200 metres exactly.
+enum surveyFeetToMetres =
+    convertLongByRatio(3937, 1200, 3937);
+static assert(surveyFeetToMetres.status
+    == ConversionStatus.exact);
+static assert(surveyFeetToMetres.value == 1200);
+
+// One foot cannot be represented as an integral number of metres.
+enum oneInternationalFootToMetres =
+    convertLongByRatio(1, 381, 1250);
+static assert(oneInternationalFootToMetres.status
+    == ConversionStatus.inexact);
+
+@safe pure nothrow @nogc
+double convertDoubleByRatio(
+    double value,
+    long numerator,
+    long denominator)
+{
+    return value * cast(double) numerator / cast(double) denominator;
+}
+
+enum double internationalFootInMetres =
+    convertDoubleByRatio(1.0, 381, 1250);
+static assert(internationalFootInMetres == 0.3048);
+
+enum double surveyFootInMetres =
+    convertDoubleByRatio(1.0, 1200, 3937);
+
+static assert(surveyFootInMetres != internationalFootInMetres);
