@@ -476,3 +476,176 @@ enum negativeInternationalFeetToMetres =
 static assert(negativeInternationalFeetToMetres.status
     == ConversionStatus.exact);
 static assert(negativeInternationalFeetToMetres.value == -381);
+
+
+// ---------------------------------------------------------------------------
+// Probe 6: caller-visible conversion intentions.
+//
+// The same exact rational unit relationship is exposed through three distinct
+// caller intentions. These names are research vocabulary, not proposed API.
+// ---------------------------------------------------------------------------
+
+enum RoundingMode
+{
+    towardZero,
+    floor,
+    ceiling,
+    nearestTiesAwayFromZero,
+}
+
+struct RoundedLongConversion
+{
+    ConversionStatus status;
+    long value;
+}
+
+@safe pure nothrow @nogc
+RoundedLongConversion roundSignedLongByRatio(
+    long value,
+    ulong numerator,
+    ulong denominator,
+    RoundingMode mode)
+{
+    assert(denominator > 0);
+
+    const bool negative = value < 0;
+    const ulong magnitude = unsignedMagnitude(value);
+
+    if (numerator != 0 && magnitude > ulong.max / numerator)
+    {
+        return RoundedLongConversion(ConversionStatus.overflow, 0);
+    }
+
+    const ulong scaled = magnitude * numerator;
+    const ulong quotient = scaled / denominator;
+    const ulong remainder = scaled % denominator;
+
+    ulong roundedMagnitude = quotient;
+
+    if (remainder != 0)
+    {
+        final switch (mode)
+        {
+            case RoundingMode.towardZero:
+                break;
+
+            case RoundingMode.floor:
+                if (negative)
+                {
+                    ++roundedMagnitude;
+                }
+                break;
+
+            case RoundingMode.ceiling:
+                if (!negative)
+                {
+                    ++roundedMagnitude;
+                }
+                break;
+
+            case RoundingMode.nearestTiesAwayFromZero:
+                // Avoid 2 * remainder, which itself could overflow.
+                if (remainder > denominator / 2
+                    || (denominator % 2 == 0
+                        && remainder == denominator / 2))
+                {
+                    ++roundedMagnitude;
+                }
+                break;
+        }
+    }
+
+    const ulong limit = negative
+        ? negativeLongMagnitudeLimit
+        : positiveLongLimit;
+
+    if (roundedMagnitude > limit)
+    {
+        return RoundedLongConversion(ConversionStatus.overflow, 0);
+    }
+
+    long result;
+    if (!negative)
+    {
+        result = cast(long) roundedMagnitude;
+    }
+    else if (roundedMagnitude == negativeLongMagnitudeLimit)
+    {
+        result = long.min;
+    }
+    else
+    {
+        result = -cast(long) roundedMagnitude;
+    }
+
+    return RoundedLongConversion(
+        remainder == 0 ? ConversionStatus.exact : ConversionStatus.inexact,
+        result);
+}
+
+// checked/loss-aware: preserve the status without choosing rounding.
+enum checkedOneMetreToKilometres =
+    convertSignedLongByRatio(1, 1, 1000);
+static assert(checkedOneMetreToKilometres.status
+    == ConversionStatus.inexact);
+
+// exact-required can be expressed as a compile-time contract for compile-time
+// values. A runtime API would need an explicit failure carrier/contract.
+template ExactRequiredLong(
+    long Value,
+    ulong Numerator,
+    ulong Denominator)
+{
+    enum conversion =
+        convertSignedLongByRatio(Value, Numerator, Denominator);
+    static assert(
+        conversion.status == ConversionStatus.exact,
+        "conversion is not exactly representable");
+    enum long result = conversion.value;
+}
+
+static assert(ExactRequiredLong!(1000, 1, 1000).result == 1);
+
+static assert(!__traits(compiles,
+{
+    enum rejected = ExactRequiredLong!(1, 1, 1000).result;
+}));
+
+// explicit-rounded: same 1 m -> km conversion, four deliberate policies.
+enum oneMetreTowardZero =
+    roundSignedLongByRatio(1, 1, 1000, RoundingMode.towardZero);
+static assert(oneMetreTowardZero.status == ConversionStatus.inexact);
+static assert(oneMetreTowardZero.value == 0);
+
+enum oneMetreFloor =
+    roundSignedLongByRatio(1, 1, 1000, RoundingMode.floor);
+static assert(oneMetreFloor.value == 0);
+
+enum oneMetreCeiling =
+    roundSignedLongByRatio(1, 1, 1000, RoundingMode.ceiling);
+static assert(oneMetreCeiling.value == 1);
+
+enum negativeOneMetreFloor =
+    roundSignedLongByRatio(-1, 1, 1000, RoundingMode.floor);
+static assert(negativeOneMetreFloor.value == -1);
+
+enum negativeOneMetreCeiling =
+    roundSignedLongByRatio(-1, 1, 1000, RoundingMode.ceiling);
+static assert(negativeOneMetreCeiling.value == 0);
+
+// Tie behavior is explicit: +/- 0.5 rounds away from zero.
+enum positiveTie =
+    roundSignedLongByRatio(1, 1, 2,
+        RoundingMode.nearestTiesAwayFromZero);
+static assert(positiveTie.value == 1);
+
+enum negativeTie =
+    roundSignedLongByRatio(-1, 1, 2,
+        RoundingMode.nearestTiesAwayFromZero);
+static assert(negativeTie.value == -1);
+
+// Exact conversions remain exact regardless of the selected rounding policy.
+enum exactRoundedPath =
+    roundSignedLongByRatio(2000, 1, 1000, RoundingMode.floor);
+static assert(exactRoundedPath.status == ConversionStatus.exact);
+static assert(exactRoundedPath.value == 2);
