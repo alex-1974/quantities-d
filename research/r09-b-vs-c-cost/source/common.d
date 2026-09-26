@@ -11,7 +11,8 @@ struct Millimetre {}
 struct InternationalFoot {}
 struct USSurveyFoot {}
 
-enum double toMetres(Unit)(double value)
+@safe pure nothrow @nogc
+double toMetres(Unit)(double value)
 {
     static if (is(Unit == Metre))
         return value;
