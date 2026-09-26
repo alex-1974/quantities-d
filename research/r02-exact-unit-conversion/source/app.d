@@ -136,3 +136,86 @@ alias CrossCancelledLarge =
 
 static assert(CrossCancelledLarge.numerator == 1);
 static assert(CrossCancelledLarge.denominator == 1);
+
+
+// ---------------------------------------------------------------------------
+// Probe 3: checked multiplication after cross-cancellation.
+//
+// Cross-cancellation lowers intermediate magnitude, but it does not prove that
+// the remaining numerator and denominator products fit in long. The operation
+// therefore needs an explicit representability check before multiplication.
+// ---------------------------------------------------------------------------
+
+enum long longMax = long.max;
+
+@safe pure nothrow @nogc
+bool canMultiplyNonNegative(long a, long b)
+{
+    assert(a >= 0);
+    assert(b >= 0);
+
+    return a == 0 || b <= longMax / a;
+}
+
+static assert(canMultiplyNonNegative(0, longMax));
+static assert(canMultiplyNonNegative(1, longMax));
+static assert(canMultiplyNonNegative(longMax, 1));
+static assert(!canMultiplyNonNegative(longMax, 2));
+static assert(!canMultiplyNonNegative(longMax / 2 + 1, 2));
+
+template CheckedMultiplyRatio(
+    long ANum,
+    long ADen,
+    long BNum,
+    long BDen)
+{
+    static assert(ANum >= 0, "probe currently covers non-negative scales");
+    static assert(BNum >= 0, "probe currently covers non-negative scales");
+    static assert(ADen > 0);
+    static assert(BDen > 0);
+
+private:
+    enum long g1 = gcd(ANum, BDen);
+    enum long g2 = gcd(BNum, ADen);
+
+    enum long a = ANum / g1;
+    enum long d = BDen / g1;
+    enum long c = BNum / g2;
+    enum long b = ADen / g2;
+
+    static assert(
+        canMultiplyNonNegative(a, c),
+        "ratio numerator multiplication is not representable in long");
+
+    static assert(
+        canMultiplyNonNegative(b, d),
+        "ratio denominator multiplication is not representable in long");
+
+public:
+    alias Result = NormalizedRatio!(a * c, b * d);
+}
+
+alias CheckedFootIdentity =
+    CheckedMultiplyRatio!(381, 1250, 1250, 381).Result;
+
+static assert(CheckedFootIdentity.numerator == 1);
+static assert(CheckedFootIdentity.denominator == 1);
+
+// This case is safe only because cross-cancellation runs before the checked
+// multiplication.
+alias CheckedLargeIdentity =
+    CheckedMultiplyRatio!(
+        3_000_000_000L, 7,
+        7, 3_000_000_000L).Result;
+
+static assert(CheckedLargeIdentity.numerator == 1);
+static assert(CheckedLargeIdentity.denominator == 1);
+
+// A genuinely unrepresentable reduced numerator must be rejected rather than
+// silently overflowing at compile time.
+static assert(!__traits(compiles,
+{
+    alias TooLarge =
+        CheckedMultiplyRatio!(longMax, 1, 2, 1).Result;
+    enum forceInstantiation = TooLarge.numerator;
+}));
