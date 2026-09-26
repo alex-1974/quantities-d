@@ -215,3 +215,117 @@ static assert(metreToMillimetreExact(1) == 1000);
 static assert(BLengthMetreLong.sizeof == long.sizeof);
 static assert(BLengthMillimetreLong.sizeof == long.sizeof);
 static assert(CLengthLong.sizeof == long.sizeof);
+
+
+// ---------------------------------------------------------------------------
+// Consumer probe 1: geodesy-d style projection boundary.
+//
+// Current geodesy-d makes the ellipsoid semi-major axis define the operation's
+// caller-selected linear unit; false offsets and projected coordinates use the
+// same unit. This probe compares how B preserves that contract and how C would
+// deliberately replace it with canonicalized boundary inputs.
+//
+// These types/functions are research-only sketches, not proposed public API.
+// ---------------------------------------------------------------------------
+
+struct SemiMajorAxisSpec
+{
+}
+
+struct FalseEastingSpec
+{
+}
+
+struct FalseNorthingSpec
+{
+}
+
+alias BAxisMetre = QuantityB!(SemiMajorAxisSpec, Metre, double);
+alias BAxisKilometre = QuantityB!(SemiMajorAxisSpec, Kilometre, double);
+alias BFalseEastingMetre = QuantityB!(FalseEastingSpec, Metre, double);
+alias BFalseEastingKilometre =
+    QuantityB!(FalseEastingSpec, Kilometre, double);
+alias BFalseNorthingMetre = QuantityB!(FalseNorthingSpec, Metre, double);
+alias BFalseNorthingKilometre =
+    QuantityB!(FalseNorthingSpec, Kilometre, double);
+
+struct BProjection(Unit)
+{
+    QuantityB!(SemiMajorAxisSpec, Unit, double) semiMajorAxis;
+    QuantityB!(FalseEastingSpec, Unit, double) falseEasting;
+    QuantityB!(FalseNorthingSpec, Unit, double) falseNorthing;
+}
+
+@safe pure nothrow @nogc
+BProjection!Unit makeProjectionB(Unit)(
+    QuantityB!(SemiMajorAxisSpec, Unit, double) semiMajorAxis,
+    QuantityB!(FalseEastingSpec, Unit, double) falseEasting,
+    QuantityB!(FalseNorthingSpec, Unit, double) falseNorthing)
+{
+    return BProjection!Unit(semiMajorAxis, falseEasting, falseNorthing);
+}
+
+enum bProjectionMetre = makeProjectionB(
+    BAxisMetre(6_378_137.0),
+    BFalseEastingMetre(500_000.0),
+    BFalseNorthingMetre(0.0));
+
+static assert(bProjectionMetre.semiMajorAxis.value == 6_378_137.0);
+static assert(bProjectionMetre.falseEasting.value == 500_000.0);
+
+// B encodes geodesy-d's current same-linear-unit contract in the type system.
+static assert(!__traits(compiles,
+    makeProjectionB(
+        BAxisMetre(6_378_137.0),
+        BFalseEastingKilometre(500.0),
+        BFalseNorthingMetre(0.0))));
+
+// C instead represents a canonicalized internal boundary. Different source
+// units can be accepted by explicit constructors before the projection is made.
+alias CAxis = QuantityC!(SemiMajorAxisSpec, double);
+alias CFalseEasting = QuantityC!(FalseEastingSpec, double);
+alias CFalseNorthing = QuantityC!(FalseNorthingSpec, double);
+
+struct CProjection
+{
+    CAxis semiMajorAxis;
+    CFalseEasting falseEasting;
+    CFalseNorthing falseNorthing;
+}
+
+@safe pure nothrow @nogc
+CAxis cAxisMetres(double value)
+{
+    return CAxis(value);
+}
+
+@safe pure nothrow @nogc
+CFalseEasting cFalseEastingKilometres(double value)
+{
+    return CFalseEasting(value * 1000.0);
+}
+
+@safe pure nothrow @nogc
+CFalseNorthing cFalseNorthingMetres(double value)
+{
+    return CFalseNorthing(value);
+}
+
+@safe pure nothrow @nogc
+CProjection makeProjectionC(
+    CAxis semiMajorAxis,
+    CFalseEasting falseEasting,
+    CFalseNorthing falseNorthing)
+{
+    return CProjection(semiMajorAxis, falseEasting, falseNorthing);
+}
+
+enum cProjectionMixedSourceUnits = makeProjectionC(
+    cAxisMetres(6_378_137.0),
+    cFalseEastingKilometres(500.0),
+    cFalseNorthingMetres(0.0));
+
+static assert(
+    cProjectionMixedSourceUnits.semiMajorAxis.value == 6_378_137.0);
+static assert(
+    cProjectionMixedSourceUnits.falseEasting.value == 500_000.0);
