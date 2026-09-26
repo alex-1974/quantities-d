@@ -339,3 +339,140 @@ enum double surveyFootInMetres =
     convertDoubleByRatio(1.0, 1200, 3937);
 
 static assert(surveyFootInMetres != internationalFootInMetres);
+
+
+// ---------------------------------------------------------------------------
+// Probe 5: signed integral conversion including long.min.
+//
+// Do not take abs(long.min): its positive magnitude is not representable in
+// long. Carry magnitude as ulong and apply the sign only after exact rational
+// conversion and range checking.
+// ---------------------------------------------------------------------------
+
+@safe pure nothrow @nogc
+ulong unsignedMagnitude(long value)
+{
+    if (value >= 0)
+    {
+        return cast(ulong) value;
+    }
+
+    // -(value + 1) is representable in long even for long.min.
+    return cast(ulong) (-(value + 1)) + 1UL;
+}
+
+static assert(unsignedMagnitude(0) == 0UL);
+static assert(unsignedMagnitude(1) == 1UL);
+static assert(unsignedMagnitude(-1) == 1UL);
+static assert(unsignedMagnitude(long.min) == (1UL << 63));
+static assert(unsignedMagnitude(long.max) == cast(ulong) long.max);
+
+@safe pure nothrow @nogc
+ulong gcdUnsigned(ulong a, ulong b)
+{
+    while (b != 0)
+    {
+        const remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+
+    return a;
+}
+
+enum ulong positiveLongLimit = cast(ulong) long.max;
+enum ulong negativeLongMagnitudeLimit = 1UL << 63;
+
+@safe pure nothrow @nogc
+LongConversion convertSignedLongByRatio(
+    long value,
+    ulong numerator,
+    ulong denominator)
+{
+    assert(denominator > 0);
+
+    const bool negative = value < 0;
+    const ulong magnitude = unsignedMagnitude(value);
+
+    const ulong common = gcdUnsigned(magnitude, denominator);
+    const ulong reducedMagnitude = magnitude / common;
+    const ulong reducedDenominator = denominator / common;
+
+    if (reducedDenominator != 1)
+    {
+        return LongConversion(ConversionStatus.inexact, 0);
+    }
+
+    if (numerator != 0
+        && reducedMagnitude > ulong.max / numerator)
+    {
+        return LongConversion(ConversionStatus.overflow, 0);
+    }
+
+    const ulong convertedMagnitude = reducedMagnitude * numerator;
+    const ulong limit = negative
+        ? negativeLongMagnitudeLimit
+        : positiveLongLimit;
+
+    if (convertedMagnitude > limit)
+    {
+        return LongConversion(ConversionStatus.overflow, 0);
+    }
+
+    if (!negative)
+    {
+        return LongConversion(
+            ConversionStatus.exact,
+            cast(long) convertedMagnitude);
+    }
+
+    if (convertedMagnitude == negativeLongMagnitudeLimit)
+    {
+        return LongConversion(ConversionStatus.exact, long.min);
+    }
+
+    return LongConversion(
+        ConversionStatus.exact,
+        -cast(long) convertedMagnitude);
+}
+
+enum negativeTwoKilometresToMetres =
+    convertSignedLongByRatio(-2, 1000, 1);
+static assert(negativeTwoKilometresToMetres.status
+    == ConversionStatus.exact);
+static assert(negativeTwoKilometresToMetres.value == -2000);
+
+enum negativeOneMetreToKilometres =
+    convertSignedLongByRatio(-1, 1, 1000);
+static assert(negativeOneMetreToKilometres.status
+    == ConversionStatus.inexact);
+
+enum minIdentity =
+    convertSignedLongByRatio(long.min, 1, 1);
+static assert(minIdentity.status == ConversionStatus.exact);
+static assert(minIdentity.value == long.min);
+
+enum minHalved =
+    convertSignedLongByRatio(long.min, 1, 2);
+static assert(minHalved.status == ConversionStatus.exact);
+static assert(minHalved.value == long.min / 2);
+
+enum minDoubled =
+    convertSignedLongByRatio(long.min, 2, 1);
+static assert(minDoubled.status == ConversionStatus.overflow);
+
+enum maxIdentity =
+    convertSignedLongByRatio(long.max, 1, 1);
+static assert(maxIdentity.status == ConversionStatus.exact);
+static assert(maxIdentity.value == long.max);
+
+enum maxDoubled =
+    convertSignedLongByRatio(long.max, 2, 1);
+static assert(maxDoubled.status == ConversionStatus.overflow);
+
+// Exact negative non-decimal unit conversion.
+enum negativeInternationalFeetToMetres =
+    convertSignedLongByRatio(-1250, 381, 1250);
+static assert(negativeInternationalFeetToMetres.status
+    == ConversionStatus.exact);
+static assert(negativeInternationalFeetToMetres.value == -381);
