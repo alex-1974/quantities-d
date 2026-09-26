@@ -1,0 +1,5 @@
+name "quantities-consumer"
+description "External consumer smoke test for quantities-d"
+targetType "executable"
+
+dependency "quantities-d" path="../.."
