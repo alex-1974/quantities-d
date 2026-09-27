@@ -98,8 +98,64 @@ bool rationalResultExactlyBinary64(double value, long numerator, long denominato
     if (d != 1UL)
         return false;
 
-    // Precision/range of sig*n is deliberately left as the next probe gate.
-    // The current test only establishes denominator exactness.
+    // Remove powers of two from the integer factors because they can be
+    // transferred into the binary exponent without consuming significand bits.
+    int exponent2 = parts.exponent2;
+    while ((sig & 1UL) == 0)
+    {
+        sig >>= 1;
+        ++exponent2;
+    }
+    while ((n & 1UL) == 0)
+    {
+        n >>= 1;
+        ++exponent2;
+    }
+
+    // The remaining odd significand product must fit into binary64's 53-bit
+    // precision. Avoid forming a potentially overflowing product merely to
+    // test this bound.
+    enum ulong maxSignificand = (1UL << 53) - 1UL;
+    if (n != 0 && sig > maxSignificand / n)
+        return false;
+
+    ulong product = sig * n;
+
+    // Normalize any newly exposed powers of two after multiplication.
+    while (product != 0 && (product & 1UL) == 0)
+    {
+        product >>= 1;
+        ++exponent2;
+    }
+
+    if (product > maxSignificand)
+        return false;
+
+    // Highest represented bit plus exponent must stay within finite binary64.
+    // Lowest exact non-zero binary64 value is 1 * 2^-1074.
+    int highestBit = -1;
+    ulong scan = product;
+    while (scan != 0)
+    {
+        scan >>= 1;
+        ++highestBit;
+    }
+
+    if (product == 0)
+        return true;
+
+    const int topExponent = exponent2 + highestBit;
+    if (topExponent > 1023)
+        return false;
+
+    if (exponent2 < -1074)
+    {
+        // Values below the subnormal quantum can still be representable if
+        // the significand contains enough powers of two, but those were
+        // normalized away above. Therefore this is below binary64 range.
+        return false;
+    }
+
     return true;
 }
 
@@ -126,4 +182,21 @@ public:
 
     enum zero = rationalResultExactlyBinary64(0.0, 1, 3);
     static assert(zero);
+
+    // 2^53 is exactly representable although the normalized odd significand
+    // is only 1 and the rest belongs in the exponent.
+    enum exactPower = rationalResultExactlyBinary64(1.0, 1L << 52, 1);
+    static assert(exactPower);
+
+    // 2^53 + 1 requires 54 significant binary digits and is not exactly
+    // representable as binary64.
+    enum tooWide = rationalResultExactlyBinary64(
+        1.0, (1L << 53) + 1L, 1);
+    static assert(!tooWide);
+
+    enum maxIdentity = rationalResultExactlyBinary64(double.max, 1, 1);
+    static assert(maxIdentity);
+
+    enum maxTimesTwo = rationalResultExactlyBinary64(double.max, 2, 1);
+    static assert(!maxTimesTwo);
 }
