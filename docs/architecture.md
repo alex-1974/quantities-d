@@ -88,7 +88,7 @@ separate compile-time axes.
 The following remain research questions and must not be treated as established
 API:
 
-- concrete Spec/Dimension/Unit declaration and validation machinery;
+- final public names/helpers for the accepted structural declaration and validation machinery;
 - mixed-unit arithmetic;
 - dimension/specification representation;
 - conversion syntax and rounding policy;
@@ -98,3 +98,12 @@ API:
 
 Decisions with durable API/representation consequences should be recorded in
 `docs/adr/` before stabilization.
+
+
+## Promoted declaration and validation mechanism
+
+ADR 0003 selects ordinary user-defined D types with structural compile-time
+validation. Valid Specs and Units satisfy required members and relationships;
+public API boundaries provide explicit `static assert` diagnostics for invalid
+declarations. No inheritance, runtime registration or declaration macro is
+required for the M1 static core.
