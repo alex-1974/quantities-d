@@ -1,0 +1,249 @@
+module exact_binary64_ratio_probe;
+
+import std.math : frexp, ldexp;
+
+private:
+struct Binary64Exact
+{
+    bool negative;
+    ulong significand;
+    int exponent2;
+}
+
+struct RoundedRational
+{
+    ulong significand;
+    int exponent2;
+    bool inexact;
+    bool overflow;
+}
+
+@safe pure nothrow @nogc
+ulong gcd(ulong a, ulong b)
+{
+    while (b != 0)
+    {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+@safe pure nothrow @nogc
+Binary64Exact decompose(double value)
+{
+    assert(value == value);
+    assert(value <= double.max && value >= -double.max);
+
+    if (value == 0.0)
+        return Binary64Exact(false, 0, 0);
+
+    const bool negative = value < 0.0;
+    double x = negative ? -value : value;
+
+    int exponent;
+    const fraction = frexp(x, exponent);
+
+    ulong significand = cast(ulong) ldexp(fraction, 53);
+    int exponent2 = exponent - 53;
+
+    while (significand != 0 && (significand & 1UL) == 0)
+    {
+        significand >>= 1;
+        ++exponent2;
+    }
+
+    return Binary64Exact(negative, significand, exponent2);
+}
+
+@safe pure nothrow @nogc
+int bitLength(ulong value)
+{
+    int bits;
+    while (value != 0)
+    {
+        ++bits;
+        value >>= 1;
+    }
+    return bits;
+}
+
+@safe pure nothrow @nogc
+bool mulChecked(ulong a, ulong b, out ulong result)
+{
+    if (a != 0 && b > ulong.max / a)
+        return false;
+
+    result = a * b;
+    return true;
+}
+
+@safe pure nothrow @nogc
+ulong roundQuotientNearestEven(
+    ulong numerator,
+    ulong denominator,
+    out bool inexact)
+{
+    assert(denominator != 0);
+
+    ulong q = numerator / denominator;
+    const ulong r = numerator % denominator;
+    inexact = r != 0;
+
+    if (r == 0)
+        return q;
+
+    const ulong half = denominator / 2;
+    const bool roundUp =
+        (denominator & 1UL) == 0
+            ? (r > half || (r == half && (q & 1UL) != 0))
+            : r > half;
+
+    if (roundUp)
+        ++q;
+
+    return q;
+}
+
+@safe pure nothrow @nogc
+RoundedRational scaleExact(
+    Binary64Exact source,
+    ulong numerator,
+    ulong denominator)
+{
+    assert(denominator != 0);
+
+    if (source.significand == 0 || numerator == 0)
+        return RoundedRational(0, 0, false, false);
+
+    ulong s = source.significand;
+    ulong n = numerator;
+    ulong d = denominator;
+    int exponent2 = source.exponent2;
+
+    // Cross-cancel source significand and rational denominator.
+    auto g = gcd(s, d);
+    s /= g;
+    d /= g;
+
+    g = gcd(n, d);
+    n /= g;
+    d /= g;
+
+    // Move powers of two into the exponent so the remaining denominator is odd.
+    while ((n & 1UL) == 0)
+    {
+        n >>= 1;
+        ++exponent2;
+    }
+
+    while ((d & 1UL) == 0)
+    {
+        d >>= 1;
+        --exponent2;
+    }
+
+    ulong product;
+    if (!mulChecked(s, n, product))
+        return RoundedRational(0, 0, true, true);
+
+    // Choose a target exponent so the rounded significand fits binary64's
+    // 53-bit precision. This probe uses integer division against the exact
+    // odd denominator and shifts powers of two into the denominator when
+    // precision reduction is required.
+    int productBits = bitLength(product);
+    int shift = productBits > 53 ? productBits - 53 : 0;
+
+    ulong scaledDenominator = d;
+    if (shift > 0)
+    {
+        if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
+            return RoundedRational(0, 0, true, true);
+
+        scaledDenominator <<= shift;
+        exponent2 += shift;
+    }
+
+    bool inexact;
+    ulong rounded = roundQuotientNearestEven(
+        product, scaledDenominator, inexact);
+
+    // Rounding can carry into a 54th bit.
+    if (bitLength(rounded) > 53)
+    {
+        rounded >>= 1;
+        ++exponent2;
+    }
+
+    return RoundedRational(
+        rounded,
+        exponent2,
+        inexact,
+        false);
+}
+
+@safe pure nothrow @nogc
+double rebuild(bool negative, RoundedRational value)
+{
+    if (value.significand == 0)
+        return negative ? -0.0 : 0.0;
+
+    const result =
+        ldexp(cast(double) value.significand, value.exponent2);
+    return negative ? -result : result;
+}
+
+@safe unittest
+{
+    enum minSubnormalValue =
+        double.min_normal * double.epsilon;
+
+    // Subnormal tie cases are decided entirely in integer/rational space.
+    enum minSub = decompose(minSubnormalValue);
+
+    enum threeHalves = scaleExact(minSub, 3, 2);
+    static assert(rebuild(false, threeHalves)
+        == minSubnormalValue * 2.0);
+
+    enum fiveHalves = scaleExact(minSub, 5, 2);
+    static assert(rebuild(false, fiveHalves)
+        == minSubnormalValue * 2.0);
+
+    enum sevenHalves = scaleExact(minSub, 7, 2);
+    static assert(rebuild(false, sevenHalves)
+        == minSubnormalValue * 4.0);
+
+    // Ordinary exact rational conversion.
+    enum oneAndHalf = decompose(1.5);
+    enum one = scaleExact(oneAndHalf, 2, 3);
+    static assert(rebuild(false, one) == 1.0);
+    static assert(!one.inexact);
+
+    // The exact mathematical result is finite; no intermediate double
+    // multiplication is permitted to invent overflow.
+    enum maximum = decompose(double.max);
+    enum twoThirdsMax = scaleExact(maximum, 2, 3);
+    static assert(!twoThirdsMax.overflow);
+    static assert(rebuild(false, twoThirdsMax) <= double.max);
+    static assert(rebuild(false, twoThirdsMax) > 0.0);
+
+    // Exact powers of two remain exact.
+    enum powerUp = scaleExact(oneAndHalf, 1024, 1);
+    static assert(rebuild(false, powerUp) == 1536.0);
+    static assert(!powerUp.inexact);
+
+    // Runtime parity for the previously divergent LDC tie.
+    const runtimeMinSub = decompose(
+        double.min_normal * double.epsilon);
+    const runtimeThreeHalves =
+        scaleExact(runtimeMinSub, 3, 2);
+    assert(rebuild(false, runtimeThreeHalves)
+        == minSubnormalValue * 2.0);
+
+    const runtimeMaximum = decompose(double.max);
+    const runtimeTwoThirds =
+        scaleExact(runtimeMaximum, 2, 3);
+    assert(!runtimeTwoThirds.overflow);
+    assert(rebuild(false, runtimeTwoThirds) <= double.max);
+}
