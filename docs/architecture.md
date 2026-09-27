@@ -64,13 +64,19 @@ contract.
 Runtime-parsed unit metadata may later be useful for CRS/serialization systems,
 but it must not burden the static numerical core.
 
+## Promoted representation decision
+
+ADR 0001 selects `Quantity!(Spec, Rep)` with canonical storage for the M1 static
+core. Each Spec defines one canonical Unit contract; source Unit is explicit at
+construction/conversion boundaries and is not part of permanent Quantity type
+identity.
+
 ## Open design decisions
 
 The following remain research questions and must not be treated as established
 API:
 
-- exact `Quantity` template parameters;
-- canonical versus unit-preserving storage;
+- concrete Spec/Dimension/Unit declaration machinery;
 - mixed-unit arithmetic;
 - dimension/specification representation;
 - conversion syntax and rounding policy;
