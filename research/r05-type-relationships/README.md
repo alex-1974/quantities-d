@@ -69,3 +69,26 @@ This probe does not decide:
 - public construction/conversion names.
 
 The goal is to validate relationships before API syntax.
+
+
+## Positive probe result — 2026-09-27
+
+The initial relationship probe builds, links and runs successfully on both
+supported compiler baselines:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Confirmed by the positive probe:
+
+- Spec can name Dimension and CanonicalUnit entirely at compile time;
+- Unit can name Dimension and an exact rational Scale entirely at compile time;
+- LengthSpec and RadiusSpec remain distinct Quantity identities despite sharing
+  Dimension and CanonicalUnit;
+- Unit diversity does not participate in `Quantity!(Spec, Rep)` identity;
+- representative Quantity storage remains exactly the size of Rep;
+- construction/extraction used by the probe remains CTFE-capable and compatible
+  with `@safe pure nothrow @nogc`.
+
+This is feasibility evidence only. Compile-negative relationship enforcement is
+the next gate before promotion to an ADR.
