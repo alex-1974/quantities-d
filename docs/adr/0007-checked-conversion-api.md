@@ -106,8 +106,9 @@ cross-cancel before forming intermediate products.
 
 ### 5. Floating-to-floating conversion
 
-Floating exactness is relative to the **represented source floating value**,
-not an earlier decimal spelling or physical measurement.
+Floating exactness for an ordinary runtime floating source is relative to the
+**represented source floating value**, not an earlier decimal spelling or
+physical measurement.
 
 A floating-to-floating conversion is `exact` iff applying the exact rational
 unit scale to the represented source value yields a mathematical result exactly
@@ -120,14 +121,35 @@ The conversion reports whether representation rounding was required.
 
 NaN and infinities are reported as `nonFinite`, not `overflow`.
 
+For arbitrary `double` input, M1 does **not** promise represented-source-exact
+semantics during CTFE. Both baseline compilers reject union-based bit
+reinterpretation in CTFE, while ordinary floating evaluation may retain excess
+precision and therefore cannot portably reconstruct the stored binary64 value.
+
+The runtime represented-source contract must not silently change meaning when
+evaluated during CTFE.
+
 ### 6. CTFE and UFCS
 
-Representative checked/exact/rounded construction and extraction operations must
-work in CTFE and remain natural under UFCS.
+Representative integral checked/exact/rounded construction and extraction
+operations must work in CTFE and remain natural under UFCS.
 
-A runtime-only bit reinterpretation path is insufficient where the public
-operation promises CTFE. The production implementation must use CTFE-compatible
-logic or provide an equivalent CTFE path with identical semantics.
+Floating CTFE is split by source semantics:
+
+- ordinary runtime `double` conversion retains represented-source semantics;
+- exact floating conversion during CTFE requires an explicit exact source
+  representation rather than reconstruction from arbitrary `double`
+  arithmetic;
+- the concrete exact-source public type/API is intentionally not frozen by this
+  ADR and requires separate consumer-driven design and validation.
+
+A runtime-only bit reinterpretation path is therefore acceptable only for the
+ordinary runtime floating contract. It must not be presented as satisfying an
+exact compile-time source contract.
+
+No public operation may silently use represented-binary64 semantics at runtime
+and excess-precision D evaluation semantics during CTFE under the same stated
+contract.
 
 ### 7. Shared semantics, implementation freedom
 
@@ -181,12 +203,15 @@ materially different failure classes.
 - Integral conversion requires careful checked arithmetic and exact ratio algebra.
 - Floating exactness requires more work than ordinary arithmetic equality.
 - CTFE remains a real implementation constraint, not only an API-style goal.
+- Exact compile-time floating input requires an explicit exact-source
+  representation; its concrete API remains a follow-up design decision.
 - Result temporaries may carry small status overhead; `Quantity` storage remains
   exactly the Rep payload where the language permits.
 
 ## Validation evidence
 
-R14 research validated the selected direction with eight unittest modules on:
+R14 research validated the integral direction and rational-to-binary64
+quantization on:
 
 - DMD 2.111;
 - LDC 1.41.
@@ -199,9 +224,18 @@ The matrix covered:
 - cross-cancellation;
 - overflow-safe unit-ratio composition;
 - all M1 integral rounding modes;
-- binary64 normal, negative, subnormal, precision, exponent, overflow, NaN and
-  infinity cases.
+- binary64 rational quantization boundaries, including nearest-even reasoning.
 
-Promotion to **Accepted** requires a production implementation slice and the
-normal quantities-d gates, including compile-negative and external-consumer
-validation.
+Final floating validation additionally established a promotion blocker:
+represented-source reconstruction from arbitrary `double` is not portable in
+CTFE on the baseline compilers. Runtime bit-pattern probes confirm ordinary
+binary64 storage, while CTFE rejects union reinterpretation and may retain excess
+floating precision.
+
+Promotion to **Accepted** therefore requires:
+
+- a production implementation slice and the normal quantities-d gates,
+  including compile-negative and external-consumer validation;
+- runtime validation of represented-source floating conversion;
+- a separate decision and validation for the explicit exact-source CTFE API;
+- no silent runtime/CTFE semantic split.
