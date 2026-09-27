@@ -179,7 +179,9 @@ Which D mechanism should implement the ADR 0002 structural contracts while
 keeping user-defined Dimensions, Specs and Units lightweight and diagnostics
 useful?
 
-The active probe under `research/r11-declaration-validation/` evaluates
-ordinary user-defined types plus structural traits and explicit API-boundary
-`static assert` diagnostics. It deliberately avoids inheritance, runtime
-registration and declaration macros unless evidence later requires them.
+R11 is promoted by `docs/adr/0003-structural-declaration-validation.md`.
+
+M1 uses ordinary user-defined D types plus structural compile-time traits and
+explicit API-boundary `static assert` diagnostics. The full five-case negative
+matrix passes on both DMD 2.111 and LDC 1.41. Inheritance, runtime registration
+and declaration macros are not required by the static core.
