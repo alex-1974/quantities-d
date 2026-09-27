@@ -432,8 +432,9 @@ ExactResult!T exactResult(T)(ConversionResult!T result)
             if (result.tryValue(value))
                 return ExactResult!T.success(value);
 
-            // ConversionResult owns the invariant that exact implies a value.
-            assert(false);
+            // Defensive fallback for an impossible internal state. Public
+            // construction prevents exact-without-value, but do not make
+            // release behavior depend on assert.
             return ExactResult!T.failed(ExactFailure.inexact);
         case ConversionStatus.inexact:
             return ExactResult!T.failed(ExactFailure.inexact);
