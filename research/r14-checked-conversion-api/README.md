@@ -1,6 +1,6 @@
 # R14 — Checked Conversion API
 
-Status: active research
+Status: complete; promoted to accepted ADR 0007
 
 ## Question
 
@@ -699,3 +699,39 @@ chosen explicitly:
    components or rational input explicitly at compile time.
 
 No silent semantic split between runtime and CTFE is acceptable.
+
+
+## Final promotion result — 2026-09-27
+
+The historical probes above intentionally retain intermediate hypotheses and
+failed approaches. The promoted production result is narrower and stronger:
+
+- ordinary runtime `double` conversion uses the stored binary64 bit pattern as
+  the represented source value;
+- exact rational scaling is preserved through the final IEEE-754 binary64
+  rounding decision rather than relying on an already-rounded floating
+  intermediate;
+- subnormal rounding, the normal/subnormal transition, the finite-overflow
+  midpoint, and signed zero have dedicated regression coverage;
+- exactness classification and value generation have a deterministic
+  consistency matrix on DMD 2.111 and LDC 1.41;
+- arbitrary `double` CTFE does not promise represented-source binary64
+  semantics;
+- no public exact-source CTFE floating representation is introduced in M1
+  because the audited consumers do not currently require one;
+- `ConversionResult` and `ExactResult` own valid default states and do not
+  expose assert-dependent public construction of contradictory states.
+
+Consumer audit conclusion:
+
+- `geo-d` and `geo3-d` deliberately remain unit-agnostic Euclidean geometry;
+- `raster-d` remains a generic raster foundation without physical-unit
+  semantics in its core;
+- `imagery-d` may later have physical-resolution/GSD needs, but has no current
+  production API requiring quantities;
+- `geodesy-d` can retain documented canonical scalar units in its dependency-
+  light core; a quantities-d adapter may be added later as an optional
+  integration if consumer demand justifies it.
+
+Therefore no current consumer justifies either a hard quantities-d dependency
+or a speculative exact-floating CTFE source abstraction.
