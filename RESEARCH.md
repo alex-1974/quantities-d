@@ -237,3 +237,13 @@ Hard gates:
   Specs.
 
 The active probe is under `research/r13-public-api-ctfe-ufcs/`.
+
+
+### R13 promotion — 2026-09-27
+
+R13 is promoted by `docs/adr/0006-ctfe-ufcs-construction-api.md`.
+
+M1 construction uses the free-function/UFCS shape
+`quantity!(Spec, Unit)(value)` / `value.quantity!(Spec, Unit)`.
+CTFE and UFCS are normative requirements, and raw Quantity payload construction
+is not public API.
