@@ -1,0 +1,5 @@
+{
+    "name": "quantities-r04-3-inf-cancel",
+    "description": "Isolate infinity cancellation across compiler/build configurations",
+    "targetType": "executable"
+}
