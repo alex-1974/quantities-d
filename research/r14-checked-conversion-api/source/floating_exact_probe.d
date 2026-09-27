@@ -201,4 +201,28 @@ public:
 
     enum maxTimesTwo = rationalResultExactlyBinary64(double.max, 2, 1);
     static assert(!maxTimesTwo);
+
+    enum negativeExact = rationalResultExactlyBinary64(-3.0, 1, 2);
+    static assert(negativeExact);
+
+    enum negativeInexact = rationalResultExactlyBinary64(-1.0, 1, 10);
+    static assert(!negativeInexact);
+
+    // Smallest positive subnormal: 2^-1074.
+    enum minSubnormal = double.min_normal / (1UL << 52);
+    enum subnormalIdentity =
+        rationalResultExactlyBinary64(minSubnormal, 1, 1);
+    static assert(subnormalIdentity);
+
+    enum subnormalTimesTwo =
+        rationalResultExactlyBinary64(minSubnormal, 2, 1);
+    static assert(subnormalTimesTwo);
+
+    enum subnormalHalf =
+        rationalResultExactlyBinary64(minSubnormal, 1, 2);
+    static assert(!subnormalHalf);
+
+    enum negativeSubnormal =
+        rationalResultExactlyBinary64(-minSubnormal, 1, 1);
+    static assert(negativeSubnormal);
 }
