@@ -1,6 +1,7 @@
 module floating_probe;
 
 import common : ConversionResult, ConversionStatus;
+import floating_exact : rationalResultExactlyBinary64;
 
 private:
 @safe pure nothrow @nogc
@@ -33,14 +34,8 @@ ConversionResult!double convertFloating(
     if (!finite(scaled))
         return ConversionResult!double(0.0, ConversionStatus.overflow);
 
-    // Research criterion: reverse the exact rational operation in floating
-    // arithmetic and compare to the represented source value. This is only a
-    // probe; it is not yet accepted as the production exactness test.
-    const double reversed =
-        (scaled * cast(double) denominator) / cast(double) numerator;
-
     const status =
-        reversed == value
+        rationalResultExactlyBinary64(value, numerator, denominator)
             ? ConversionStatus.exact
             : ConversionStatus.inexact;
 
@@ -62,7 +57,12 @@ ConversionResult!double convertFloating(
     static assert(binaryHalf.value == 1.5);
 
     enum decimalLike = convertFloating(1.0, 1, 10);
+    static assert(decimalLike.status == ConversionStatus.inexact);
     static assert(decimalLike.value > 0.0);
+
+    enum representedTenth = convertFloating(0.1, 10, 1);
+    static assert(representedTenth.status == ConversionStatus.inexact);
+    static assert(representedTenth.value == 1.0);
 
     enum overflow = convertFloating(double.max, 2, 1);
     static assert(overflow.status == ConversionStatus.overflow);
