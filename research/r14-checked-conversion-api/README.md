@@ -141,3 +141,57 @@ derives exact/rounded behavior from it.
 B exposes policy machinery at ordinary call sites and still needs a separate
 rounding-mode argument for the rounded case. It therefore has no demonstrated
 surface-area advantage yet.
+
+
+## Probe 2 — exact-required result contract
+
+Candidate C now passes the real checked integral kernel on both baseline compilers.
+This exposes a semantic issue in the first sketch:
+
+```d
+q.exactIn!Unit
+```
+
+must not merely return the same `ConversionResult!T` as `checkedIn`, because
+that would make exact-required intent observationally identical to checked/loss-aware
+intent.
+
+Two result contracts are therefore compared next.
+
+### E1 — status-bearing result
+
+```d
+struct ExactResult(T)
+{
+    T value;
+    ConversionStatus status;
+}
+```
+
+Only `exact` is a successful exact-required result. `inexact` and `overflow`
+remain explicit, but the presence of `value` risks callers accidentally using
+a rounded/truncated placeholder.
+
+### E2 — success-bearing exact result
+
+```d
+enum ExactFailure
+{
+    inexact,
+    overflow
+}
+
+struct ExactResult(T)
+{
+    bool hasValue;
+    T value;
+    ExactFailure failure;
+}
+```
+
+The exact-required wrapper exposes a value only on semantic success. The
+implementation may internally reuse the checked kernel, but the public result
+shape makes accidental use of an inexact fallback less natural.
+
+R14 should prefer the smallest CTFE-friendly value type that preserves this
+distinction without exceptions, allocation, or runtime metadata.
