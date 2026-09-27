@@ -99,3 +99,66 @@ compilers and include compile-negative cases where a candidate intentionally
 rejects an expression.
 
 No candidate is promoted from this document alone.
+
+
+## Observed baseline — 2026-09-27
+
+The first probe was run successfully on DMD 2.111 and LDC 1.41. Both
+compilers produced the same result types and values for every tested case.
+
+Observed binary Rep results:
+
+| Expression class | Result Rep |
+|---|---|
+| int + int / int - int | int |
+| int + long / int - long | long |
+| int + uint / int - uint | uint |
+| int + double / int - double | double |
+| float + double / float - double | double |
+
+Observed scalar Rep results:
+
+| Expression class | Result Rep / behavior |
+|---|---|
+| int * int | int |
+| int / int | int, integer division |
+| int * long / int / long | long |
+| int * double / int / double | double |
+| float * double / float / double | double |
+
+The CTFE same-Rep addition probe also passed under both compilers.
+
+### Immediate consequences
+
+Candidate B (use ordinary D arithmetic result Rep) is implementation-simple and
+compiler-stable for this matrix, but it is not automatically acceptable as the
+public quantities-d rule.
+
+Two cases require explicit hardening:
+
+1. `int + uint -> uint`: negative signed values can cross into unsigned
+   semantics merely because the other operand is unsigned.
+2. `int / int -> int`: ordinary D division truncates. A quantity operation
+   must not accidentally look like exact physical/numerical division while
+   silently discarding a fractional result.
+
+Therefore normal D promotion remains a candidate language mechanism, not yet an
+accepted quantities-d semantic policy.
+
+## Next boundary probes
+
+Before choosing A, B, C, or D, test:
+
+- negative int with uint for addition/subtraction;
+- signed/unsigned width combinations near boundaries;
+- int.min / -1 overflow behavior;
+- multiplication overflow;
+- division by zero behavior and diagnostics;
+- narrow integer promotions (byte/ubyte/short/ushort);
+- scalar multiplication where the scalar changes signedness;
+- CTFE behavior for the same boundary cases;
+- whether release-mode behavior changes any overflow observation.
+
+The purpose is not to build checked arithmetic in R04.1. It is to determine
+which raw language behaviors quantities-d may safely expose and which require
+restriction or explicit policy.
