@@ -317,16 +317,53 @@ RoundedRational scaleExact(
         ++roundedExponent;
     }
 
-    // At the top of the binary64 range, round-to-nearest-even has a finite
-    // interval above double.max that still rounds back to double.max. Only a
-    // rounded carry to 2^52 * 2^972 represents the overflow result.
-    if (roundedExponent > 971)
+    // The largest finite binary64 is
+    //
+    //   (2^53 - 1) * 2^971.
+    //
+    // For exact values whose unbiased top exponent is 1024, the ordinary
+    // 53-bit normalization above targets exponent 972 and therefore loses the
+    // finite interval that must still round back to double.max. Re-evaluate
+    // that narrow boundary directly against the overflow midpoint:
+    //
+    //   (2^54 - 1) * 2^970.
+    //
+    // Values below the midpoint round to double.max; midpoint and above round
+    // to infinity under round-to-nearest, ties-to-even.
+    if (exactTopExponent == 1024)
     {
-        if (roundedExponent == 972 && rounded == (1UL << 52))
-            return RoundedRational(0, 0, true);
+        // Compare exactNumerator / d * 2^exponent2 with
+        // (2^54 - 1) * 2^970 without using floating arithmetic.
+        const int midpointShift = 970 - exponent2;
+        Cent lhs = exactNumerator;
+        Cent rhs = mul(
+            fromUlong128(d),
+            fromUlong128((1UL << 54) - 1UL));
+
+        if (midpointShift > 0)
+        {
+            bool shiftOverflow;
+            rhs = shlCent(rhs, midpointShift, shiftOverflow);
+            if (shiftOverflow)
+                return RoundedRational(
+                    (1UL << 53) - 1UL, 971, false);
+        }
+        else if (midpointShift < 0)
+        {
+            bool shiftOverflow;
+            lhs = shlCent(lhs, -midpointShift, shiftOverflow);
+            if (shiftOverflow)
+                return RoundedRational(0, 0, true);
+        }
+
+        if (centGreater(rhs, lhs))
+            return RoundedRational((1UL << 53) - 1UL, 971, false);
 
         return RoundedRational(0, 0, true);
     }
+
+    if (roundedExponent > 971)
+        return RoundedRational(0, 0, true);
 
     return RoundedRational(rounded, roundedExponent, false);
 }
@@ -340,17 +377,8 @@ RoundedRational quantizeBinary64(RoundedRational value)
     int bits = bitLength(value.significand);
     int topExponent = value.exponent2 + bits - 1;
 
-    if (topExponent > 1024)
+    if (topExponent > 1023)
         return RoundedRational(0, 0, true);
-
-    if (topExponent == 1024)
-    {
-        // A rounded 53-bit significand of 2^52 at exponent 972 is the
-        // overflow result (+/- infinity). Values below the overflow midpoint
-        // must have rounded to the maximum finite significand at exponent 971
-        // before reaching this branch.
-        return RoundedRational(0, 0, true);
-    }
 
     if (topExponent >= -1022)
         return value;
