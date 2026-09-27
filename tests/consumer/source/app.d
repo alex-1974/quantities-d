@@ -42,20 +42,39 @@ void main()
 
     enum exactKilometres = 2L.exactQuantity!(Length, Kilometre);
     static assert(exactKilometres.hasValue);
-    static assert(exactKilometres.value.canonicalValue == 2000L);
+    static assert({
+        Quantity!(Length, long) value;
+        return exactKilometres.tryValue(value)
+            && value.canonicalValue == 2000L;
+    }());
 
     enum inexactCentimetres = 150L.exactQuantity!(Length, Centimetre);
     static assert(!inexactCentimetres.hasValue);
-    static assert(inexactCentimetres.failure == ExactFailure.inexact);
+    static assert({
+        ExactFailure failure;
+        return inexactCentimetres.tryFailure(failure)
+            && failure == ExactFailure.inexact;
+    }());
 
     enum roundedCentimetres = 150L.roundedQuantity!(
         Length, Centimetre, RoundingMode.nearestTiesAway);
     static assert(roundedCentimetres.status == ConversionStatus.inexact);
-    static assert(roundedCentimetres.value.canonicalValue == 2L);
+    static assert({
+        Quantity!(Length, long) value;
+        return roundedCentimetres.tryValue(value)
+            && value.canonicalValue == 2L;
+    }());
 
-    enum extracted = exactKilometres.value.exactIn!Kilometre;
+    enum extracted = {
+        Quantity!(Length, long) value;
+        assert(exactKilometres.tryValue(value));
+        return value.exactIn!Kilometre;
+    }();
     static assert(extracted.hasValue);
-    static assert(extracted.value == 2L);
+    static assert({
+        long value;
+        return extracted.tryValue(value) && value == 2L;
+    }());
 
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
 }
