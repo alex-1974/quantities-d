@@ -1,5 +1,6 @@
 module exact_binary64_ratio_probe;
 
+import core.int128 : Cent, mul, udivmod;
 import std.math : frexp, ldexp;
 
 private:
@@ -70,35 +71,54 @@ int bitLength(ulong value)
 }
 
 @safe pure nothrow @nogc
-bool mulChecked(ulong a, ulong b, out ulong result)
+Cent cent(ulong value)
 {
-    if (a != 0 && b > ulong.max / a)
-        return false;
-
-    result = a * b;
-    return true;
+    return Cent(value, 0);
 }
 
 @safe pure nothrow @nogc
-ulong roundQuotientNearestEven(
-    ulong numerator,
+bool centIsZero(Cent value)
+{
+    return value.lo == 0 && value.hi == 0;
+}
+
+@safe pure nothrow @nogc
+bool centGreater(Cent a, Cent b)
+{
+    return a.hi > b.hi || (a.hi == b.hi && a.lo > b.lo);
+}
+
+@safe pure nothrow @nogc
+bool centEqual(Cent a, Cent b)
+{
+    return a.hi == b.hi && a.lo == b.lo;
+}
+
+@safe pure nothrow @nogc
+ulong roundCentQuotientNearestEven(
+    Cent numerator,
     ulong denominator,
     out bool inexact)
 {
     assert(denominator != 0);
 
-    ulong q = numerator / denominator;
-    const ulong r = numerator % denominator;
-    inexact = r != 0;
+    Cent remainder;
+    const quotient = udivmod(numerator, cent(denominator), remainder);
 
-    if (r == 0)
+    assert(quotient.hi == 0);
+    ulong q = quotient.lo;
+
+    inexact = !centIsZero(remainder);
+    if (!inexact)
         return q;
 
-    const ulong half = denominator / 2;
+    const doubledRemainder = mul(remainder, cent(2));
+    const denominator128 = cent(denominator);
+
     const bool roundUp =
-        (denominator & 1UL) == 0
-            ? (r > half || (r == half && (q & 1UL) != 0))
-            : r > half;
+        centGreater(doubledRemainder, denominator128)
+        || (centEqual(doubledRemainder, denominator128)
+            && (q & 1UL) != 0);
 
     if (roundUp)
         ++q;
@@ -122,7 +142,7 @@ RoundedRational scaleExact(
     ulong d = denominator;
     int exponent2 = source.exponent2;
 
-    // Cross-cancel source significand and rational denominator.
+    // Cross-cancel exactly before widening the remaining product.
     auto g = gcd(s, d);
     s /= g;
     d /= g;
@@ -131,7 +151,8 @@ RoundedRational scaleExact(
     n /= g;
     d /= g;
 
-    // Move powers of two into the exponent so the remaining denominator is odd.
+    // Keep powers of two in the binary exponent. The remaining denominator
+    // is odd, which makes the final binary rounding decision explicit.
     while ((n & 1UL) == 0)
     {
         n >>= 1;
@@ -144,49 +165,38 @@ RoundedRational scaleExact(
         --exponent2;
     }
 
-    // Avoid requiring s*n to fit in ulong. Reduce n/d first into an
-    // integer quotient plus remainder, then combine only bounded pieces.
-    // This keeps ratios close to one representable even when numerator and
-    // denominator are individually near ulong limits.
-    const ulong ratioQuotient = n / d;
-    const ulong ratioRemainder = n % d;
+    // s is at most 53 bits and n at most 64 bits, so their exact product
+    // fits comfortably in the 128-bit Cent payload.
+    Cent exactNumerator = mul(cent(s), cent(n));
 
-    ulong integerPart;
-    if (!mulChecked(s, ratioQuotient, integerPart))
-        return RoundedRational(0, 0, true, true);
+    // Reduce precision only when the integer part needs more than 53 bits.
+    // Shifting is represented by multiplying the denominator by a power of
+    // two. For this research kernel, denominator growth is bounded to 64 bits;
+    // wider cases will be handled explicitly if the adversarial matrix finds
+    // a real consumer-relevant need.
+    Cent initialRemainder;
+    const initialQuotient = udivmod(exactNumerator, cent(d), initialRemainder);
 
-    ulong remainderProduct;
-    if (!mulChecked(s, ratioRemainder, remainderProduct))
+    int quotientBits;
+    ulong qHi = initialQuotient.hi;
+    ulong qLo = initialQuotient.lo;
+    if (qHi != 0)
     {
-        // Research fallback: progressively halve the source significand and
-        // compensate in exponent until the bounded product fits. This changes
-        // only representation, not the mathematical value.
-        while (s > 1
-            && !mulChecked(s, ratioRemainder, remainderProduct))
+        quotientBits = 64;
+        while (qHi != 0)
         {
-            const bool lostBit = (s & 1UL) != 0;
-            s >>= 1;
-            ++exponent2;
-
-            // If representation compaction discards information, the final
-            // conversion is necessarily inexact.
-            if (lostBit)
-                return RoundedRational(0, 0, true, true);
+            ++quotientBits;
+            qHi >>= 1;
         }
-
-        if (!mulChecked(s, ratioRemainder, remainderProduct))
-            return RoundedRational(0, 0, true, true);
-
-        if (!mulChecked(s, ratioQuotient, integerPart))
-            return RoundedRational(0, 0, true, true);
+    }
+    else
+    {
+        quotientBits = bitLength(qLo);
     }
 
-    // Form the exact rational result as integerPart + remainderProduct/d.
-    // Scale by powers of two until the retained significand is near 53 bits.
-    int integerBits = bitLength(integerPart);
-    int shift = integerBits > 53 ? integerBits - 53 : 0;
-
+    const int shift = quotientBits > 53 ? quotientBits - 53 : 0;
     ulong scaledDenominator = d;
+
     if (shift > 0)
     {
         if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
@@ -196,20 +206,12 @@ RoundedRational scaleExact(
         exponent2 += shift;
     }
 
-    ulong scaledInteger;
-    if (!mulChecked(integerPart, scaledDenominator, scaledInteger))
-        return RoundedRational(0, 0, true, true);
-
-    if (remainderProduct > ulong.max - scaledInteger)
-        return RoundedRational(0, 0, true, true);
-
     bool inexact;
-    ulong rounded = roundQuotientNearestEven(
-        scaledInteger + remainderProduct,
+    ulong rounded = roundCentQuotientNearestEven(
+        exactNumerator,
         scaledDenominator,
         inexact);
 
-    // Rounding can carry into a 54th bit.
     if (bitLength(rounded) > 53)
     {
         rounded >>= 1;
@@ -394,8 +396,7 @@ double rebuild(bool negative, RoundedRational value)
         cast(ulong) long.max,
         cast(ulong)(long.max - 2));
     static assert(!largeBalanced.overflow);
-    static assert(rebuild(false, largeBalanced) > 1.0);
-    static assert(rebuild(false, largeBalanced) < 2.0);
+    static assert(rebuild(false, largeBalanced) == 1.0);
 
     // Exact large power-of-two scale remains representable where expected.
     enum scaleUp = scaleExact(oneAndHalf, 1UL << 20, 1);
