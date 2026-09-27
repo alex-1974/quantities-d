@@ -319,3 +319,18 @@ precision/range without discarded bits.
 This criterion is stronger than reverse comparison and directly matches ADR 0005.
 The first implementation probe is intentionally limited to finite positive/negative
 `double` values and exact rational scales; NaN/infinity policy remains separate.
+
+
+### CTFE note
+
+The initial binary64 probe used a local union to reinterpret a `double` as
+`ulong`. DMD rejects reading the overlapped field during CTFE:
+
+```text
+reinterpretation through overlapped field raw is not allowed in CTFE
+```
+
+Because CTFE is a hard quantities-d requirement, R14 does not treat runtime-only
+bit reinterpretation as sufficient. The probe now decomposes finite values
+arithmetically, preserving a single CTFE-capable semantic path on the baseline
+compilers.
