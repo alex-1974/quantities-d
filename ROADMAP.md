@@ -31,13 +31,14 @@ Resolve, with prototypes and evidence:
 - CTFE, `@safe`, `pure`, `nothrow`, and `@nogc` viability;
 - compile-time cost on DMD and LDC.
 
-ADR 0001–0007 now close the M1 storage, static metadata, conversion-intent,
-CTFE/UFCS, and checked-conversion decisions. Final branch-level verification
-remains before the M1 integration PR is promoted from draft.
+ADR 0001–0007 close the M1 storage, static metadata, conversion-intent,
+CTFE/UFCS, and checked-conversion decisions. PR #9 merged the checked
+conversion slice after DMD/LDC debug and release tests, compile-negative gates,
+and external-consumer validation. M1 is complete.
 
 ## M2 — Minimal linear-unit slice
 
-After final M1 branch verification:
+M2 begins from the accepted M1 core:
 
 - metre;
 - kilometre;
