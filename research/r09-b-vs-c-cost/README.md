@@ -110,3 +110,28 @@ Interpretation is deliberately limited:
 The DMD size difference must be explained by symbol/code-generation inspection
 before it is treated as a representation cost. The next step is therefore
 optimized symbol/assembly comparison, not a larger benchmark or a B/C decision.
+
+
+## DMD section inspection — 2026-09-27
+
+The first section-level inspection explains much of the DMD size signal.
+
+Relative to C, B adds only 816 bytes of `.text`, while larger increases occur
+in dynamic-symbol/relocation/data infrastructure, including approximately:
+
+- `.dynstr`: +5,941 B;
+- `.rela.dyn`: +2,304 B;
+- `.data`: +3,696 B;
+- `.dynsym`: +1,392 B;
+- smaller increases in GNU hash/version and unwind metadata.
+
+`.rodata` is slightly smaller for B in this run.
+
+This is consistent with additional concrete D type/symbol materialization for
+B's Unit-bearing type identity rather than a large numerical-code penalty.
+That interpretation is not yet proven. A model-specific symbol-set comparison
+is the next probe.
+
+The LDC byte-identical result remains important: any DMD materialization cost
+observed here is compiler/code-generation behavior, not an unavoidable runtime
+storage cost of B.
