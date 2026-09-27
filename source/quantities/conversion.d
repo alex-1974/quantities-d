@@ -432,9 +432,9 @@ ExactResult!T exactResult(T)(ConversionResult!T result)
             if (result.tryValue(value))
                 return ExactResult!T.success(value);
 
-            // Defensive fallback for an impossible internal state. Public
-            // construction prevents exact-without-value, but do not make
-            // release behavior depend on assert.
+            // Defensive fallback for an impossible internal state. Result
+            // construction is internal, but keep release behavior independent
+            // of assertions if an invariant is ever violated internally.
             return ExactResult!T.failed(ExactFailure.inexact);
         case ConversionStatus.inexact:
             return ExactResult!T.failed(ExactFailure.inexact);
