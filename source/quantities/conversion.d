@@ -30,8 +30,56 @@ enum RoundingMode
 
 struct ConversionResult(T)
 {
-    T value;
-    ConversionStatus status;
+private:
+    bool hasValue_;
+    T value_;
+    ConversionStatus status_;
+
+public:
+    @safe pure nothrow @nogc
+    static ConversionResult withValue(T value, ConversionStatus status)
+    {
+        assert(status == ConversionStatus.exact
+            || status == ConversionStatus.inexact);
+
+        ConversionResult result;
+        result.hasValue_ = true;
+        result.value_ = value;
+        result.status_ = status;
+        return result;
+    }
+
+    @safe pure nothrow @nogc
+    static ConversionResult withoutValue(ConversionStatus status)
+    {
+        assert(status != ConversionStatus.exact);
+
+        ConversionResult result;
+        result.status_ = status;
+        return result;
+    }
+
+    @safe pure nothrow @nogc
+    bool hasValue() const
+    {
+        return hasValue_;
+    }
+
+    @safe pure nothrow @nogc
+    ConversionStatus status() const
+    {
+        return status_;
+    }
+
+    @safe pure nothrow @nogc
+    bool tryValue(out T value) const
+    {
+        if (!hasValue_)
+            return false;
+
+        value = value_;
+        return true;
+    }
 }
 
 struct ExactResult(T)
@@ -66,17 +114,23 @@ public:
     }
 
     @safe pure nothrow @nogc
-    T value() const
+    bool tryValue(out T value) const
     {
-        assert(hasValue_);
-        return value_;
+        if (!hasValue_)
+            return false;
+
+        value = value_;
+        return true;
     }
 
     @safe pure nothrow @nogc
-    ExactFailure failure() const
+    bool tryFailure(out ExactFailure failure) const
     {
-        assert(!hasValue_);
-        return failure_;
+        if (hasValue_)
+            return false;
+
+        failure = failure_;
+        return true;
     }
 }
 
@@ -164,7 +218,7 @@ ConversionResult!long convertIntegral(
 
     if (valueMagnitude > cast(ulong) long.max + (negative ? 1UL : 0UL)
         || numeratorMagnitude > cast(ulong) long.max + (negative ? 1UL : 0UL))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long signedValue;
     if (negative && valueMagnitude == cast(ulong) long.max + 1UL)
@@ -175,18 +229,18 @@ ConversionResult!long convertIntegral(
             : cast(long) valueMagnitude;
 
     if (numeratorMagnitude > cast(ulong) long.max)
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long product;
     if (!multiplyChecked(signedValue, cast(long) numeratorMagnitude, product))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     const long d = cast(long) denominatorMagnitude;
     const long quotient = product / d;
     const long remainder = product % d;
 
     if (remainder == 0)
-        return ConversionResult!long(quotient, ConversionStatus.exact);
+        return ConversionResult!long.withValue(quotient, ConversionStatus.exact);
 
     long rounded = quotient;
     final switch (mode)
@@ -208,7 +262,7 @@ ConversionResult!long convertIntegral(
             break;
     }
 
-    return ConversionResult!long(rounded, ConversionStatus.inexact);
+    return ConversionResult!long.withValue(rounded, ConversionStatus.inexact);
 }
 
 @safe pure nothrow @nogc
@@ -221,7 +275,7 @@ ConversionResult!long convertIntegralChecked(
         value, numerator, denominator, RoundingMode.towardZero);
 
     if (converted.status == ConversionStatus.inexact)
-        return ConversionResult!long(0, ConversionStatus.inexact);
+        return ConversionResult!long.withoutValue(ConversionStatus.inexact);
 
     return converted;
 }
@@ -246,15 +300,15 @@ ConversionResult!long convertIntegralUnits(FromUnit, ToUnit)(
 
     if (a > cast(ulong) long.max || b > cast(ulong) long.max
         || c > cast(ulong) long.max || d > cast(ulong) long.max)
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long numerator;
     if (!multiplyChecked(cast(long) a, cast(long) d, numerator))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long denominator;
     if (!multiplyChecked(cast(long) b, cast(long) c, denominator))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     const bool negative =
         (FromUnit.Scale.numerator < 0) != (ToUnit.Scale.numerator < 0);
@@ -282,15 +336,15 @@ ConversionResult!long convertIntegralUnitsChecked(FromUnit, ToUnit)(long value)
 
     if (a > cast(ulong) long.max || b > cast(ulong) long.max
         || c > cast(ulong) long.max || d > cast(ulong) long.max)
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long numerator;
     if (!multiplyChecked(cast(long) a, cast(long) d, numerator))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     long denominator;
     if (!multiplyChecked(cast(long) b, cast(long) c, denominator))
-        return ConversionResult!long(0, ConversionStatus.overflow);
+        return ConversionResult!long.withoutValue(ConversionStatus.overflow);
 
     const bool negative =
         (FromUnit.Scale.numerator < 0) != (ToUnit.Scale.numerator < 0);
@@ -317,19 +371,19 @@ ConversionResult!double convertFloating(
     assert(denominator > 0);
 
     if (!finite(value))
-        return ConversionResult!double(0.0, ConversionStatus.nonFinite);
+        return ConversionResult!double.withoutValue(ConversionStatus.nonFinite);
 
     const scaled = scaleBinary64(value, numerator, denominator);
 
     if (scaled.overflow)
-        return ConversionResult!double(0.0, ConversionStatus.overflow);
+        return ConversionResult!double.withoutValue(ConversionStatus.overflow);
 
     const status = rationalResultExactlyBinary64(
         value, numerator, denominator)
             ? ConversionStatus.exact
             : ConversionStatus.inexact;
 
-    return ConversionResult!double(scaled.value, status);
+    return ConversionResult!double.withValue(scaled.value, status);
 }
 
 @safe pure nothrow @nogc
@@ -350,15 +404,15 @@ ConversionResult!double convertFloatingUnits(FromUnit, ToUnit)(double value)
 
     if (a > cast(ulong) long.max || b > cast(ulong) long.max
         || c > cast(ulong) long.max || d > cast(ulong) long.max)
-        return ConversionResult!double(0.0, ConversionStatus.overflow);
+        return ConversionResult!double.withoutValue(ConversionStatus.overflow);
 
     long numerator;
     if (!multiplyChecked(cast(long) a, cast(long) d, numerator))
-        return ConversionResult!double(0.0, ConversionStatus.overflow);
+        return ConversionResult!double.withoutValue(ConversionStatus.overflow);
 
     long denominator;
     if (!multiplyChecked(cast(long) b, cast(long) c, denominator))
-        return ConversionResult!double(0.0, ConversionStatus.overflow);
+        return ConversionResult!double.withoutValue(ConversionStatus.overflow);
 
     const bool negative =
         (FromUnit.Scale.numerator < 0) != (ToUnit.Scale.numerator < 0);
@@ -374,7 +428,13 @@ ExactResult!T exactResult(T)(ConversionResult!T result)
     final switch (result.status)
     {
         case ConversionStatus.exact:
-            return ExactResult!T.success(result.value);
+            T value;
+            if (result.tryValue(value))
+                return ExactResult!T.success(value);
+
+            // ConversionResult owns the invariant that exact implies a value.
+            assert(false);
+            return ExactResult!T.failed(ExactFailure.inexact);
         case ConversionStatus.inexact:
             return ExactResult!T.failed(ExactFailure.inexact);
         case ConversionStatus.overflow:
@@ -398,8 +458,13 @@ auto checkedQuantity(Spec, Unit)(long value)
     const converted = convertIntegralUnitsChecked!(
         Unit, Spec.CanonicalUnit)(value);
 
-    return ConversionResult!(Quantity!(Spec, long))(
-        Quantity!(Spec, long).fromCanonical(converted.value),
+    long canonical;
+    if (!converted.tryValue(canonical))
+        return ConversionResult!(Quantity!(Spec, long))
+            .withoutValue(converted.status);
+
+    return ConversionResult!(Quantity!(Spec, long)).withValue(
+        Quantity!(Spec, long).fromCanonical(canonical),
         converted.status);
 }
 
@@ -420,8 +485,14 @@ auto roundedQuantity(Spec, Unit, RoundingMode mode)(long value)
         "roundedQuantity: Spec and Unit must have the same Dimension.");
 
     const converted = convertIntegralUnits!(Unit, Spec.CanonicalUnit)(value, mode);
-    return ConversionResult!(Quantity!(Spec, long))(
-        Quantity!(Spec, long).fromCanonical(converted.value),
+
+    long canonical;
+    if (!converted.tryValue(canonical))
+        return ConversionResult!(Quantity!(Spec, long))
+            .withoutValue(converted.status);
+
+    return ConversionResult!(Quantity!(Spec, long)).withValue(
+        Quantity!(Spec, long).fromCanonical(canonical),
         converted.status);
 }
 
@@ -466,8 +537,13 @@ auto checkedQuantity(Spec, Unit)(double value)
         "checkedQuantity: Spec and Unit must have the same Dimension.");
 
     const converted = convertFloatingUnits!(Unit, Spec.CanonicalUnit)(value);
-    return ConversionResult!(Quantity!(Spec, double))(
-        Quantity!(Spec, double).fromCanonical(converted.value),
+    double canonical;
+    if (!converted.tryValue(canonical))
+        return ConversionResult!(Quantity!(Spec, double))
+            .withoutValue(converted.status);
+
+    return ConversionResult!(Quantity!(Spec, double)).withValue(
+        Quantity!(Spec, double).fromCanonical(canonical),
         converted.status);
 }
 
@@ -528,53 +604,53 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 
     enum km = 2L.exactQuantity!(Length, Kilometre);
     static assert(km.hasValue);
-    static assert(km.value.canonicalValue == 2000);
+    static assert(({ Quantity!(Length, long) v; assert(km.tryValue(v)); return v.canonicalValue; }()) == 2000);
 
-    enum back = km.value.exactIn!Kilometre;
+    enum back = ({ Quantity!(Length, long) v; assert(km.tryValue(v)); return v.exactIn!Kilometre; }());
     static assert(back.hasValue);
-    static assert(back.value == 2);
+    static assert(({ long v; return back.tryValue(v) && v == 2; }()));
 
     enum checkedCm = 150L.checkedQuantity!(Length, Centimetre);
     static assert(checkedCm.status == ConversionStatus.inexact);
-    static assert(checkedCm.value.canonicalValue == 0);
+    static assert(!checkedCm.hasValue);
 
     enum cm = 150L.exactQuantity!(Length, Centimetre);
     static assert(!cm.hasValue);
-    static assert(cm.failure == ExactFailure.inexact);
+    static assert(({ ExactFailure f; return cm.tryFailure(f) && f == ExactFailure.inexact; }()));
 
     enum rounded = 150L.roundedQuantity!(
         Length, Centimetre, RoundingMode.nearestTiesAway);
     static assert(rounded.status == ConversionStatus.inexact);
-    static assert(rounded.value.canonicalValue == 2);
+    static assert(({ Quantity!(Length, long) v; return rounded.tryValue(v) && v.canonicalValue == 2; }()));
 
     enum extraction = 1500L.quantity!(Length, Metre)
         .roundedIn!(Kilometre, RoundingMode.nearestTiesAway);
     static assert(extraction.status == ConversionStatus.inexact);
-    static assert(extraction.value == 2);
+    static assert(({ long v; return extraction.tryValue(v) && v == 2; }()));
 
     enum minIdentity = long.min.exactQuantity!(Length, Metre);
     static assert(minIdentity.hasValue);
-    static assert(minIdentity.value.canonicalValue == long.min);
+    static assert(({ Quantity!(Length, long) v; return minIdentity.tryValue(v) && v.canonicalValue == long.min; }()));
 
     enum negTowardZero = (-150L).roundedQuantity!(
         Length, Centimetre, RoundingMode.towardZero);
     static assert(negTowardZero.status == ConversionStatus.inexact);
-    static assert(negTowardZero.value.canonicalValue == -1);
+    static assert(({ Quantity!(Length, long) v; return negTowardZero.tryValue(v) && v.canonicalValue == -1; }()));
 
     enum negFloor = (-150L).roundedQuantity!(
         Length, Centimetre, RoundingMode.floor);
     static assert(negFloor.status == ConversionStatus.inexact);
-    static assert(negFloor.value.canonicalValue == -2);
+    static assert(({ Quantity!(Length, long) v; return negFloor.tryValue(v) && v.canonicalValue == -2; }()));
 
     enum negCeiling = (-150L).roundedQuantity!(
         Length, Centimetre, RoundingMode.ceiling);
     static assert(negCeiling.status == ConversionStatus.inexact);
-    static assert(negCeiling.value.canonicalValue == -1);
+    static assert(({ Quantity!(Length, long) v; return negCeiling.tryValue(v) && v.canonicalValue == -1; }()));
 
     enum negNearest = (-150L).roundedQuantity!(
         Length, Centimetre, RoundingMode.nearestTiesAway);
     static assert(negNearest.status == ConversionStatus.inexact);
-    static assert(negNearest.value.canonicalValue == -2);
+    static assert(({ Quantity!(Length, long) v; return negNearest.tryValue(v) && v.canonicalValue == -2; }()));
 
     struct HugeNumeratorUnit
     {
@@ -590,7 +666,7 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 
     enum cancelled = 2L.exactQuantity!(Length, HugeNumeratorUnit);
     static assert(cancelled.hasValue);
-    static assert(cancelled.value.canonicalValue == long.max);
+    static assert(({ Quantity!(Length, long) v; return cancelled.tryValue(v) && v.canonicalValue == long.max; }()));
 
     enum ratioOverflow = long.max.checkedQuantity!(
         Length, HugeNumeratorUnit);
@@ -617,7 +693,7 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
     enum nonUnitCanonicalScale = 1L.exactQuantity!(
         HalfMetreLength, MetreAgainstHalfCanonical);
     static assert(nonUnitCanonicalScale.hasValue);
-    static assert(nonUnitCanonicalScale.value.canonicalValue == 2);
+    static assert(({ Quantity!(HalfMetreLength, long) v; return nonUnitCanonicalScale.tryValue(v) && v.canonicalValue == 2; }()));
 
     struct HalfMetre
     {
@@ -633,20 +709,20 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 
     enum halfDouble = 3.0.exactQuantity!(Length, HalfMetre);
     static assert(halfDouble.hasValue);
-    static assert(halfDouble.value.canonicalValue == 1.5);
+    static assert(({ Quantity!(Length, double) v; return halfDouble.tryValue(v) && v.canonicalValue == 1.5; }()));
 
     enum tenthDouble = 1.0.exactQuantity!(Length, TenthMetre);
     static assert(!tenthDouble.hasValue);
-    static assert(tenthDouble.failure == ExactFailure.inexact);
+    static assert(({ ExactFailure f; return tenthDouble.tryFailure(f) && f == ExactFailure.inexact; }()));
 
     enum checkedTenthDouble =
         1.0.checkedQuantity!(Length, TenthMetre);
     static assert(checkedTenthDouble.status == ConversionStatus.inexact);
-    static assert(checkedTenthDouble.value.canonicalValue == 0.1);
+    static assert(({ Quantity!(Length, double) v; return checkedTenthDouble.tryValue(v) && v.canonicalValue == 0.1; }()));
 
-    enum tenthRoundTrip = checkedTenthDouble.value.checkedIn!TenthMetre;
+    enum tenthRoundTrip = ({ Quantity!(Length, double) v; assert(checkedTenthDouble.tryValue(v)); return v.checkedIn!TenthMetre; }());
     static assert(tenthRoundTrip.status == ConversionStatus.inexact);
-    static assert(tenthRoundTrip.value == 1.0);
+    static assert(({ double v; return tenthRoundTrip.tryValue(v) && v == 1.0; }()));
 
     enum nanChecked =
         double.nan.checkedQuantity!(Length, Metre);
@@ -672,8 +748,8 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         double.max.checkedQuantity!(Length, TwoThirdsMetre);
     static assert(avoidableIntermediateOverflow.status
         != ConversionStatus.overflow);
-    static assert(avoidableIntermediateOverflow.value.canonicalValue
-        <= double.max);
+    static assert(({ Quantity!(Length, double) v; return avoidableIntermediateOverflow.tryValue(v)
+        && v.canonicalValue <= double.max; }()));
 
     struct ThreeHalvesMetre
     {
@@ -688,5 +764,6 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         double.min_normal.checkedQuantity!(Length, ThreeHalvesMetre);
     static assert(subnormalScaling.status == ConversionStatus.exact
         || subnormalScaling.status == ConversionStatus.inexact);
-    static assert(subnormalScaling.value.canonicalValue > 0.0);
+    static assert(({ Quantity!(Length, double) v; return subnormalScaling.tryValue(v)
+        && v.canonicalValue > 0.0; }()));
 }
