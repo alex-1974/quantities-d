@@ -1,0 +1,5 @@
+{
+    "name": "quantities-r04-1-same-spec-scalar",
+    "description": "R04.1 language probe for arithmetic Rep behavior",
+    "targetType": "executable"
+}
