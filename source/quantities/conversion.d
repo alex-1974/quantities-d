@@ -708,22 +708,26 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         alias Scale = ExactRatio!(1, 10);
     }
 
-    enum halfDouble = 3.0.exactQuantity!(Length, HalfMetre);
-    static assert(halfDouble.hasValue);
-    static assert(({ Quantity!(Length, double) v; return halfDouble.tryValue(v) && v.canonicalValue == 1.5; }()));
+    // ADR 0007: represented-source floating conversion is a runtime contract.
+    const halfDouble = 3.0.exactQuantity!(Length, HalfMetre);
+    assert(halfDouble.hasValue);
+    Quantity!(Length, double) halfValue;
+    assert(halfDouble.tryValue(halfValue));
+    assert(halfValue.canonicalValue == 1.5);
 
-    enum tenthDouble = 1.0.exactQuantity!(Length, TenthMetre);
-    static assert(!tenthDouble.hasValue);
-    static assert(({ ExactFailure f; return tenthDouble.tryFailure(f) && f == ExactFailure.inexact; }()));
+    const tenthDouble = 1.0.exactQuantity!(Length, TenthMetre);
+    assert(!tenthDouble.hasValue);
+    ExactFailure tenthFailure;
+    assert(tenthDouble.tryFailure(tenthFailure));
+    assert(tenthFailure == ExactFailure.inexact);
 
-    enum checkedTenthDouble =
+    const checkedTenthDouble =
         1.0.checkedQuantity!(Length, TenthMetre);
-    static assert(checkedTenthDouble.status == ConversionStatus.inexact);
-    static assert(checkedTenthDouble.hasValue);
-
-    // ADR 0007: arbitrary double CTFE does not promise represented-source
-    // binary64 equality. Keep status/payload-availability coverage here;
-    // exact represented-value checks belong to the runtime path.
+    assert(checkedTenthDouble.status == ConversionStatus.inexact);
+    assert(checkedTenthDouble.hasValue);
+    Quantity!(Length, double) checkedTenthValue;
+    assert(checkedTenthDouble.tryValue(checkedTenthValue));
+    assert(checkedTenthValue.canonicalValue == 0.1);
 
     enum nanChecked =
         double.nan.checkedQuantity!(Length, Metre);
@@ -733,9 +737,9 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         double.infinity.checkedQuantity!(Length, Metre);
     static assert(infinityChecked.status == ConversionStatus.nonFinite);
 
-    enum overflowDouble =
+    const overflowDouble =
         double.max.checkedQuantity!(Length, Kilometre);
-    static assert(overflowDouble.status == ConversionStatus.overflow);
+    assert(overflowDouble.status == ConversionStatus.overflow);
 
     struct TwoThirdsMetre
     {
@@ -745,12 +749,13 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 
     // Regression: the exact rational result is finite even though evaluating
     // double.max * 2 first would overflow.
-    enum avoidableIntermediateOverflow =
+    const avoidableIntermediateOverflow =
         double.max.checkedQuantity!(Length, TwoThirdsMetre);
-    static assert(avoidableIntermediateOverflow.status
+    assert(avoidableIntermediateOverflow.status
         != ConversionStatus.overflow);
-    static assert(({ Quantity!(Length, double) v; return avoidableIntermediateOverflow.tryValue(v)
-        && v.canonicalValue <= double.max; }()));
+    Quantity!(Length, double) finiteScaledValue;
+    assert(avoidableIntermediateOverflow.tryValue(finiteScaledValue));
+    assert(finiteScaledValue.canonicalValue <= double.max);
 
     struct ThreeHalvesMetre
     {
@@ -761,10 +766,11 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
     // Dual regression: scaling a minimum subnormal by 3/2 must not be
     // classified as overflow/non-finite. The represented result may round,
     // but intermediate ordering must not invent a different failure class.
-    enum subnormalScaling =
+    const subnormalScaling =
         double.min_normal.checkedQuantity!(Length, ThreeHalvesMetre);
-    static assert(subnormalScaling.status == ConversionStatus.exact
+    assert(subnormalScaling.status == ConversionStatus.exact
         || subnormalScaling.status == ConversionStatus.inexact);
-    static assert(({ Quantity!(Length, double) v; return subnormalScaling.tryValue(v)
-        && v.canonicalValue > 0.0; }()));
+    Quantity!(Length, double) subnormalValue;
+    assert(subnormalScaling.tryValue(subnormalValue));
+    assert(subnormalValue.canonicalValue > 0.0);
 }
