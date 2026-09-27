@@ -1,6 +1,6 @@
 module candidate_c;
 
-import checked_kernel : convertIntegral;
+import checked_kernel : convertIntegralComposed;
 import common;
 import exact_result : ExactFailure, ExactResult;
 
@@ -16,14 +16,12 @@ ConversionResult!long checkedScale(FromUnit, ToUnit)(long value)
     // value * FromScale / ToScale. The research Units use normalized positive
     // denominators, so the composed ratio stays explicit at this boundary.
     // Production algebra will cross-cancel before composing ratios.
-    const n1 = FromUnit.UnitScale.numerator;
-    const d1 = FromUnit.UnitScale.denominator;
-    const n2 = ToUnit.UnitScale.numerator;
-    const d2 = ToUnit.UnitScale.denominator;
-
-    // R14 values deliberately fit this composition. Overflow-safe ratio
-    // composition is a separate production gate.
-    return convertIntegral(value, n1 * d2, d1 * n2);
+    return convertIntegralComposed(
+        value,
+        FromUnit.UnitScale.numerator,
+        FromUnit.UnitScale.denominator,
+        ToUnit.UnitScale.numerator,
+        ToUnit.UnitScale.denominator);
 }
 
 @safe pure nothrow @nogc
@@ -31,11 +29,13 @@ ConversionResult!long roundedScale(FromUnit, ToUnit)(
     long value,
     RoundingMode mode)
 {
-    const n1 = FromUnit.UnitScale.numerator;
-    const d1 = FromUnit.UnitScale.denominator;
-    const n2 = ToUnit.UnitScale.numerator;
-    const d2 = ToUnit.UnitScale.denominator;
-    return convertIntegral(value, n1 * d2, d1 * n2, mode);
+    return convertIntegralComposed(
+        value,
+        FromUnit.UnitScale.numerator,
+        FromUnit.UnitScale.denominator,
+        ToUnit.UnitScale.numerator,
+        ToUnit.UnitScale.denominator,
+        mode);
 }
 
 @safe pure nothrow @nogc
