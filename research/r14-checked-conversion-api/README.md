@@ -362,3 +362,17 @@ itself exactly representable as binary64. The operation therefore rounds and mus
 be classified `inexact` under ADR 0005.
 
 This is a useful counterexample to reverse-operation or round-trip exactness tests.
+
+
+## Probe 7 — negative and subnormal coverage
+
+The binary64 exactness probe now includes:
+
+- negative exact and inexact conversions;
+- the smallest positive subnormal;
+- exact scaling of that subnormal by two;
+- underflow below the subnormal quantum;
+- the corresponding negative subnormal case.
+
+This gate specifically checks that the arithmetic CTFE decomposition remains valid
+at the lower edge of binary64 rather than only for ordinary normalized values.
