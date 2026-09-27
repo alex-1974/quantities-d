@@ -17,7 +17,7 @@ private:
     }
 
     @safe pure nothrow @nogc
-    static Quantity fromCanonical(Rep canonical)
+    package(quantities) static Quantity fromCanonical(Rep canonical)
     {
         return Quantity(canonical);
     }
