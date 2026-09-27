@@ -376,3 +376,25 @@ The binary64 exactness probe now includes:
 
 This gate specifically checks that the arithmetic CTFE decomposition remains valid
 at the lower edge of binary64 rather than only for ordinary normalized values.
+
+
+## Candidate C — floating integration
+
+The represented-binary exactness criterion is now wired into Candidate C for
+`double` construction and extraction.
+
+The public semantic split remains the same as for integral Reps:
+
+- `checked...` returns a value plus `exact / inexact / overflow`;
+- `exact...` returns `ExactResult` and exposes no usable value on failure.
+
+Integer-style caller-selected rounding is deliberately not added to
+floating-to-floating conversion. Floating conversion already follows the target
+floating representation's rounding semantics; R14 tracks whether that rounding
+was required rather than pretending it was an integer rounding-policy choice.
+
+NaN and infinities remain classified outside ordinary exact/inexact finite
+conversion and are currently mapped to the non-success `overflow` status in
+the research kernel. Before promotion, R14 must decide whether that status name
+is sufficiently precise or whether non-finite input deserves a distinct failure
+category.
