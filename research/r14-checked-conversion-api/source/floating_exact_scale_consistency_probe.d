@@ -66,3 +66,97 @@ import quantities.floating_exact : rationalResultExactlyBinary64;
             assert(!exact);
     }
 }
+
+
+@safe unittest
+{
+    // Deterministic cross-product stress matrix. This is intentionally not a
+    // random/fuzz test: every input is stable across compilers and exercises a
+    // distinct binary64 magnitude or rational-scale shape.
+    const minSubnormal = double.min_normal * double.epsilon;
+    const largestSubnormal = double.min_normal - minSubnormal;
+
+    const values = [
+        minSubnormal,
+        largestSubnormal,
+        double.min_normal,
+        0.1,
+        0.5,
+        1.0,
+        1.5,
+        3.0,
+        9007199254740991.0, // 2^53 - 1, exactly representable
+        double.max
+    ];
+
+    struct Ratio
+    {
+        long numerator;
+        long denominator;
+    }
+
+    const ratios = [
+        Ratio(1, 1),
+        Ratio(2, 1),
+        Ratio(1, 2),
+        Ratio(4, 8),
+        Ratio(3, 2),
+        Ratio(2, 3),
+        Ratio(1, 10),
+        Ratio(10, 1),
+        Ratio(133, 151),
+        Ratio(long.max, long.max),
+        Ratio(long.max - 1, long.max),
+        Ratio(long.min, long.max)
+    ];
+
+    foreach (value; values)
+    {
+        foreach (ratio; ratios)
+        {
+            const positiveExact = rationalResultExactlyBinary64(
+                value, ratio.numerator, ratio.denominator);
+            const positiveScaled = scaleBinary64(
+                value, ratio.numerator, ratio.denominator);
+
+            const negativeExact = rationalResultExactlyBinary64(
+                -value, ratio.numerator, ratio.denominator);
+            const negativeScaled = scaleBinary64(
+                -value, ratio.numerator, ratio.denominator);
+
+            // Exact representability is sign-symmetric.
+            assert(positiveExact == negativeExact);
+
+            // Overflow depends on magnitude, not source sign.
+            assert(positiveScaled.overflow == negativeScaled.overflow);
+
+            // An overflowing result cannot be exact binary64.
+            if (positiveScaled.overflow)
+                assert(!positiveExact);
+
+            // For finite nonzero results, sign symmetry must hold numerically.
+            if (!positiveScaled.overflow && positiveScaled.value != 0.0)
+                assert(negativeScaled.value == -positiveScaled.value);
+        }
+    }
+
+    // Algebraically identical rational scales must produce identical value and
+    // exactness classifications, including reduction before risky arithmetic.
+    foreach (value; values)
+    {
+        const a = scaleBinary64(value, 1, 2);
+        const b = scaleBinary64(value, 4, 8);
+        assert(a.overflow == b.overflow);
+        if (!a.overflow)
+            assert(a.value == b.value);
+
+        assert(rationalResultExactlyBinary64(value, 1, 2)
+            == rationalResultExactlyBinary64(value, 4, 8));
+
+        const identity = scaleBinary64(value, long.max, long.max);
+        assert(!identity.overflow);
+        assert(identity.value == value);
+        assert(rationalResultExactlyBinary64(
+            value, long.max, long.max));
+    }
+}
