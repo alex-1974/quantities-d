@@ -195,3 +195,30 @@ shape makes accidental use of an inexact fallback less natural.
 
 R14 should prefer the smallest CTFE-friendly value type that preserves this
 distinction without exceptions, allocation, or runtime metadata.
+
+
+## Probe 3 — exact result representation
+
+The first `ExactResult` shape proved CTFE-compatible on DMD and LDC. R14 now
+compares it with a sum-type-like value object that keeps state private and only
+exposes:
+
+```d
+result.hasValue
+result.value
+result.failure
+```
+
+The goal is not a sophisticated algebraic-data-type framework. The question is
+whether a tiny dedicated result type can make invalid-state misuse less natural
+than a public `bool + value + failure` aggregate while retaining:
+
+- CTFE;
+- `@safe pure nothrow @nogc`;
+- trivial value semantics;
+- no allocation;
+- small representation.
+
+A true overlapping union is deliberately not assumed yet. D safety rules and
+destructor/postblit behavior for generic `T` would need separate evidence
+before such a representation could be accepted.
