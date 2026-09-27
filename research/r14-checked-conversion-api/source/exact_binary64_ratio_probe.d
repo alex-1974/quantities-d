@@ -184,8 +184,97 @@ RoundedRational scaleExact(
 }
 
 @safe pure nothrow @nogc
+RoundedRational quantizeBinary64(RoundedRational value)
+{
+    if (value.overflow || value.significand == 0)
+        return value;
+
+    int bits = bitLength(value.significand);
+    int topExponent = value.exponent2 + bits - 1;
+
+    // Overflow above the largest finite normal exponent.
+    if (topExponent > 1023)
+        return RoundedRational(0, 0, true, true);
+
+    // Normal range: reduce significand to at most 53 bits with one
+    // round-to-nearest, ties-to-even decision.
+    if (topExponent >= -1022)
+    {
+        if (bits > 53)
+        {
+            const shift = bits - 53;
+            if (shift >= 64)
+                return RoundedRational(0, 0, true, true);
+
+            const mask = (1UL << shift) - 1UL;
+            const remainder = value.significand & mask;
+            ulong upper = value.significand >> shift;
+            const halfway = 1UL << (shift - 1);
+
+            const bool roundUp =
+                remainder > halfway
+                || (remainder == halfway
+                    && (upper & 1UL) != 0);
+
+            if (roundUp)
+                ++upper;
+
+            value.significand = upper;
+            value.exponent2 += shift;
+            value.inexact = value.inexact || remainder != 0;
+
+            if (bitLength(value.significand) > 53)
+            {
+                value.significand >>= 1;
+                ++value.exponent2;
+            }
+        }
+
+        return value;
+    }
+
+    // Subnormal range: binary64 values are integer multiples of 2^-1074.
+    const shiftToQuantum = -1074 - value.exponent2;
+
+    if (shiftToQuantum <= 0)
+        return value;
+
+    if (shiftToQuantum >= 64)
+    {
+        // Everything is below one half quantum for this bounded probe.
+        value.inexact = value.inexact || value.significand != 0;
+        value.significand = 0;
+        value.exponent2 = -1074;
+        return value;
+    }
+
+    const mask = (1UL << shiftToQuantum) - 1UL;
+    const remainder = value.significand & mask;
+    ulong quanta = value.significand >> shiftToQuantum;
+    const halfway = 1UL << (shiftToQuantum - 1);
+
+    const bool roundUp =
+        remainder > halfway
+        || (remainder == halfway
+            && (quanta & 1UL) != 0);
+
+    if (roundUp)
+        ++quanta;
+
+    value.significand = quanta;
+    value.exponent2 = -1074;
+    value.inexact = value.inexact || remainder != 0;
+    return value;
+}
+
+@safe pure nothrow @nogc
 double rebuild(bool negative, RoundedRational value)
 {
+    value = quantizeBinary64(value);
+
+    if (value.overflow)
+        return negative ? -double.infinity : double.infinity;
+
     if (value.significand == 0)
         return negative ? -0.0 : 0.0;
 
