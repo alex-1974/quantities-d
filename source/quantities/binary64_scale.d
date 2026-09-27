@@ -231,13 +231,55 @@ RoundedRational scaleExact(
     }
 
     // Let r = exactNumerator / d. The represented value is r * 2^exponent2.
-    // If floor(log2(r)) == ratioExponent, a normalized 53-bit significand is
+    // Normal values use a 53-bit significand. Subnormal values must instead be
+    // rounded directly onto the fixed 2^-1074 lattice. Rounding first to 53
+    // bits and then again to the subnormal lattice can introduce a 1-ULP
+    // double-rounding error.
+    const int exactTopExponent = exponent2 + ratioExponent;
+
+    if (exactTopExponent < -1022)
+    {
+        // Direct subnormal quantization:
+        //
+        //   quanta = round((exactNumerator / d) * 2^(exponent2 + 1074))
+        //
+        // The returned exponent is already the final subnormal quantum.
+        const int quantumShift = exponent2 + 1074;
+
+        Cent scaledNumerator = exactNumerator;
+        ulong scaledDenominator = d;
+
+        if (quantumShift > 0)
+        {
+            bool shiftOverflow;
+            scaledNumerator = shlCent(
+                scaledNumerator, quantumShift, shiftOverflow);
+            if (shiftOverflow)
+                return RoundedRational(0, 0, true);
+        }
+        else if (quantumShift < 0)
+        {
+            const shift = -quantumShift;
+            if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
+            {
+                // The exact magnitude is less than half a minimum subnormal,
+                // so round-to-nearest-even is zero.
+                return RoundedRational(0, -1074, false);
+            }
+
+            scaledDenominator <<= shift;
+        }
+
+        const quanta = roundCentQuotientNearestEven(
+            scaledNumerator, scaledDenominator);
+
+        return RoundedRational(quanta, -1074, false);
+    }
+
+    // Normal quantization:
     //
-    //     M = round(r * 2^(52 - ratioExponent))
-    //
-    // and the corresponding binary exponent is
-    //
-    //     E = exponent2 + ratioExponent - 52.
+    //   M = round(r * 2^(52 - ratioExponent))
+    //   E = exponent2 + ratioExponent - 52
     //
     // Note that exponent2 belongs only in E. It must not also influence the
     // scaling used to compute M.
@@ -386,6 +428,14 @@ Binary64ScaleResult scaleBinary64(
     const subnormalTie = scaleBinary64(minSubnormal, 3, 2);
     assert(!subnormalTie.overflow);
     assert(subnormalTie.value == minSubnormal * 2.0);
+
+    // Regression: round the exact rational value directly to the subnormal
+    // lattice. A prior 53-bit rounding step produces the adjacent lower ULP.
+    const doubleRoundSource = ldexp(2950364274258428.0, -1074);
+    const doubleRoundExpected = ldexp(2598665221697821.0, -1074);
+    const doubleRound = scaleBinary64(doubleRoundSource, 133, 151);
+    assert(!doubleRound.overflow);
+    assert(doubleRound.value == doubleRoundExpected);
 
     const halfMin = scaleBinary64(minSubnormal, 1, 2);
     assert(!halfMin.overflow);
