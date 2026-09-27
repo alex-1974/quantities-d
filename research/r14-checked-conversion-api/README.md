@@ -349,3 +349,16 @@ result fits binary64's finite representation:
 Boundary probes include an exactly representable power of two, a 54-bit odd
 integer that cannot be represented exactly, `double.max`, and overflow from
 scaling `double.max` by two.
+
+
+### Precision-gate correction
+
+The earlier probe expectation that represented binary64 `0.1 * 10` could be
+classified as exact was wrong once target precision is included.
+
+Ordinary IEEE-754 arithmetic produces `1.0`, but the exact mathematical product
+of the represented source binary64 value and the exact integer scale 10 is not
+itself exactly representable as binary64. The operation therefore rounds and must
+be classified `inexact` under ADR 0005.
+
+This is a useful counterexample to reverse-operation or round-trip exactness tests.
