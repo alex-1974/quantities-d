@@ -71,12 +71,24 @@ core. Each Spec defines one canonical Unit contract; source Unit is explicit at
 construction/conversion boundaries and is not part of permanent Quantity type
 identity.
 
+## Promoted static type relationship
+
+ADR 0002 fixes the M1 relationship between static concepts:
+
+- Spec -> Dimension + CanonicalUnit;
+- Unit -> Dimension + exact rational scale;
+- Quantity identity -> Spec × Rep.
+
+A Spec is invalid when its CanonicalUnit Dimension differs from its own
+Dimension. Dimension compatibility and quantity semantics therefore remain
+separate compile-time axes.
+
 ## Open design decisions
 
 The following remain research questions and must not be treated as established
 API:
 
-- concrete Spec/Dimension/Unit declaration machinery;
+- concrete Spec/Dimension/Unit declaration and validation machinery;
 - mixed-unit arithmetic;
 - dimension/specification representation;
 - conversion syntax and rounding policy;
