@@ -320,3 +320,84 @@ R09 now has evidence that the B scaling cost cannot be removed merely by
 providing or disabling equality/hash in the obvious way. Any further mitigation
 would need to change how DMD materializes type information, how the public type
 is represented, or how Unit participates in concrete type identity.
+
+
+## Real-consumer type-count audit — geospatial workspace
+
+The synthetic N=200 result is a stress discriminator, not a typical-consumer
+estimate. An audit of current workspace semantics gives a more useful range.
+
+### geodesy-d
+
+Current geodesy-d separates several semantic linear roles:
+
+- ellipsoid semi-major/minor axes and radius;
+- ellipsoidal height;
+- projected easting/northing;
+- geocentric X/Y/Z;
+- topocentric East/North/Up.
+
+These roles do not all necessarily require distinct Quantity Specs. Some are
+components of stronger coordinate types whose reference-system semantics remain
+outside a generic quantities library. The current contract instead requires
+participating linear values in an operation to use the same caller-selected
+linear unit.
+
+UTM is narrower: its public policy fixes easting, northing and ellipsoid axes to
+metres.
+
+Angles are an important existing counterexample to the source-unit-preserving
+linear policy: `Angle`, `Latitude`, and `Longitude` already store radians
+canonically and expose explicit degree/radian factories/accessors. This is
+conceptually C-like storage, although these are domain-specific geodesy types
+rather than quantities-d types.
+
+Current geodesy scalar support is float/double/real. A library test suite may
+instantiate all three, but a normal consumer commonly selects one Rep for a
+given numerical path. Therefore multiplying every possible Spec × Unit × Rep
+combination overstates ordinary application type count.
+
+A plausible quantities-d integration should initially keep strong quantities at
+semantic/API boundaries and preserve scalar numerical kernels. Under that
+architecture, an individual geodesy consumer is much closer to the low tens of
+concrete quantity types than to the N=100–200 stress cases unless it
+deliberately mixes many source units and Reps in one binary.
+
+### geo-d / geo3-d
+
+The Euclidean geometry libraries intentionally support a wider scalar family,
+including integral coordinate types. They also have exact-before-floating
+metric policies for large integral coordinates. This makes blanket replacement
+of geometry scalar parameters with unit-bearing Quantity types unattractive:
+it would multiply concrete types by Unit and Rep while entangling unit
+conversion with carefully designed numeric kernels.
+
+The safer initial integration boundary is therefore typed physical inputs and
+outputs around scalar geometry kernels, not unit-bearing replacement of every
+Point/Vector coordinate scalar.
+
+### raster-d / imagery-d
+
+Resident raster x/y coordinates are sample/element coordinates, not physical
+lengths, so raster-d itself should not create a broad linear-unit quantity
+surface.
+
+Imagery introduces physical/angular resolution only at geospatial metadata and
+georeferencing boundaries. Its previously identified distinction between
+linear resolution and angular resolution requires Spec-level semantic
+separation, but does not imply hundreds of concrete unit-bearing quantity
+types in a normal image-processing binary.
+
+### Practical R09 range
+
+For decision work, use three bands rather than treating N=200 as typical:
+
+- N ≈ 5–15: ordinary focused consumer / one Rep / few units;
+- N ≈ 20–50: broad geospatial consumer or tests combining several semantic
+  quantities, units and Reps;
+- N >= 100: stress/library-validation or unusually broad unit-heavy program.
+
+This range is an architectural estimate from current workspace contracts, not
+a measured census of downstream applications. The public design must still
+remain viable at high N, but normal-consumer cost should be judged primarily
+in the first two bands.
