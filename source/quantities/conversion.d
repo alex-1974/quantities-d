@@ -1,5 +1,6 @@
 module quantities.conversion;
 
+import quantities.floating_exact : rationalResultExactlyBinary64;
 import quantities.quantity : Quantity;
 import quantities.traits : isQuantitySpec, isUnit;
 
@@ -299,6 +300,75 @@ ConversionResult!long convertIntegralUnitsChecked(FromUnit, ToUnit)(long value)
 }
 
 @safe pure nothrow @nogc
+bool finite(double value)
+{
+    return value == value
+        && value <= double.max
+        && value >= -double.max;
+}
+
+@safe pure nothrow @nogc
+ConversionResult!double convertFloating(
+    double value,
+    long numerator,
+    long denominator)
+{
+    assert(denominator > 0);
+
+    if (!finite(value))
+        return ConversionResult!double(0.0, ConversionStatus.nonFinite);
+
+    const double scaled =
+        (value * cast(double) numerator) / cast(double) denominator;
+
+    if (!finite(scaled))
+        return ConversionResult!double(0.0, ConversionStatus.overflow);
+
+    const status = rationalResultExactlyBinary64(
+        value, numerator, denominator)
+            ? ConversionStatus.exact
+            : ConversionStatus.inexact;
+
+    return ConversionResult!double(scaled, status);
+}
+
+@safe pure nothrow @nogc
+ConversionResult!double convertFloatingUnits(FromUnit, ToUnit)(double value)
+{
+    ulong a = magnitude(FromUnit.Scale.numerator);
+    ulong b = cast(ulong) FromUnit.Scale.denominator;
+    ulong c = magnitude(ToUnit.Scale.numerator);
+    ulong d = cast(ulong) ToUnit.Scale.denominator;
+
+    auto divisor = gcd(a, c);
+    a /= divisor;
+    c /= divisor;
+
+    divisor = gcd(d, b);
+    d /= divisor;
+    b /= divisor;
+
+    if (a > cast(ulong) long.max || b > cast(ulong) long.max
+        || c > cast(ulong) long.max || d > cast(ulong) long.max)
+        return ConversionResult!double(0.0, ConversionStatus.overflow);
+
+    long numerator;
+    if (!multiplyChecked(cast(long) a, cast(long) d, numerator))
+        return ConversionResult!double(0.0, ConversionStatus.overflow);
+
+    long denominator;
+    if (!multiplyChecked(cast(long) b, cast(long) c, denominator))
+        return ConversionResult!double(0.0, ConversionStatus.overflow);
+
+    const bool negative =
+        (FromUnit.Scale.numerator < 0) != (ToUnit.Scale.numerator < 0);
+    if (negative)
+        numerator = -numerator;
+
+    return convertFloating(value, numerator, denominator);
+}
+
+@safe pure nothrow @nogc
 ExactResult!T exactResult(T)(ConversionResult!T result)
 {
     final switch (result.status)
@@ -383,6 +453,46 @@ auto roundedIn(Unit, RoundingMode mode, Spec)(Quantity!(Spec, long) value)
 
     return convertIntegralUnits!(Spec.CanonicalUnit, Unit)(
         value.canonicalValue, mode);
+}
+
+@safe pure nothrow @nogc
+auto checkedQuantity(Spec, Unit)(double value)
+{
+    static assert(isQuantitySpec!Spec,
+        "checkedQuantity: Spec must define Dimension and a valid CanonicalUnit.");
+    static assert(isUnit!Unit,
+        "checkedQuantity: Unit must define Dimension and a valid exact Scale.");
+    static assert(is(Spec.Dimension == Unit.Dimension),
+        "checkedQuantity: Spec and Unit must have the same Dimension.");
+
+    const converted = convertFloatingUnits!(Unit, Spec.CanonicalUnit)(value);
+    return ConversionResult!(Quantity!(Spec, double))(
+        Quantity!(Spec, double).fromCanonical(converted.value),
+        converted.status);
+}
+
+@safe pure nothrow @nogc
+auto exactQuantity(Spec, Unit)(double value)
+{
+    return exactResult(value.checkedQuantity!(Spec, Unit));
+}
+
+@safe pure nothrow @nogc
+auto checkedIn(Unit, Spec)(Quantity!(Spec, double) value)
+{
+    static assert(isUnit!Unit,
+        "checkedIn: Unit must define Dimension and a valid exact Scale.");
+    static assert(is(Spec.Dimension == Unit.Dimension),
+        "checkedIn: Quantity Spec and Unit must have the same Dimension.");
+
+    return convertFloatingUnits!(Spec.CanonicalUnit, Unit)(
+        value.canonicalValue);
+}
+
+@safe pure nothrow @nogc
+auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
+{
+    return exactResult(value.checkedIn!Unit);
 }
 
 @safe unittest
@@ -508,4 +618,45 @@ auto roundedIn(Unit, RoundingMode mode, Spec)(Quantity!(Spec, long) value)
         HalfMetreLength, MetreAgainstHalfCanonical);
     static assert(nonUnitCanonicalScale.hasValue);
     static assert(nonUnitCanonicalScale.value.canonicalValue == 2);
+
+    struct HalfMetre
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(1, 2);
+    }
+
+    struct TenthMetre
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(1, 10);
+    }
+
+    enum halfDouble = 3.0.exactQuantity!(Length, HalfMetre);
+    static assert(halfDouble.hasValue);
+    static assert(halfDouble.value.canonicalValue == 1.5);
+
+    enum tenthDouble = 1.0.exactQuantity!(Length, TenthMetre);
+    static assert(!tenthDouble.hasValue);
+    static assert(tenthDouble.failure == ExactFailure.inexact);
+
+    enum checkedTenthDouble =
+        1.0.checkedQuantity!(Length, TenthMetre);
+    static assert(checkedTenthDouble.status == ConversionStatus.inexact);
+    static assert(checkedTenthDouble.value.canonicalValue == 0.1);
+
+    enum tenthRoundTrip = checkedTenthDouble.value.checkedIn!TenthMetre;
+    static assert(tenthRoundTrip.status == ConversionStatus.inexact);
+    static assert(tenthRoundTrip.value == 1.0);
+
+    enum nanChecked =
+        double.nan.checkedQuantity!(Length, Metre);
+    static assert(nanChecked.status == ConversionStatus.nonFinite);
+
+    enum infinityChecked =
+        double.infinity.checkedQuantity!(Length, Metre);
+    static assert(infinityChecked.status == ConversionStatus.nonFinite);
+
+    enum overflowDouble =
+        double.max.checkedQuantity!(Length, Kilometre);
+    static assert(overflowDouble.status == ConversionStatus.overflow);
 }
