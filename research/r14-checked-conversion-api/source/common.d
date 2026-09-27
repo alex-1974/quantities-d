@@ -23,14 +23,28 @@ struct ConversionResult(T)
 
 struct LengthDimension {}
 
+struct Scale(long Numerator, long Denominator)
+{
+    enum long numerator = Numerator;
+    enum long denominator = Denominator;
+}
+
 struct Metre
 {
     alias Dimension = LengthDimension;
+    alias UnitScale = Scale!(1, 1);
 }
 
 struct Kilometre
 {
     alias Dimension = LengthDimension;
+    alias UnitScale = Scale!(1000, 1);
+}
+
+struct Centimetre
+{
+    alias Dimension = LengthDimension;
+    alias UnitScale = Scale!(1, 100);
 }
 
 struct Length
