@@ -173,3 +173,51 @@ machinery that belongs to quantities-d rather than user-defined Unit metadata.
 A remains the least intrusive candidate because it preserves ordinary structural
 Spec/Unit declarations and gives UFCS naturally. B and C must demonstrate a
 material usability benefit before adding declaration or mixin machinery.
+
+
+## Competing-shape result — 2026-09-27
+
+All three construction shapes build, link and run successfully on both baseline
+compilers:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Therefore the alternatives provide no compiler-feasibility advantage.
+
+### Selection candidate
+
+Shape A remains the preferred M1 surface:
+
+```d
+quantity!(Spec, Unit)(value)
+value.quantity!(Spec, Unit)
+```
+
+Reasons:
+
+1. It preserves ADR 0003 structural declarations without adding mixins or
+   wrapper-factory types.
+2. It is naturally UFCS-compatible.
+3. It works in CTFE.
+4. Rep is inferred from the value.
+5. Spec and Unit remain explicit and independent as required by ADR 0002.
+6. User-defined Specs and Units do not need quantities-d-specific methods.
+7. It minimizes public API machinery.
+
+Spec-centred and Unit-centred wrapper factories are therefore not selected
+unless later consumer evidence demonstrates a material usability benefit.
+
+### Final gate before promotion
+
+Before accepting the call shape, R13 still requires compile-negative coverage
+for:
+
+- mismatched Spec/Unit Dimension;
+- invalid Spec declaration;
+- invalid Unit declaration;
+- attempts to bypass Unit-explicit construction;
+- CTFE use of valid construction/extraction.
+
+Diagnostics should fail at the quantities-d API boundary, not as deep template
+errors.
