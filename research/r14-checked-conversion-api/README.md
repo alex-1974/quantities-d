@@ -426,3 +426,128 @@ This keeps two materially different failures separate:
 `ExactFailure` mirrors the same distinction. Integral conversions never
 produce `nonFinite`, but sharing the status type keeps the public checked
 conversion vocabulary uniform across Reps.
+
+
+# R14 consolidated result
+
+Status: **research complete; ready for promotion to ADR / production design**.
+
+Validated on the baseline compilers:
+
+- DMD 2.111;
+- LDC 1.41.
+
+Final research matrix: **8 modules passed unittests on both compilers**.
+
+## Selected API direction
+
+Candidate C is preferred:
+
+```d
+q.checkedIn!Unit
+q.exactIn!Unit
+q.roundedIn!(Unit, RoundingMode.floor)
+
+value.checkedQuantity!(Spec, Unit)
+value.exactQuantity!(Spec, Unit)
+value.roundedQuantity!(Spec, Unit, RoundingMode.floor)
+```
+
+The named public operations express caller intent directly while sharing common
+conversion kernels internally.
+
+## Selected result semantics
+
+Checked/loss-aware conversion:
+
+```d
+enum ConversionStatus
+{
+    exact,
+    inexact,
+    overflow,
+    nonFinite
+}
+```
+
+Exact-required conversion uses an invariant-owning `ExactResult!T` with private
+state rather than a public aggregate whose fields can contradict one another.
+
+`ExactFailure` distinguishes:
+
+- `inexact`;
+- `overflow`;
+- `nonFinite`.
+
+A compact overlapping union is not required for M1 absent evidence that its added
+generic lifetime / `@safe` complexity is worthwhile.
+
+## Integral semantics
+
+Validated requirements:
+
+- exact rational unit scale;
+- cross-cancellation before multiplication;
+- full signed-long boundary including `long.min`;
+- exact / inexact / overflow distinction;
+- explicit caller-selected rounding;
+- `towardZero`, `floor`, `ceiling`, `nearestTiesAway`;
+- overflow-safe composition of source and target unit ratios;
+- CTFE and UFCS.
+
+No integral conversion silently truncates, wraps, or rounds.
+
+## Floating semantics
+
+Floating exactness is defined relative to the **represented source floating
+value**, as required by ADR 0005.
+
+A floating-to-floating conversion is `exact` iff applying the exact rational
+unit scale to that represented value yields a mathematical result exactly
+representable in the target floating Rep.
+
+Round-trip / inverse-operation equality is explicitly rejected as an exactness
+test. The `0.1 * 10 -> 1.0` counterexample demonstrates why: ordinary binary64
+arithmetic returns 1.0, but the exact product of represented binary64 0.1 and 10
+requires rounding and is therefore `inexact`.
+
+The binary64 research path validates:
+
+- normal values;
+- negative values;
+- subnormals;
+- significand precision;
+- exponent range;
+- overflow;
+- non-finite input;
+- CTFE without runtime-only bit reinterpretation.
+
+NaN and infinities are classified as `nonFinite`, distinct from overflow.
+
+Integer-style `RoundingMode` is not applied to floating-to-floating conversion;
+the API reports whether the target floating representation required rounding.
+
+## CTFE finding
+
+Union-based reinterpretation of `double` to integer bits is not valid in CTFE on
+the baseline DMD compiler. R14 therefore uses an arithmetic decomposition path for
+the exactness probe.
+
+This is a design constraint for the production implementation: runtime-only
+bit-cast tricks are insufficient where the public operation promises CTFE.
+
+## Items not yet frozen by R14
+
+R14 establishes semantics and API vocabulary, but does not yet freeze:
+
+- final module placement;
+- exact internal kernel decomposition;
+- representation/layout micro-optimizations for result types;
+- generalized `float` / `real` implementation details beyond the validated
+  binary64 research path;
+- mixed integral/floating Rep conversion policy;
+- compile-time diagnostics wording;
+- public documentation wording.
+
+These remain production implementation / follow-up research concerns and must not
+weaken the accepted semantics above.
