@@ -1,5 +1,7 @@
 module quantities.floating_exact;
 
+import core.stdc.string : memcpy;
+
 private:
 struct Binary64
 {
@@ -20,30 +22,33 @@ ulong gcd(ulong a, ulong b)
 }
 
 @safe pure nothrow @nogc
+ulong binary64Bits(double value)
+{
+    ulong bits;
+
+    () @trusted {
+        memcpy(&bits, &value, double.sizeof);
+    }();
+
+    return bits;
+}
+
+@safe pure nothrow @nogc
 Binary64 decompose(double value)
 {
-    double x = value < 0.0 ? -value : value;
+    const bits = binary64Bits(value);
+    const exponentField = cast(uint)((bits >> 52) & 0x7ffUL);
+    const fraction = bits & ((1UL << 52) - 1UL);
 
-    if (x == 0.0)
-        return Binary64(0, 0);
+    if (exponentField == 0)
+        return Binary64(fraction, -1074);
 
-    int exponent2 = 0;
-    while (x >= 2.0)
-    {
-        x *= 0.5;
-        ++exponent2;
-    }
-    while (x < 1.0)
-    {
-        x *= 2.0;
-        --exponent2;
-    }
+    // rationalResultExactlyBinary64 excludes NaN and infinity first.
+    assert(exponentField != 0x7ff);
 
-    double scaled = x;
-    foreach (_; 0 .. 52)
-        scaled *= 2.0;
-
-    return Binary64(cast(ulong) scaled, exponent2 - 52);
+    return Binary64(
+        (1UL << 52) | fraction,
+        cast(int) exponentField - 1023 - 52);
 }
 
 public:
