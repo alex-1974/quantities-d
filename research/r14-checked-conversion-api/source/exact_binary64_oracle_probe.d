@@ -196,6 +196,27 @@ bool candidateCloserToRational(
     return greater(bDiff, aDiff);
 }
 
+@safe pure nothrow @nogc
+Cent rationalDistanceNumerator(
+    ulong candidate,
+    int exponent2,
+    ulong numerator,
+    ulong denominator)
+{
+    assert(exponent2 < 0);
+
+    const shift = -exponent2;
+    const candidateScaled =
+        mul(fromUlong(candidate), fromUlong(denominator));
+
+    Cent targetScaled = fromUlong(numerator);
+    targetScaled = shl(targetScaled, shift);
+
+    return greater(candidateScaled, targetScaled)
+        ? subtractNonNegative(candidateScaled, targetScaled)
+        : subtractNonNegative(targetScaled, candidateScaled);
+}
+
 @safe unittest
 {
     // 1/10 should match the actual binary64 literal exactly.
@@ -204,6 +225,17 @@ bool candidateCloserToRational(
     static assert(literalTenth.exponent2 == -56);
 
     // Direct nearest-neighbour oracle around 0.1.
+    enum lowerDistance = rationalDistanceNumerator(
+        7205759403792793UL, -56, 1, 10);
+    enum upperDistance = rationalDistanceNumerator(
+        7205759403792794UL, -56, 1, 10);
+
+    static assert(lowerDistance.hi == 0);
+    static assert(upperDistance.hi == 0);
+    static assert(lowerDistance.lo == 2UL);
+    static assert(upperDistance.lo == 8UL);
+    static assert(greater(upperDistance, lowerDistance));
+
     static assert(candidateCloserToRational(
         7205759403792793UL,
         7205759403792794UL,
