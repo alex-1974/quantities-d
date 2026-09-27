@@ -145,6 +145,18 @@ Parts roundPositiveRational(Cent numerator, ulong denominator, int exponent2)
 }
 
 @safe pure nothrow @nogc
+Cent subtractNonNegative(Cent a, Cent b)
+{
+    assert(greater(a, b) || equal(a, b));
+
+    const ulong lo = a.lo - b.lo;
+    const ulong borrow = a.lo < b.lo ? 1UL : 0UL;
+    const ulong hi = a.hi - b.hi - borrow;
+
+    return Cent(lo, hi);
+}
+
+@safe pure nothrow @nogc
 bool candidateCloserToRational(
     ulong candidateA,
     ulong candidateB,
@@ -163,12 +175,12 @@ bool candidateCloserToRational(
     const aScaled = mul(fromUlong(candidateA), fromUlong(denominator));
     const bScaled = mul(fromUlong(candidateB), fromUlong(denominator));
 
-    Cent aDiff = greater(aScaled, targetScaled)
-        ? Cent(aScaled.lo - targetScaled.lo, aScaled.hi - targetScaled.hi)
-        : Cent(targetScaled.lo - aScaled.lo, targetScaled.hi - aScaled.hi);
-    Cent bDiff = greater(bScaled, targetScaled)
-        ? Cent(bScaled.lo - targetScaled.lo, bScaled.hi - targetScaled.hi)
-        : Cent(targetScaled.lo - bScaled.lo, targetScaled.hi - bScaled.hi);
+    const Cent aDiff = greater(aScaled, targetScaled)
+        ? subtractNonNegative(aScaled, targetScaled)
+        : subtractNonNegative(targetScaled, aScaled);
+    const Cent bDiff = greater(bScaled, targetScaled)
+        ? subtractNonNegative(bScaled, targetScaled)
+        : subtractNonNegative(targetScaled, bScaled);
 
     return greater(bDiff, aDiff);
 }
