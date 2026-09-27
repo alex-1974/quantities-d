@@ -617,3 +617,37 @@ must demonstrate:
 
 Until this gate is satisfied, the floating production slice remains blocked and
 PR #9 must remain draft.
+
+
+### Probe 9 correction — post-quantization is insufficient
+
+The combined rational-scaling + post-quantization probe exposed a compiler
+difference at runtime on the baseline matrix.
+
+For the minimum positive binary64 subnormal scaled by the exact ratio `3 / 2`:
+
+- the mathematical value is exactly halfway between one and two minimum
+  subnormal quanta;
+- round-to-nearest, ties-to-even therefore requires **two** quanta;
+- DMD 2.111 runtime satisfies the probe;
+- LDC 1.41 runtime does not satisfy the same assertion, although the CTFE
+  assertion passes.
+
+This demonstrates that a design of:
+
+```text
+exact rational intent
+    -> ordinary double intermediate
+    -> explicit post-quantization
+```
+
+is not sufficient. The ordinary floating intermediate may already have lost the
+information needed to make the final IEEE-754 rounding decision consistently.
+
+Therefore the production kernel must preserve enough exact integer/rational
+state through the final rounding step. In particular, subnormal and boundary
+rounding must not depend on a prior rounded `double` intermediate.
+
+The `frexp` / `ldexp` prototype remains useful for exponent decomposition and
+normal-range scaling research, but the current post-quantization architecture is
+**rejected for promotion**.
