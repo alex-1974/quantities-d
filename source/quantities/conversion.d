@@ -773,4 +773,75 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
     Quantity!(Length, double) subnormalValue;
     assert(subnormalScaling.tryValue(subnormalValue));
     assert(subnormalValue.canonicalValue > 0.0);
+
+    // Adversarial runtime matrix for represented-source binary64 semantics.
+    const negativeTenth =
+        (-1.0).checkedQuantity!(Length, TenthMetre);
+    assert(negativeTenth.status == ConversionStatus.inexact);
+    Quantity!(Length, double) negativeTenthValue;
+    assert(negativeTenth.tryValue(negativeTenthValue));
+    assert(negativeTenthValue.canonicalValue == -0.1);
+
+    const exactHalf =
+        1.0.checkedQuantity!(Length, HalfMetre);
+    assert(exactHalf.status == ConversionStatus.exact);
+    Quantity!(Length, double) exactHalfValue;
+    assert(exactHalf.tryValue(exactHalfValue));
+    assert(exactHalfValue.canonicalValue == 0.5);
+
+    const negativeExactHalf =
+        (-1.0).checkedQuantity!(Length, HalfMetre);
+    assert(negativeExactHalf.status == ConversionStatus.exact);
+    Quantity!(Length, double) negativeExactHalfValue;
+    assert(negativeExactHalf.tryValue(negativeExactHalfValue));
+    assert(negativeExactHalfValue.canonicalValue == -0.5);
+
+    const negativeAvoidableOverflow =
+        (-double.max).checkedQuantity!(Length, TwoThirdsMetre);
+    assert(negativeAvoidableOverflow.status
+        != ConversionStatus.overflow);
+    Quantity!(Length, double) negativeFiniteScaledValue;
+    assert(negativeAvoidableOverflow.tryValue(negativeFiniteScaledValue));
+    assert(negativeFiniteScaledValue.canonicalValue >= -double.max);
+
+    const negativeOverflow =
+        (-double.max).checkedQuantity!(Length, Kilometre);
+    assert(negativeOverflow.status == ConversionStatus.overflow);
+    assert(!negativeOverflow.hasValue);
+
+    const minSubnormal = double.min_normal * double.epsilon;
+
+    const subnormalTieToEven =
+        minSubnormal.checkedQuantity!(Length, ThreeHalvesMetre);
+    assert(subnormalTieToEven.status == ConversionStatus.inexact);
+    Quantity!(Length, double) subnormalTieValue;
+    assert(subnormalTieToEven.tryValue(subnormalTieValue));
+    assert(subnormalTieValue.canonicalValue == minSubnormal * 2.0);
+
+    const negativeSubnormalTieToEven =
+        (-minSubnormal).checkedQuantity!(Length, ThreeHalvesMetre);
+    assert(negativeSubnormalTieToEven.status == ConversionStatus.inexact);
+    Quantity!(Length, double) negativeSubnormalTieValue;
+    assert(negativeSubnormalTieToEven.tryValue(negativeSubnormalTieValue));
+    assert(negativeSubnormalTieValue.canonicalValue
+        == -(minSubnormal * 2.0));
+
+    const subnormalUnderflow =
+        minSubnormal.checkedQuantity!(Length, HalfMetre);
+    assert(subnormalUnderflow.status == ConversionStatus.inexact);
+    Quantity!(Length, double) underflowValue;
+    assert(subnormalUnderflow.tryValue(underflowValue));
+    assert(underflowValue.canonicalValue == 0.0);
+
+    const negativeSubnormalUnderflow =
+        (-minSubnormal).checkedQuantity!(Length, HalfMetre);
+    assert(negativeSubnormalUnderflow.status == ConversionStatus.inexact);
+    Quantity!(Length, double) negativeUnderflowValue;
+    assert(negativeSubnormalUnderflow.tryValue(negativeUnderflowValue));
+    assert(negativeUnderflowValue.canonicalValue == -0.0);
+
+    const negativeInfinityChecked =
+        (-double.infinity).checkedQuantity!(Length, Metre);
+    assert(negativeInfinityChecked.status == ConversionStatus.nonFinite);
+    assert(!negativeInfinityChecked.hasValue);
 }
