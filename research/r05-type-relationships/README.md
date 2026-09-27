@@ -92,3 +92,18 @@ Confirmed by the positive probe:
 
 This is feasibility evidence only. Compile-negative relationship enforcement is
 the next gate before promotion to an ADR.
+
+
+## Compile-negative result — 2026-09-27
+
+All six required negative compilations were rejected:
+
+- DMD / wrong CanonicalUnit Dimension: PASS;
+- DMD / missing CanonicalUnit: PASS;
+- DMD / missing Dimension: PASS;
+- LDC / wrong CanonicalUnit Dimension: PASS;
+- LDC / missing CanonicalUnit: PASS;
+- LDC / missing Dimension: PASS.
+
+Together with the positive probe, R05 now provides sufficient evidence to
+promote the static relationship model to ADR 0002.
