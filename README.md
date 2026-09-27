@@ -10,8 +10,7 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core implemented; final branch verification is in progress. No
-stable public API exists yet.**
+**M1 static core complete on `develop`. No stable public release exists yet.**
 
 The repository now contains the first production quantity core and the checked
 conversion contract accepted by ADR 0007.
@@ -30,8 +29,9 @@ Current production coverage includes:
 `float`, `real`, mixed-Rep conversion, arithmetic, affine quantity points, and
 runtime-parsed unit metadata are not yet production-complete.
 
-The public API remains pre-stable until the final branch-level compile-negative,
-external-consumer, and compiler gates are rerun.
+The M1 branch-level compile-negative, external-consumer, DMD, and LDC gates
+have passed. The API remains pre-release while M2 adds the first standard
+linear-unit catalogue and further consumer validation.
 
 ## Intended domain
 
