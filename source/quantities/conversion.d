@@ -674,4 +674,19 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         != ConversionStatus.overflow);
     static assert(avoidableIntermediateOverflow.value.canonicalValue
         <= double.max);
+
+    struct ThreeHalvesMetre
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(3, 2);
+    }
+
+    // Dual regression: scaling a minimum subnormal by 3/2 must not be
+    // classified as overflow/non-finite. The represented result may round,
+    // but intermediate ordering must not invent a different failure class.
+    enum subnormalScaling =
+        double.min_normal.checkedQuantity!(Length, ThreeHalvesMetre);
+    static assert(subnormalScaling.status == ConversionStatus.exact
+        || subnormalScaling.status == ConversionStatus.inexact);
+    static assert(subnormalScaling.value.canonicalValue > 0.0);
 }
