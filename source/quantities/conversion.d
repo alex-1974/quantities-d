@@ -441,4 +441,71 @@ auto roundedIn(Unit, RoundingMode mode, Spec)(Quantity!(Spec, long) value)
         .roundedIn!(Kilometre, RoundingMode.nearestTiesAway);
     static assert(extraction.status == ConversionStatus.inexact);
     static assert(extraction.value == 2);
+
+    enum minIdentity = long.min.exactQuantity!(Length, Metre);
+    static assert(minIdentity.hasValue);
+    static assert(minIdentity.value.canonicalValue == long.min);
+
+    enum negTowardZero = (-150L).roundedQuantity!(
+        Length, Centimetre, RoundingMode.towardZero);
+    static assert(negTowardZero.status == ConversionStatus.inexact);
+    static assert(negTowardZero.value.canonicalValue == -1);
+
+    enum negFloor = (-150L).roundedQuantity!(
+        Length, Centimetre, RoundingMode.floor);
+    static assert(negFloor.status == ConversionStatus.inexact);
+    static assert(negFloor.value.canonicalValue == -2);
+
+    enum negCeiling = (-150L).roundedQuantity!(
+        Length, Centimetre, RoundingMode.ceiling);
+    static assert(negCeiling.status == ConversionStatus.inexact);
+    static assert(negCeiling.value.canonicalValue == -1);
+
+    enum negNearest = (-150L).roundedQuantity!(
+        Length, Centimetre, RoundingMode.nearestTiesAway);
+    static assert(negNearest.status == ConversionStatus.inexact);
+    static assert(negNearest.value.canonicalValue == -2);
+
+    struct HugeNumeratorUnit
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(long.max, 2);
+    }
+
+    struct HugeDenominatorUnit
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(1, long.max);
+    }
+
+    enum cancelled = 2L.exactQuantity!(Length, HugeNumeratorUnit);
+    static assert(cancelled.hasValue);
+    static assert(cancelled.value.canonicalValue == long.max);
+
+    enum ratioOverflow = long.max.checkedQuantity!(
+        Length, HugeNumeratorUnit);
+    static assert(ratioOverflow.status == ConversionStatus.overflow);
+
+    struct HalfMetreCanonical
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(1, 2);
+    }
+
+    struct HalfMetreLength
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = HalfMetreCanonical;
+    }
+
+    struct MetreAgainstHalfCanonical
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(1, 1);
+    }
+
+    enum nonUnitCanonicalScale = 1L.exactQuantity!(
+        HalfMetreLength, MetreAgainstHalfCanonical);
+    static assert(nonUnitCanonicalScale.hasValue);
+    static assert(nonUnitCanonicalScale.value.canonicalValue == 2);
 }
