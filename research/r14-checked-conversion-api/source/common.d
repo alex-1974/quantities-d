@@ -4,7 +4,8 @@ enum ConversionStatus
 {
     exact,
     inexact,
-    overflow
+    overflow,
+    nonFinite
 }
 
 enum RoundingMode
