@@ -334,3 +334,18 @@ Because CTFE is a hard quantities-d requirement, R14 does not treat runtime-only
 bit reinterpretation as sufficient. The probe now decomposes finite values
 arithmetically, preserving a single CTFE-capable semantic path on the baseline
 compilers.
+
+
+## Probe 6 — floating precision and exponent range
+
+The represented-binary criterion now also checks whether the exact rational
+result fits binary64's finite representation:
+
+- remaining odd significand content must fit 53 significant bits;
+- powers of two are moved into the exponent instead of consuming precision;
+- top exponent must remain within the finite normal range;
+- the normalized exponent must not fall below the subnormal quantum.
+
+Boundary probes include an exactly representable power of two, a 54-bit odd
+integer that cannot be represented exactly, `double.max`, and overflow from
+scaling `double.max` by two.
