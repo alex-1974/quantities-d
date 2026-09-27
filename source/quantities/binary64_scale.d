@@ -494,8 +494,8 @@ Binary64ScaleResult scaleBinary64(
 
     const belowOverflowMidpoint = scaleBinary64(
         double.max,
-        18014398509481982L,
-        18014398509481981L);
+        18014398509481984L,
+        18014398509481983L);
     assert(!belowOverflowMidpoint.overflow);
     assert(belowOverflowMidpoint.value == double.max);
 
@@ -507,8 +507,8 @@ Binary64ScaleResult scaleBinary64(
 
     const aboveOverflowMidpoint = scaleBinary64(
         double.max,
-        18014398509481984L,
-        18014398509481983L);
+        18014398509481982L,
+        18014398509481981L);
     assert(aboveOverflowMidpoint.overflow);
 
     const negative = scaleBinary64(-1.5, 2, 3);
