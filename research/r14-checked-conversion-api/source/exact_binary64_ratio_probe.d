@@ -144,16 +144,47 @@ RoundedRational scaleExact(
         --exponent2;
     }
 
-    ulong product;
-    if (!mulChecked(s, n, product))
+    // Avoid requiring s*n to fit in ulong. Reduce n/d first into an
+    // integer quotient plus remainder, then combine only bounded pieces.
+    // This keeps ratios close to one representable even when numerator and
+    // denominator are individually near ulong limits.
+    const ulong ratioQuotient = n / d;
+    const ulong ratioRemainder = n % d;
+
+    ulong integerPart;
+    if (!mulChecked(s, ratioQuotient, integerPart))
         return RoundedRational(0, 0, true, true);
 
-    // Choose a target exponent so the rounded significand fits binary64's
-    // 53-bit precision. This probe uses integer division against the exact
-    // odd denominator and shifts powers of two into the denominator when
-    // precision reduction is required.
-    int productBits = bitLength(product);
-    int shift = productBits > 53 ? productBits - 53 : 0;
+    ulong remainderProduct;
+    if (!mulChecked(s, ratioRemainder, remainderProduct))
+    {
+        // Research fallback: progressively halve the source significand and
+        // compensate in exponent until the bounded product fits. This changes
+        // only representation, not the mathematical value.
+        while (s > 1
+            && !mulChecked(s, ratioRemainder, remainderProduct))
+        {
+            const bool lostBit = (s & 1UL) != 0;
+            s >>= 1;
+            ++exponent2;
+
+            // If representation compaction discards information, the final
+            // conversion is necessarily inexact.
+            if (lostBit)
+                return RoundedRational(0, 0, true, true);
+        }
+
+        if (!mulChecked(s, ratioRemainder, remainderProduct))
+            return RoundedRational(0, 0, true, true);
+
+        if (!mulChecked(s, ratioQuotient, integerPart))
+            return RoundedRational(0, 0, true, true);
+    }
+
+    // Form the exact rational result as integerPart + remainderProduct/d.
+    // Scale by powers of two until the retained significand is near 53 bits.
+    int integerBits = bitLength(integerPart);
+    int shift = integerBits > 53 ? integerBits - 53 : 0;
 
     ulong scaledDenominator = d;
     if (shift > 0)
@@ -165,9 +196,18 @@ RoundedRational scaleExact(
         exponent2 += shift;
     }
 
+    ulong scaledInteger;
+    if (!mulChecked(integerPart, scaledDenominator, scaledInteger))
+        return RoundedRational(0, 0, true, true);
+
+    if (remainderProduct > ulong.max - scaledInteger)
+        return RoundedRational(0, 0, true, true);
+
     bool inexact;
     ulong rounded = roundQuotientNearestEven(
-        product, scaledDenominator, inexact);
+        scaledInteger + remainderProduct,
+        scaledDenominator,
+        inexact);
 
     // Rounding can carry into a 54th bit.
     if (bitLength(rounded) > 53)
