@@ -229,3 +229,81 @@ The current strongest composition is therefore:
 The next candidate tests whether a descriptor layer adds enough value for
 catalogue enumeration, metadata, or generated validation to justify its
 additional abstraction.
+
+
+## D evidence — 2026-09-27
+
+Candidate D introduced a descriptor layer in addition to named public Unit
+types.
+
+Both DMD 2.111 and LDC 1.41 compile the descriptor candidate successfully.
+
+Observed names:
+
+```text
+D public kilometre type: Kilometre
+D descriptor alias: UnitDescriptor!(Kilometre, LengthDimension, 1000L, 1L)
+D descriptor unit type: Kilometre
+```
+
+The public Unit type remains clean, but the descriptor itself is a template
+instantiation and repeats normative information already stored by the Unit
+type.
+
+A descriptor-free control using only:
+
+```d
+alias LengthUnits = AliasSeq!(
+    Metre, Kilometre, Centimetre, Millimetre,
+    InternationalFoot, USSurveyFoot
+);
+```
+
+successfully generates the same Unit-family validation and the same 6 x 6
+pairwise matrix with `static foreach` on both baseline compilers.
+
+Observed descriptor-free names:
+
+```text
+D-control public kilometre type: Kilometre
+D-control catalogue entry: Kilometre
+```
+
+### Conclusion
+
+- **D — REJECT for M2.**
+- **AliasSeq + static foreach — COMPLEMENT.**
+
+The descriptor adds no demonstrated capability required by M2. It duplicates
+Dimension/Scale data and creates another template identity while the Unit types
+themselves are already sufficient catalogue entries.
+
+A descriptor layer may be reconsidered later only if a concrete requirement
+cannot be represented naturally by the Unit types plus compile-time sequences,
+for example metadata whose ownership genuinely belongs to a separate catalogue.
+
+## Decision matrix after A-D
+
+| Candidate | Result | Evidence |
+| --- | --- | --- |
+| A — explicit named structs | KEEP | Best public type identity and diagnostics; single visible source of normative Unit semantics. |
+| B — generic Unit template aliases | DEFER | Removes declaration boilerplate but exposes template instantiations in type names/diagnostics and adds template error layers. |
+| C — exact SI-prefix scale helper | COMPLEMENT | Preserves named public types while removing mechanical decimal-scale construction; exact rational result. |
+| D — descriptor catalogue | REJECT | Descriptor-free AliasSeq/static foreach provides the required catalogue/test generation without duplicated semantics. |
+| AliasSeq/static foreach | COMPLEMENT | Generates family and pairwise compile-time validation directly from Unit types. |
+
+### Emerging M2 shape
+
+The evidence currently favors:
+
+1. public Units are explicit named structs;
+2. each Unit owns its Dimension and exact Scale;
+3. exact compile-time helpers may derive mechanical scales such as SI powers of
+   ten;
+4. Unit families are ordinary compile-time sequences of those Unit types;
+5. generated validation/tests use `static foreach`;
+6. no separate descriptor layer is introduced without a new proven
+   requirement.
+
+Candidate E remains only as a challenger: mixin or string-mixin declaration
+generation must demonstrate a concrete advantage over this simpler shape.
