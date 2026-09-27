@@ -441,9 +441,14 @@ Binary64ScaleResult scaleBinary64(
     assert(denominator > 0);
 
     if (value == 0.0 || numerator == 0)
+    {
+        // Numeric comparison cannot distinguish +0.0 from -0.0. Preserve the
+        // stored source sign and combine it with the scale sign exactly.
+        const sourceNegative = (binary64Bits(value) >> 63) != 0;
         return Binary64ScaleResult(
-            (value < 0.0) != (numerator < 0) ? -0.0 : 0.0,
+            sourceNegative != (numerator < 0) ? -0.0 : 0.0,
             false);
+    }
 
     const source = decompose(value);
 
@@ -488,6 +493,24 @@ Binary64ScaleResult scaleBinary64(
     const halfMin = scaleBinary64(minSubnormal, 1, 2);
     assert(!halfMin.overflow);
     assert(halfMin.value == 0.0);
+    assert((binary64Bits(halfMin.value) >> 63) == 0);
+
+    const negativeHalfMin = scaleBinary64(-minSubnormal, 1, 2);
+    assert(!negativeHalfMin.overflow);
+    assert(negativeHalfMin.value == 0.0);
+    assert((binary64Bits(negativeHalfMin.value) >> 63) == 1);
+
+    const negativeZeroPositiveScale = scaleBinary64(-0.0, 1, 1);
+    assert(!negativeZeroPositiveScale.overflow);
+    assert((binary64Bits(negativeZeroPositiveScale.value) >> 63) == 1);
+
+    const positiveZeroNegativeScale = scaleBinary64(0.0, -1, 1);
+    assert(!positiveZeroNegativeScale.overflow);
+    assert((binary64Bits(positiveZeroNegativeScale.value) >> 63) == 1);
+
+    const negativeZeroNegativeScale = scaleBinary64(-0.0, -1, 1);
+    assert(!negativeZeroNegativeScale.overflow);
+    assert((binary64Bits(negativeZeroNegativeScale.value) >> 63) == 0);
 
     const trueOverflow = scaleBinary64(double.max, 2, 1);
     assert(trueOverflow.overflow);
