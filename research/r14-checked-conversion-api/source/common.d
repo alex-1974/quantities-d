@@ -61,3 +61,16 @@ ConversionResult!T probeChecked(T)(T value)
 {
     return ConversionResult!T(value, ConversionStatus.exact);
 }
+
+
+struct HalfMetre
+{
+    alias Dimension = LengthDimension;
+    alias UnitScale = Scale!(1, 2);
+}
+
+struct TenthMetre
+{
+    alias Dimension = LengthDimension;
+    alias UnitScale = Scale!(1, 10);
+}
