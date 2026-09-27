@@ -94,3 +94,82 @@ Consequently:
 is attractive UFCS syntax but is not automatically semantically sufficient.
 
 R13 must not trade ADR 0002's semantic distinction for shorter syntax.
+
+
+## First probe result — 2026-09-27
+
+The initial free-function/UFCS candidate builds, links and runs successfully on
+both baseline compilers:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Confirmed:
+
+- CTFE construction works;
+- CTFE extraction through `inUnit!Unit` works;
+- UFCS construction works;
+- Spec remains explicit at construction;
+- same Unit can be used with distinct Specs without changing Quantity identity;
+- zero-overhead storage remains intact for the representative probe.
+
+This confirms feasibility only. It does not yet select the final public call
+shape.
+
+## Competing API shapes for the next gate
+
+### A — free-function / UFCS construction
+
+```d
+auto q = quantity!(Length, Metre)(12.5);
+auto q = 12.5.quantity!(Length, Metre);
+```
+
+Strengths:
+
+- natural UFCS;
+- explicit Spec and Unit;
+- ordinary function template inference for Rep.
+
+Cost:
+
+- two template arguments at every non-canonical construction site.
+
+### B — Spec-centred factory
+
+Conceptually:
+
+```d
+auto q = Length.quantity!Metre(12.5);
+```
+
+or an equivalent compile-time factory vocabulary.
+
+Potential strength:
+
+- visually groups semantic meaning before Unit.
+
+Potential cost:
+
+- D does not provide namespace-like static methods on arbitrary user-defined
+  Spec types without additional declaration machinery;
+- may require mixins/helpers that conflict with ADR 0003's deliberately simple
+  structural declaration model.
+
+### C — Unit-centred factory
+
+Conceptually:
+
+```d
+auto q = Metre.quantity!Length(12.5);
+```
+
+This remains semantically explicit but puts measurement Unit before quantity
+meaning. It also risks encouraging Unit declarations to accumulate API
+machinery that belongs to quantities-d rather than user-defined Unit metadata.
+
+### Current bias
+
+A remains the least intrusive candidate because it preserves ordinary structural
+Spec/Unit declarations and gives UFCS naturally. B and C must demonstrate a
+material usability benefit before adding declaration or mixin machinery.
