@@ -169,3 +169,17 @@ Initial consumers/reference cases:
   raster resolution itself is not synonymous with `Length`;
 - future `proj-d`: dynamic CRS/axis/unit metadata as a deliberately separate
   layer.
+
+
+## R11 — Static declaration and validation mechanics
+
+### Question
+
+Which D mechanism should implement the ADR 0002 structural contracts while
+keeping user-defined Dimensions, Specs and Units lightweight and diagnostics
+useful?
+
+The active probe under `research/r11-declaration-validation/` evaluates
+ordinary user-defined types plus structural traits and explicit API-boundary
+`static assert` diagnostics. It deliberately avoids inheritance, runtime
+registration and declaration macros unless evidence later requires them.
