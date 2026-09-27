@@ -14,6 +14,12 @@ public import quantities.traits : isQuantitySpec, isUnit;
         alias Scale = ExactRatio!(1, 1);
     }
 
+    struct Length
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+    }
+
     enum integralCanonical = 42L.quantity!(Length, Metre);
     static assert(integralCanonical.canonicalValue == 42L);
 
