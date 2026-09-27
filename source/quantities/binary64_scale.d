@@ -229,8 +229,10 @@ RoundedRational scaleExact(
 
     ulong rounded = roundCentQuotientNearestEven(exactNumerator, d);
 
-    // Rounding may carry into a 54th bit; renormalize exactly.
-    if (bitLength(rounded) > 53)
+    // The normalization above targets a 53-bit quotient. Only a true carry
+    // from 2^53-1 to 2^53 creates a 54th bit and therefore advances the
+    // binary exponent. Do not renormalize a 53-bit result again.
+    if (bitLength(rounded) == 54)
     {
         rounded >>= 1;
         ++exponent2;
@@ -360,9 +362,5 @@ Binary64ScaleResult scaleBinary64(
     enum tenth = scaleBinary64(1.0, 1, 10);
     static assert(!tenth.overflow);
 
-    enum tenthParts = decompose(tenth.value);
-    enum literalTenthParts = decompose(0.1);
-
-    static assert(tenthParts.exponent2 == literalTenthParts.exponent2);
-    static assert(tenthParts.significand == literalTenthParts.significand);
+    static assert(tenth.value == 0.1);
 }
