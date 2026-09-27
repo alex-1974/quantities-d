@@ -60,9 +60,11 @@ private:
         canonical_ = canonical;
     }
 
-package(r13_core):
+    // Module-private trusted construction path. The public quantity()
+    // function below is in this same module and can call it; importing
+    // consumers cannot.
     @safe pure nothrow @nogc
-    static Quantity fromCanonical(Rep canonical)
+    private static Quantity fromCanonical(Rep canonical)
     {
         return Quantity(canonical);
     }
