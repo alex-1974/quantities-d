@@ -71,7 +71,7 @@ int bitLength(ulong value)
 }
 
 @safe pure nothrow @nogc
-Cent cent(ulong value)
+Cent fromUlong128(ulong value)
 {
     return Cent(value, 0);
 }
@@ -103,7 +103,7 @@ ulong roundCentQuotientNearestEven(
     assert(denominator != 0);
 
     Cent remainder;
-    const quotient = udivmod(numerator, cent(denominator), remainder);
+    const quotient = udivmod(numerator, fromUlong128(denominator), remainder);
 
     assert(quotient.hi == 0);
     ulong q = quotient.lo;
@@ -112,8 +112,8 @@ ulong roundCentQuotientNearestEven(
     if (!inexact)
         return q;
 
-    const doubledRemainder = mul(remainder, cent(2));
-    const denominator128 = cent(denominator);
+    const doubledRemainder = mul(remainder, fromUlong128(2));
+    const denominator128 = fromUlong128(denominator);
 
     const bool roundUp =
         centGreater(doubledRemainder, denominator128)
@@ -167,7 +167,7 @@ RoundedRational scaleExact(
 
     // s is at most 53 bits and n at most 64 bits, so their exact product
     // fits comfortably in the 128-bit Cent payload.
-    Cent exactNumerator = mul(cent(s), cent(n));
+    Cent exactNumerator = mul(fromUlong128(s), fromUlong128(n));
 
     // Reduce precision only when the integer part needs more than 53 bits.
     // Shifting is represented by multiplying the denominator by a power of
@@ -175,7 +175,7 @@ RoundedRational scaleExact(
     // wider cases will be handled explicitly if the adversarial matrix finds
     // a real consumer-relevant need.
     Cent initialRemainder;
-    const initialQuotient = udivmod(exactNumerator, cent(d), initialRemainder);
+    const initialQuotient = udivmod(exactNumerator, fromUlong128(d), initialRemainder);
 
     int quotientBits;
     ulong qHi = initialQuotient.hi;
