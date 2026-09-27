@@ -382,8 +382,10 @@ Binary64ScaleResult scaleBinary64(
     static assert(!negative.overflow);
     static assert(negative.value == -1.0);
 
+    // R14/ADR 0007: arbitrary double CTFE does not promise reconstruction
+    // of the stored binary64 source lattice on the baseline compilers.
+    // Keep compile-time coverage for overflow classification here, but do not
+    // assert represented-source binary64 equality for 1/10 at CTFE.
     enum tenth = scaleBinary64(1.0, 1, 10);
     static assert(!tenth.overflow);
-
-    static assert(tenth.value == 0.1);
 }
