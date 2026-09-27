@@ -210,6 +210,21 @@ ConversionResult!long convertIntegral(
 }
 
 @safe pure nothrow @nogc
+ConversionResult!long convertIntegralChecked(
+    long value,
+    long numerator,
+    long denominator)
+{
+    const converted = convertIntegral(
+        value, numerator, denominator, RoundingMode.towardZero);
+
+    if (converted.status == ConversionStatus.inexact)
+        return ConversionResult!long(0, ConversionStatus.inexact);
+
+    return converted;
+}
+
+@safe pure nothrow @nogc
 ConversionResult!long convertIntegralUnits(FromUnit, ToUnit)(
     long value,
     RoundingMode mode)
@@ -248,6 +263,42 @@ ConversionResult!long convertIntegralUnits(FromUnit, ToUnit)(
 }
 
 @safe pure nothrow @nogc
+ConversionResult!long convertIntegralUnitsChecked(FromUnit, ToUnit)(long value)
+{
+    ulong a = magnitude(FromUnit.Scale.numerator);
+    ulong b = cast(ulong) FromUnit.Scale.denominator;
+    ulong c = magnitude(ToUnit.Scale.numerator);
+    ulong d = cast(ulong) ToUnit.Scale.denominator;
+
+    auto divisor = gcd(a, c);
+    a /= divisor;
+    c /= divisor;
+
+    divisor = gcd(d, b);
+    d /= divisor;
+    b /= divisor;
+
+    if (a > cast(ulong) long.max || b > cast(ulong) long.max
+        || c > cast(ulong) long.max || d > cast(ulong) long.max)
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    long numerator;
+    if (!multiplyChecked(cast(long) a, cast(long) d, numerator))
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    long denominator;
+    if (!multiplyChecked(cast(long) b, cast(long) c, denominator))
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    const bool negative =
+        (FromUnit.Scale.numerator < 0) != (ToUnit.Scale.numerator < 0);
+    if (negative)
+        numerator = -numerator;
+
+    return convertIntegralChecked(value, numerator, denominator);
+}
+
+@safe pure nothrow @nogc
 ExactResult!T exactResult(T)(ConversionResult!T result)
 {
     final switch (result.status)
@@ -274,8 +325,8 @@ auto checkedQuantity(Spec, Unit)(long value)
     static assert(is(Spec.Dimension == Unit.Dimension),
         "checkedQuantity: Spec and Unit must have the same Dimension.");
 
-    const converted = convertIntegralUnits!(Unit, Spec.CanonicalUnit)(
-        value, RoundingMode.towardZero);
+    const converted = convertIntegralUnitsChecked!(
+        Unit, Spec.CanonicalUnit)(value);
 
     return ConversionResult!(Quantity!(Spec, long))(
         Quantity!(Spec, long).fromCanonical(converted.value),
@@ -312,8 +363,8 @@ auto checkedIn(Unit, Spec)(Quantity!(Spec, long) value)
     static assert(is(Spec.Dimension == Unit.Dimension),
         "checkedIn: Quantity Spec and Unit must have the same Dimension.");
 
-    return convertIntegralUnits!(Spec.CanonicalUnit, Unit)(
-        value.canonicalValue, RoundingMode.towardZero);
+    return convertIntegralUnitsChecked!(
+        Spec.CanonicalUnit, Unit)(value.canonicalValue);
 }
 
 @safe pure nothrow @nogc
@@ -372,6 +423,10 @@ auto roundedIn(Unit, RoundingMode mode, Spec)(Quantity!(Spec, long) value)
     enum back = km.value.exactIn!Kilometre;
     static assert(back.hasValue);
     static assert(back.value == 2);
+
+    enum checkedCm = 150L.checkedQuantity!(Length, Centimetre);
+    static assert(checkedCm.status == ConversionStatus.inexact);
+    static assert(checkedCm.value.canonicalValue == 0);
 
     enum cm = 150L.exactQuantity!(Length, Centimetre);
     static assert(!cm.hasValue);
