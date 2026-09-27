@@ -317,6 +317,17 @@ RoundedRational scaleExact(
         ++roundedExponent;
     }
 
+    // At the top of the binary64 range, round-to-nearest-even has a finite
+    // interval above double.max that still rounds back to double.max. Only a
+    // rounded carry to 2^52 * 2^972 represents the overflow result.
+    if (roundedExponent > 971)
+    {
+        if (roundedExponent == 972 && rounded == (1UL << 52))
+            return RoundedRational(0, 0, true);
+
+        return RoundedRational(0, 0, true);
+    }
+
     return RoundedRational(rounded, roundedExponent, false);
 }
 
@@ -329,8 +340,17 @@ RoundedRational quantizeBinary64(RoundedRational value)
     int bits = bitLength(value.significand);
     int topExponent = value.exponent2 + bits - 1;
 
-    if (topExponent > 1023)
+    if (topExponent > 1024)
         return RoundedRational(0, 0, true);
+
+    if (topExponent == 1024)
+    {
+        // A rounded 53-bit significand of 2^52 at exponent 972 is the
+        // overflow result (+/- infinity). Values below the overflow midpoint
+        // must have rounded to the maximum finite significand at exponent 971
+        // before reaching this branch.
+        return RoundedRational(0, 0, true);
+    }
 
     if (topExponent >= -1022)
         return value;
@@ -443,6 +463,25 @@ Binary64ScaleResult scaleBinary64(
 
     const trueOverflow = scaleBinary64(double.max, 2, 1);
     assert(trueOverflow.overflow);
+
+    const belowOverflowMidpoint = scaleBinary64(
+        double.max,
+        18014398509481982L,
+        18014398509481981L);
+    assert(!belowOverflowMidpoint.overflow);
+    assert(belowOverflowMidpoint.value == double.max);
+
+    const atOverflowMidpoint = scaleBinary64(
+        double.max,
+        18014398509481983L,
+        18014398509481982L);
+    assert(atOverflowMidpoint.overflow);
+
+    const aboveOverflowMidpoint = scaleBinary64(
+        double.max,
+        18014398509481984L,
+        18014398509481983L);
+    assert(aboveOverflowMidpoint.overflow);
 
     const negative = scaleBinary64(-1.5, 2, 3);
     assert(!negative.overflow);
