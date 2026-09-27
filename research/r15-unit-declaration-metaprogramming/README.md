@@ -105,3 +105,79 @@ For each candidate record:
 - DEFER — potentially useful but not justified by M2.
 
 M2 production work starts only after this comparison has a clear result.
+
+
+## A/B evidence — 2026-09-27
+
+Both candidate A (explicit structs) and candidate B (Unit template + aliases)
+compile successfully with DMD 2.111 and LDC 1.41 for the full six-Unit
+reference set.
+
+### Type identity / diagnostics
+
+The compilers preserve the explicit struct name for A:
+
+```text
+A type: AGood
+```
+
+For B, the alias name is not preserved in `.stringof` or representative
+diagnostics:
+
+```text
+B alias: Unit!(LengthDimension, 1000L, 1L)
+B instantiated type: Unit!(LengthDimension, 1000L, 1L)
+```
+
+This is a material public-diagnostics cost: a consumer using a named
+`Kilometre` alias can still be shown the implementation template
+instantiation rather than the domain name.
+
+### Invalid scale diagnostics
+
+A zero denominator in A reports directly through `ExactRatio!(1L, 0L)` at
+the declaration site.
+
+B reports the same `ExactRatio` failure but adds another template
+instantiation layer through `Unit!(LengthDimension, 1L, 0L)`.
+
+The candidate-B `static assert(D != 0)` does not improve the observed error
+because instantiation of the nested `ExactRatio` still supplies the operative
+diagnostic. Duplicating that invariant in the wrapper therefore has no
+demonstrated value.
+
+### Invalid Dimension shape
+
+A malformed explicit Unit can reach a structural boundary and produce a
+domain-oriented diagnostic such as:
+
+```text
+Unit must provide Dimension
+```
+
+B makes the Dimension template argument syntactically mandatory, which rejects
+a value such as `42`, but the resulting diagnostic is template-oriented:
+
+```text
+template instance Unit!(42, 1, 1) does not match template declaration ...
+```
+
+That is useful compiler enforcement, but it does not establish that B has
+better domain diagnostics.
+
+### Interim conclusion
+
+- **A — KEEP as the semantic/diagnostic baseline.**
+- **B — DEFER as a primary public Unit declaration mechanism.**
+
+B removes repeated declaration structure, but current evidence shows two costs:
+public compiler-visible type names become template instantiations and invalid
+declarations gain an extra instantiation layer. No runtime or semantic benefit
+has been demonstrated.
+
+This does not reject templates as implementation tools. It rejects the current
+idea that all public named Units should merely be aliases of one generic
+`Unit!(Dimension, N, D)` type.
+
+The next experiment evaluates exact SI-prefix metaprogramming as a narrower
+**complement** to named Unit declarations.
