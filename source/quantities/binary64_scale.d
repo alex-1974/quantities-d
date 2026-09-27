@@ -3,7 +3,7 @@ module quantities.binary64_scale;
 import core.int128 : Cent, mul, udivmod;
 import std.math : frexp, ldexp;
 
-package:
+package(quantities):
 struct Binary64ScaleResult
 {
     double value;
