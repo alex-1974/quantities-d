@@ -80,3 +80,43 @@ Confirmed so far:
 - exact rational scale is retained until final floating arithmetic.
 
 A representative Rep matrix is the next gate before promotion.
+
+
+## Representative Rep matrix result — 2026-09-27
+
+The extended representative Rep matrix builds, links and runs successfully on
+both baseline compilers:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Covered classes:
+
+- integral -> integral;
+- integral -> floating;
+- floating -> integral;
+- floating -> floating.
+
+Representative Reps include `int`, `long`, `float`, `double`, and
+`real`.
+
+### Interpretation
+
+The compiler/language mechanics do not require separate public conversion
+models per representative Rep family.
+
+However, the term "exact" must be used carefully for floating sources. Once a
+physical value is already represented by a binary floating-point value, the
+library cannot recover whether that source value was itself an exact
+representation of the originating physical quantity.
+
+For floating-source conversions, R03 therefore distinguishes:
+
+1. **source-value preservation / representability** — whether the existing
+   floating value can be converted to the target representation without an
+   additional representational change beyond the requested Unit transform; and
+2. **physical/mathematical exactness of the original measurement** — not
+   inferable by quantities-d from the floating value alone.
+
+This prevents an `exact` status from making a stronger epistemic claim than
+the representation supports.
