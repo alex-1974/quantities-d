@@ -10,11 +10,26 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**Research / initial architecture. No stable public quantity API exists yet.**
+**M1 static core in active development. No stable public API exists yet.**
 
-The repository is intentionally initialized before the core API is committed so
-that design evidence, prototypes, compile-negative tests, benchmarks, and ADRs
-have a durable project home.
+The repository now contains the first production quantity core plus an
+experimental checked-conversion implementation promoted from R14 research.
+
+Current production coverage includes:
+
+- canonical `Quantity!(Spec, Rep)` storage with zero runtime Unit/Spec metadata;
+- exact compile-time rational Unit scales;
+- CTFE- and UFCS-friendly canonical construction/extraction;
+- explicit checked / exact-required / rounded non-canonical conversion for
+  signed `long`;
+- checked / exact-required non-canonical conversion for binary64 `double`;
+- compile-negative API-boundary tests;
+- external-consumer tests on DMD 2.111 and LDC 1.41.
+
+`float`, `real`, mixed-Rep conversion, arithmetic, affine quantity points, and
+runtime-parsed unit metadata are not yet production-complete.
+
+The public API remains pre-stable while these M1 contracts are being validated.
 
 ## Intended domain
 
