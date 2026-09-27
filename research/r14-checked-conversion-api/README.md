@@ -651,3 +651,51 @@ rounding must not depend on a prior rounded `double` intermediate.
 The `frexp` / `ldexp` prototype remains useful for exponent decomposition and
 normal-range scaling research, but the current post-quantization architecture is
 **rejected for promotion**.
+
+
+## Floating binary64 CTFE boundary
+
+Final R14 validation exposed a language-level limitation that materially affects
+the floating conversion contract.
+
+The desired floating rule is:
+
+> exactness is relative to the represented binary64 source value.
+
+For runtime code, the represented value can be recovered from the IEEE-754 bit
+pattern. A dedicated probe confirmed that both DMD 2.111 and LDC 1.41 store
+`0.1` as the expected binary64 bit pattern
+`0x3FB999999999999A`.
+
+For CTFE, however, the same strategy is unavailable:
+
+- union-based bit reinterpretation is rejected during CTFE by both baseline
+  compilers;
+- arithmetic reconstruction of the stored `double` value is not reliable,
+  because D permits floating intermediates to retain precision beyond the
+  nominal type;
+- `frexp`/`ldexp`-based and repeated-power-of-two arithmetic probes both
+  produced a different significand for `0.1` during CTFE than the actual
+  stored binary64 value.
+
+Therefore R14 must not claim that an arbitrary runtime `double` can be
+converted with represented-source-exact semantics and identical CTFE behavior
+using the current decomposition approach.
+
+A rational-only CTFE oracle is valid and now passes on DMD 2.111 and LDC 1.41.
+It validates the exact rational-to-binary64 quantization step independently of
+source-double decomposition.
+
+### Consequence for promotion
+
+The floating portion of ADR 0007 remains blocked until one of the following is
+chosen explicitly:
+
+1. represented-source-exact floating conversion is runtime-only, while CTFE is
+   not promised for arbitrary `double` inputs;
+2. the public floating CTFE contract is weakened to D's evaluation semantics
+   rather than stored-binary64 semantics;
+3. a different source representation is introduced that carries exact binary64
+   components or rational input explicitly at compile time.
+
+No silent semantic split between runtime and CTFE is acceptable.
