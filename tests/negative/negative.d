@@ -54,13 +54,13 @@ version (BrokenUnitCase)
     enum x = 1.0.quantity!(Length, BrokenUnit);
 }
 
-version (IntegralNonCanonicalConstruction)
+version (NonCanonicalConstruction)
 {
-    enum x = 1L.quantity!(Length, Kilometre);
+    enum x = 1.0.quantity!(Length, Kilometre);
 }
 
-version (IntegralNonCanonicalExtraction)
+version (NonCanonicalExtraction)
 {
-    enum q = 1000L.quantity!(Length, Metre);
+    enum q = 1000.0.quantity!(Length, Metre);
     enum x = q.inUnit!Kilometre;
 }
