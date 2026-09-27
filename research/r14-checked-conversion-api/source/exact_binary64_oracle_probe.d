@@ -56,45 +56,46 @@ Cent shl(Cent value, int shift)
     return value;
 }
 
-@trusted pure nothrow @nogc
-ulong rawBits(double value)
-{
-    union Bits
-    {
-        double d;
-        ulong u;
-    }
-
-    Bits bits;
-    bits.d = value;
-    return bits.u;
-}
-
-@trusted pure nothrow @nogc
+@safe pure nothrow @nogc
 Parts decompose(double value)
 {
-    const ulong raw = rawBits(value);
-    const ulong exponentBits = (raw >> 52) & 0x7FFUL;
-    const ulong fractionBits = raw & 0x000F_FFFF_FFFF_FFFFUL;
-
-    if (exponentBits == 0 && fractionBits == 0)
+    if (value == 0.0)
         return Parts(0, 0);
 
-    ulong significand;
+    double x = value < 0.0 ? -value : value;
     int exponent2;
 
-    if (exponentBits == 0)
+    // Normalize arithmetically into [1, 2). Multiplication/division by two
+    // is exact for finite binary64 values and remains CTFE-friendly.
+    while (x >= 2.0)
     {
-        // Subnormal: value = fractionBits * 2^-1074.
-        significand = fractionBits;
-        exponent2 = -1074;
+        x *= 0.5;
+        ++exponent2;
     }
-    else
+
+    while (x < 1.0)
     {
-        // Normal: value = (2^52 + fractionBits) * 2^(biasedExponent-1023-52).
-        significand = (1UL << 52) | fractionBits;
-        exponent2 = cast(int) exponentBits - 1023 - 52;
+        x *= 2.0;
+        --exponent2;
     }
+
+    // Recover the 53-bit integer significand exactly by repeated binary
+    // digit extraction instead of frexp/ldexp or bit reinterpretation.
+    ulong significand;
+    double fraction = x;
+
+    foreach (_; 0 .. 53)
+    {
+        significand <<= 1;
+        if (fraction >= 1.0)
+        {
+            significand |= 1UL;
+            fraction -= 1.0;
+        }
+        fraction *= 2.0;
+    }
+
+    exponent2 -= 52;
 
     while ((significand & 1UL) == 0)
     {
