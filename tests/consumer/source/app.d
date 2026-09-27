@@ -2,37 +2,11 @@ module app;
 
 import quantities;
 
-struct LengthDimension {}
-
-struct Metre
-{
-    alias Dimension = LengthDimension;
-    alias Scale = ExactRatio!(1, 1);
-}
-
-struct Kilometre
-{
-    alias Dimension = LengthDimension;
-    alias Scale = ExactRatio!(1000, 1);
-}
-
-struct Centimetre
-{
-    alias Dimension = LengthDimension;
-    alias Scale = ExactRatio!(1, 100);
-}
-
-struct Length
-{
-    alias Dimension = LengthDimension;
-    alias CanonicalUnit = Metre;
-}
-
 void main()
 {
-    enum ctfe = 1.25.quantity!(Length, Metre);
-    static assert(ctfe.canonicalValue == 1.25);
-    static assert(ctfe.inUnit!Metre == 1.25);
+    enum canonical = 1.25.quantity!(Length, Metre);
+    static assert(canonical.canonicalValue == 1.25);
+    static assert(canonical.inUnit!Metre == 1.25);
 
     auto runtime = 2.5.quantity!(Length, Metre);
     assert(runtime.canonicalValue == 2.5);
@@ -48,21 +22,31 @@ void main()
             && value.canonicalValue == 2000L;
     }());
 
-    enum inexactCentimetres = 150L.exactQuantity!(Length, Centimetre);
-    static assert(!inexactCentimetres.hasValue);
-    static assert({
-        ExactFailure failure;
-        return inexactCentimetres.tryFailure(failure)
-            && failure == ExactFailure.inexact;
-    }());
-
-    enum roundedCentimetres = 150L.roundedQuantity!(
-        Length, Centimetre, RoundingMode.nearestTiesAway);
-    static assert(roundedCentimetres.status == ConversionStatus.inexact);
+    enum internationalFeet =
+        1250L.exactQuantity!(Length, InternationalFoot);
+    static assert(internationalFeet.hasValue);
     static assert({
         Quantity!(Length, long) value;
-        return roundedCentimetres.tryValue(value)
-            && value.canonicalValue == 2L;
+        return internationalFeet.tryValue(value)
+            && value.canonicalValue == 381L;
+    }());
+
+    enum surveyFeet =
+        3937L.exactQuantity!(Length, USSurveyFoot);
+    static assert(surveyFeet.hasValue);
+    static assert({
+        Quantity!(Length, long) value;
+        return surveyFeet.tryValue(value)
+            && value.canonicalValue == 1200L;
+    }());
+
+    enum inexactFoot =
+        1L.exactQuantity!(Length, InternationalFoot);
+    static assert(!inexactFoot.hasValue);
+    static assert({
+        ExactFailure failure;
+        return inexactFoot.tryFailure(failure)
+            && failure == ExactFailure.inexact;
     }());
 
     enum extracted = {
@@ -76,5 +60,21 @@ void main()
         return extracted.tryValue(value) && value == 2L;
     }());
 
+    const internationalDouble =
+        1.0.checkedQuantity!(Length, InternationalFoot);
+    assert(internationalDouble.hasValue);
+
+    const surveyDouble =
+        1.0.checkedQuantity!(Length, USSurveyFoot);
+    assert(surveyDouble.hasValue);
+
+    Quantity!(Length, double) internationalValue;
+    Quantity!(Length, double) surveyValue;
+    assert(internationalDouble.tryValue(internationalValue));
+    assert(surveyDouble.tryValue(surveyValue));
+    assert(internationalValue.canonicalValue
+        != surveyValue.canonicalValue);
+
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
+    static assert(Quantity!(Length, long).sizeof == long.sizeof);
 }
