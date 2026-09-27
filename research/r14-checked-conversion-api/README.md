@@ -296,3 +296,26 @@ Initial contract under test:
 
 The first probe intentionally uses binary-exact examples (powers of two) and
 binary-inexact decimal-style scales to make the distinction observable.
+
+
+## Probe 5 — exact floating criterion from represented binary value
+
+The reverse-operation probe is not sufficient for production because two floating
+rounding steps may accidentally reconstruct the source.
+
+R14 therefore sharpens the semantic criterion:
+
+> A floating-to-floating unit conversion is `exact` iff the mathematical result
+> obtained from the **represented source floating value** and the exact rational
+> unit scale is exactly representable in the target floating Rep.
+
+For binary floating point this can be reasoned about from the represented value
+as an integer significand times a power of two. After multiplying by an exact
+rational `N / D`, all odd factors remaining in the denominator must divide the
+integer significand; any remaining power-of-two denominator can be absorbed into
+the binary exponent. The resulting significand must then fit the target
+precision/range without discarded bits.
+
+This criterion is stronger than reverse comparison and directly matches ADR 0005.
+The first implementation probe is intentionally limited to finite positive/negative
+`double` values and exact rational scales; NaN/infinity policy remains separate.
