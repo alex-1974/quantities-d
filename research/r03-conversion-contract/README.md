@@ -61,3 +61,22 @@ values and Reps. Rounding is never encoded in Unit identity.
 
 The probe intentionally does not decide implicit conversions, mixed-unit
 arithmetic, public function names, floating narrowing, or exception policy.
+
+
+## First probe result — 2026-09-27
+
+The initial signed-long conversion probe builds, links and runs successfully on
+both baseline compilers:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Confirmed so far:
+
+- exact/inexact/overflow are separable;
+- cross-cancellation avoids needless overflow;
+- full signed long source range is handled safely;
+- explicit positive/negative rounding modes behave as intended;
+- exact rational scale is retained until final floating arithmetic.
+
+A representative Rep matrix is the next gate before promotion.
