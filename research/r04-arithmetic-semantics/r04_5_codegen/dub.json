@@ -1,0 +1,6 @@
+{
+    "name": "quantities-r04-5-codegen",
+    "description": "R04.5 floating Quantity code-generation comparison",
+    "targetType": "library",
+    "sourceFiles": ["source/codegen.d"]
+}
