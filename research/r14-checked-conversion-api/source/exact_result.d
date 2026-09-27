@@ -3,7 +3,8 @@ module exact_result;
 enum ExactFailure
 {
     inexact,
-    overflow
+    overflow,
+    nonFinite
 }
 
 enum ExactState : ubyte
