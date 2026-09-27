@@ -181,3 +181,51 @@ idea that all public named Units should merely be aliases of one generic
 
 The next experiment evaluates exact SI-prefix metaprogramming as a narrower
 **complement** to named Unit declarations.
+
+
+## C evidence — 2026-09-27
+
+Candidate C keeps public Units as explicit named structs and uses
+metaprogramming only to derive exact decimal SI scales.
+
+Both DMD 2.111 and LDC 1.41 compile the candidate successfully.
+
+Observed compiler-visible names:
+
+```text
+C metre type: Metre
+C kilometre type: Kilometre
+C kilometre scale: ExactRatio!(1000L, 1L)
+```
+
+This preserves the domain-facing Unit type identity while moving only the
+mechanical power-of-ten construction behind a template.
+
+The candidate also validates:
+
+- exponent 0 -> 1/1;
+- positive exponents -> exact integer powers of ten;
+- negative exponents -> exact reciprocal powers of ten;
+- equivalence with explicit ExactRatio definitions;
+- explicit non-SI ratios remain available unchanged;
+- international foot and US survey foot remain exact and distinct;
+- power-of-ten construction can reject values beyond the long-backed
+  ExactRatio range before multiplication overflow.
+
+### Interim conclusion
+
+- **C — COMPLEMENT.**
+
+C is promising as an implementation helper for exact SI-prefix scales, not as a
+replacement for named Unit declarations.
+
+The current strongest composition is therefore:
+
+- explicit public Unit structs for type identity and diagnostics;
+- exact compile-time helpers for mechanical scale construction;
+- explicit ExactRatio definitions for non-SI or otherwise normative exact
+  ratios.
+
+The next candidate tests whether a descriptor layer adds enough value for
+catalogue enumeration, metadata, or generated validation to justify its
+additional abstraction.
