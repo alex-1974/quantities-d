@@ -19,8 +19,8 @@ import quantities.binary64_scale : scaleBinary64;
 
     const below = scaleBinary64(
         double.max,
-        18014398509481982L,
-        18014398509481981L);
+        18014398509481984L,
+        18014398509481983L);
     assert(!below.overflow,
         "finite exact value below overflow midpoint must round to double.max");
     assert(below.value == double.max);
@@ -34,8 +34,8 @@ import quantities.binary64_scale : scaleBinary64;
 
     const above = scaleBinary64(
         double.max,
-        18014398509481984L,
-        18014398509481983L);
+        18014398509481982L,
+        18014398509481981L);
     assert(above.overflow,
         "value above overflow midpoint must round to infinity");
 }
