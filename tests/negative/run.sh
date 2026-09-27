@@ -40,4 +40,8 @@ for c in dmd ldc2; do
     run_case "$c" "$flag" BrokenUnitCase         "quantity: Unit must define Dimension and a valid exact Scale."
     run_case "$c" "$flag" NonCanonicalConstruction         "quantity: non-canonical Unit construction requires explicit checked conversion and is not yet available."
     run_case "$c" "$flag" NonCanonicalExtraction         "inUnit: non-canonical Unit extraction requires explicit checked conversion and is not yet available."
+    run_case "$c" "$flag" CheckedWrongDimension           "checkedQuantity: Spec and Unit must have the same Dimension."
+    run_case "$c" "$flag" CheckedBrokenSpec               "checkedQuantity: Spec must define Dimension and a valid CanonicalUnit."
+    run_case "$c" "$flag" CheckedBrokenUnit               "checkedQuantity: Unit must define Dimension and a valid exact Scale."
+    run_case "$c" "$flag" CheckedExtractionWrongDimension "checkedIn: Quantity Spec and Unit must have the same Dimension."
 done
