@@ -70,18 +70,20 @@ Cent divideWithRemainder(Cent numerator, ulong denominator, out Cent remainder)
     static assert(scaledQR[0].lo == significand);
     static assert(!isZero(scaledQR[1]));
 
-    // The quotient is still 2^52. The +1 comes from the final
-    // round-to-nearest, ties-to-even decision based on the remainder.
+    // The exact excess over 2^52 is only
+    //     2 * 2^52 / (long.max - 2) ~= 2^-10,
+    // far below half an ulp at 1.0. Therefore the correctly rounded
+    // binary64 result is still exactly 1.0.
     enum doubledRemainder = mul(scaledQR[1], fromUlong(2));
     enum denominator128 = fromUlong(ratioDenominator);
 
     static assert(
-        doubledRemainder.hi > denominator128.hi
+        doubledRemainder.hi < denominator128.hi
         || (doubledRemainder.hi == denominator128.hi
-            && doubledRemainder.lo > denominator128.lo));
+            && doubledRemainder.lo < denominator128.lo));
 
-    enum roundedSignificand = scaledQR[0].lo + 1;
-    static assert(roundedSignificand == significand + 1);
+    enum roundedSignificand = scaledQR[0].lo;
+    static assert(roundedSignificand == significand);
 
     // Runtime must match CTFE exactly.
     const runtimeProduct = multiply(a, b);
