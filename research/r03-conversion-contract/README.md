@@ -120,3 +120,77 @@ For floating-source conversions, R03 therefore distinguishes:
 
 This prevents an `exact` status from making a stronger epistemic claim than
 the representation supports.
+
+
+## Status and rounding semantics candidate
+
+R03 keeps the status term `exact`, but defines it narrowly.
+
+`exact` means:
+
+> the requested conversion of the represented source value to the target Unit
+> and Rep requires no information-losing rounding or truncation by the
+> conversion operation.
+
+It does **not** mean:
+
+- that the original physical measurement was exact;
+- that a floating source exactly represented some prior decimal or physical
+  value;
+- that the target floating value has infinite mathematical precision.
+
+This definition is stronger and more useful than `representable`: a
+fractional mathematical result can be mapped to an integral target type only by
+rounding, even though some integral value is trivially representable.
+
+### Candidate status set
+
+```d
+enum ConversionStatus
+{
+    exact,
+    inexact,
+    overflow
+}
+```
+
+Semantics:
+
+- `exact`: conversion introduces no information-losing rounding/truncation;
+- `inexact`: the mathematical conversion result cannot be represented under
+  the requested policy without rounding or other representational loss;
+- `overflow`: the required result is outside the supported target
+  representation/range.
+
+The status describes the conversion outcome, not caller intent.
+
+### Candidate rounding policy
+
+```d
+enum RoundingMode
+{
+    towardZero,
+    floor,
+    ceiling,
+    nearestTiesAway
+}
+```
+
+Rounding is only selected explicitly by the caller. Unit identity never carries
+a rounding policy.
+
+A rounded result may still carry `inexact` status: the returned value is the
+explicitly requested rounded value, while the status records that the
+unrounded mathematical result was not exactly representable.
+
+### Important separation
+
+```text
+conversion intent     result status
+------------------    ----------------
+exact-required   -->  value or exact/inexact/overflow failure
+checked          -->  exact/inexact/overflow observation
+rounded(mode)    -->  rounded value + exact/inexact/overflow status
+```
+
+This keeps policy and observation orthogonal.
