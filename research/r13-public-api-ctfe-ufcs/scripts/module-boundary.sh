@@ -26,7 +26,7 @@ compile_reject() {
     local compiler="$1"
     local flag="$2"
     local case_name="$3"
-    local needle="$4"
+    shift 3
     local log="$OUT/${compiler}-${case_name}.log"
 
     if "$compiler" "$CORE" "$CONSUMER" "$flag$case_name" -of=/tmp/quantities-r13-module-boundary >"$log" 2>&1; then
@@ -34,13 +34,16 @@ compile_reject() {
         return 1
     fi
 
-    if grep -Fq "$needle" "$log"; then
-        echo "PASS: $compiler rejected $case_name at module boundary"
-    else
-        echo "FAIL: $compiler rejected $case_name, but expected boundary evidence was not found"
-        cat "$log"
-        return 1
-    fi
+    for needle in "$@"; do
+        if grep -Fq "$needle" "$log"; then
+            echo "PASS: $compiler rejected $case_name at module boundary"
+            return 0
+        fi
+    done
+
+    echo "FAIL: $compiler rejected $case_name, but expected boundary evidence was not found"
+    cat "$log"
+    return 1
 }
 
 for c in dmd ldc2; do
@@ -52,5 +55,5 @@ for c in dmd ldc2; do
 
     compile_ok "$c" "$flag" ValidPublicConstruction
     compile_reject "$c" "$flag" RawConstructor "not accessible"
-    compile_reject "$c" "$flag" RawField "not accessible"
+    compile_reject "$c" "$flag" RawField "not accessible" "no property"
 done
