@@ -47,7 +47,7 @@ auto quantity(Spec, Unit, Rep)(Rep value)
     else
     {
         static assert(false,
-            "quantity: non-canonical Unit construction requires explicit checked conversion and is not yet available.");
+            "quantity: non-canonical Unit construction requires checkedQuantity, exactQuantity, or roundedQuantity.");
     }
 }
 
@@ -66,6 +66,6 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     else
     {
         static assert(false,
-            "inUnit: non-canonical Unit extraction requires explicit checked conversion and is not yet available.");
+            "inUnit: non-canonical Unit extraction requires checkedIn, exactIn, or roundedIn.");
     }
 }
