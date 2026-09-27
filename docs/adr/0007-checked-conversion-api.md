@@ -1,10 +1,10 @@
 # ADR 0007 — Checked, Exact, and Rounded Conversion API
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-27
 - Research: R14 — Checked Conversion API
 - Issue: #8
-- Supersedes: none
+- Supersedes: ADR 0005 status vocabulary for non-finite floating input
 - Related: ADR 0001, ADR 0004, ADR 0005, ADR 0006
 
 ## Context
@@ -141,7 +141,7 @@ Floating CTFE is split by source semantics:
   representation rather than reconstruction from arbitrary `double`
   arithmetic;
 - the concrete exact-source public type/API is intentionally not frozen by this
-  ADR and requires separate consumer-driven design and validation.
+  ADR and is deferred until a concrete consumer demonstrates the need.
 
 A runtime-only bit reinterpretation path is therefore acceptable only for the
 ordinary runtime floating contract. It must not be presented as satisfying an
@@ -232,10 +232,18 @@ CTFE on the baseline compilers. Runtime bit-pattern probes confirm ordinary
 binary64 storage, while CTFE rejects union reinterpretation and may retain excess
 floating precision.
 
-Promotion to **Accepted** therefore requires:
+Acceptance evidence:
 
-- a production implementation slice and the normal quantities-d gates,
-  including compile-negative and external-consumer validation;
-- runtime validation of represented-source floating conversion;
-- a separate decision and validation for the explicit exact-source CTFE API;
-- no silent runtime/CTFE semantic split.
+- the production implementation slice is present and has passed the baseline
+  DMD/LDC debug and release unit-test gates;
+- compile-negative and external-consumer gates are part of the final PR
+  verification;
+- runtime represented-source binary64 conversion has been validated across
+  normal/subnormal boundaries, signed zero, exact/inexact scaling, overflow
+  midpoint behavior, and sign symmetry;
+- result default states and construction invariants are release-safe;
+- arbitrary-double CTFE does not claim represented-source semantics;
+- the consumer audit found no current requirement for a public exact-source
+  floating CTFE type, so that API is deferred rather than invented for M1;
+- no public contract silently changes mathematical semantics between runtime
+  and CTFE.
