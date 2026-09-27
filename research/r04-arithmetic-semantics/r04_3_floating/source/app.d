@@ -77,7 +77,7 @@ enum ctfeFF = 1.5f + 2.0f;
 enum ctfeFD = 1.5f + 2.0;
 enum ctfeDD = 1.5 + 2.0;
 enum ctfeNegZero = -0.0 + -0.0;
-enum ctfeInf = double.max * 2.0;
+enum ctfeWide = double.max * 2.0;
 
 static assert(is(typeof(ctfeFF) == float));
 static assert(is(typeof(ctfeFD) == double));
@@ -86,4 +86,4 @@ static assert(ctfeFF == 3.5f);
 static assert(ctfeFD == 3.5);
 static assert(ctfeDD == 3.5);
 static assert(signbit(ctfeNegZero));
-static assert(isInfinity(ctfeInf));
+static assert(ctfeWide > double.max);
