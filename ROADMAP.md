@@ -49,6 +49,13 @@ M2 begins from the accepted M1 core:
 - compile-negative dimensional/semantic tests;
 - consumer probes from geodesy/geometry use cases.
 
+Current M2 scope evidence selects metre, kilometre, international foot, and US
+survey foot. The geospatial consumer audit found no concrete centimetre or
+millimetre requirement, so those units remain deferred rather than being added
+speculatively. The public-unit consumer and compile-negative gates pass on the
+DMD 2.111 / LDC 1.41 baseline; final release-build and branch-review gates
+remain before M2 is closed.
+
 ## M3 — Quantity semantics and derived operations
 
 Evaluate from real consumers:

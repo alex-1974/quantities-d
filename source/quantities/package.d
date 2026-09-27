@@ -13,6 +13,14 @@ public import quantities.conversion :
     roundedIn,
     roundedQuantity;
 public import quantities.quantity : Quantity, inUnit, quantity;
+public import quantities.length :
+    InternationalFoot,
+    Kilometre,
+    Length,
+    LengthDimension,
+    LengthUnits,
+    Metre,
+    USSurveyFoot;
 public import quantities.ratio : ExactRatio;
 public import quantities.traits : isQuantitySpec, isUnit;
 

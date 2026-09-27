@@ -10,7 +10,7 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core complete on `develop`. No stable public release exists yet.**
+**M1 static core is complete; M2 minimal linear-unit work is in validation. No stable public release exists yet.**
 
 The repository now contains the first production quantity core and the checked
 conversion contract accepted by ADR 0007.
@@ -19,6 +19,7 @@ Current production coverage includes:
 
 - canonical `Quantity!(Spec, Rep)` storage with zero runtime Unit/Spec metadata;
 - exact compile-time rational Unit scales;
+- public M2 length catalogue: metre, kilometre, international foot, and US survey foot;
 - CTFE- and UFCS-friendly canonical construction/extraction;
 - explicit checked / exact-required / rounded non-canonical conversion for
   signed `long`;
@@ -113,9 +114,9 @@ is intentionally ignored by Git and is not package content.
 The M1 static core and checked conversion slice follow ADR 0001–0007:
 
 ```d
-enum distance = 1.25.quantity!(Length, Kilometre);
+enum distance = 1250.0.quantity!(Length, Metre);
 static assert(distance.canonicalValue == 1250.0);
-static assert(distance.inUnit!Kilometre == 1.25);
+static assert(distance.inUnit!Metre == 1250.0);
 ```
 
 Non-canonical Unit conversion is explicit. Integral conversion never silently
@@ -127,3 +128,22 @@ scalar APIs have documented canonical units. For example, a geodetic library
 may define metres for linear scalars and strong angle types in its own contract.
 A quantities-d integration should be an optional boundary adapter unless a
 consumer demonstrates that quantities belong in its core model.
+
+
+## M2 linear-unit slice
+
+The M2 public length catalogue is intentionally minimal:
+
+- `Metre`, the canonical unit of `Length`;
+- `Kilometre`;
+- `InternationalFoot`, exactly `381 / 1250` metre;
+- `USSurveyFoot`, exactly `1200 / 3937` metre.
+
+The current geospatial consumer audit found no concrete centimetre or
+millimetre requirement. Those units are therefore not added speculatively;
+they remain candidates for a later consumer-backed extension.
+
+`geo-d` and `geo3-d` remain coordinate-system- and unit-agnostic.
+`geodesy-d` documents metres as its normal linear convention. The current
+audit therefore also does not justify a hard quantities-d dependency in those
+libraries.
