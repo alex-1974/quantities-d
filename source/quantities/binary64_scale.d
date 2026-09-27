@@ -1,7 +1,8 @@
 module quantities.binary64_scale;
 
 import core.int128 : Cent, mul, udivmod;
-import std.math : frexp, ldexp;
+import core.stdc.string : memcpy;
+import std.math : ldexp;
 
 struct Binary64ScaleResult
 {
@@ -38,27 +39,40 @@ ulong gcd(ulong a, ulong b)
 }
 
 @safe pure nothrow @nogc
+ulong binary64Bits(double value)
+{
+    ulong bits;
+
+    () @trusted {
+        memcpy(&bits, &value, double.sizeof);
+    }();
+
+    return bits;
+}
+
+@safe pure nothrow @nogc
 Binary64Exact decompose(double value)
 {
-    if (value == 0.0)
-        return Binary64Exact(value < 0.0, 0, 0);
+    const bits = binary64Bits(value);
+    const negative = (bits >> 63) != 0;
+    const exponentField = cast(uint)((bits >> 52) & 0x7ffUL);
+    const fraction = bits & ((1UL << 52) - 1UL);
 
-    const bool negative = value < 0.0;
-    const x = negative ? -value : value;
-
-    int exponent;
-    const fraction = frexp(x, exponent);
-
-    ulong significand = cast(ulong) ldexp(fraction, 53);
-    int exponent2 = exponent - 53;
-
-    while (significand != 0 && (significand & 1UL) == 0)
+    if (exponentField == 0)
     {
-        significand >>= 1;
-        ++exponent2;
+        // Zero or subnormal: fraction * 2^-1074.
+        return Binary64Exact(negative, fraction, -1074);
     }
 
-    return Binary64Exact(negative, significand, exponent2);
+    // scaleBinary64 is called only for finite values.
+    assert(exponentField != 0x7ff);
+
+    // Normal:
+    //   (2^52 + fraction) * 2^(biasedExponent - 1023 - 52)
+    return Binary64Exact(
+        negative,
+        (1UL << 52) | fraction,
+        cast(int) exponentField - 1023 - 52);
 }
 
 @safe pure nothrow @nogc
