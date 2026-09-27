@@ -124,7 +124,9 @@ bool valueEquals(T)(ConversionResult!T result, T expected)
     static assert(!nonFinite.hasValue);
     static assert(nonFinite.status == ConversionStatus.nonFinite);
 
-    // Safe no-value observation remains defined in release builds.
-    long unavailable;
-    static assert(!checkedIntegralInexact.tryValue(unavailable));
+    // Safe no-value observation remains defined in release builds and CTFE.
+    static assert({
+        long unavailable;
+        return !checkedIntegralInexact.tryValue(unavailable);
+    }());
 }
