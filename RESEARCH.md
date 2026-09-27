@@ -208,3 +208,14 @@ R12 is promoted by `docs/adr/0004-exact-ratio-public-boundary.md`.
 `ExactRatio!(Numerator, Denominator)` is the M1 public declarative vocabulary for
 exact Unit scale. Normalization is part of its contract; GCD, cross-cancellation
 and checked ratio algebra remain internal.
+
+
+### R03 promotion — 2026-09-27
+
+The conversion status and rounding semantics are promoted by
+`docs/adr/0005-conversion-status-rounding.md`.
+
+M1 distinguishes conversion intent from outcome status. `exact` is explicitly
+relative to the represented source value and does not claim physical
+measurement exactness. Integral conversions never silently truncate or round;
+rounding is explicit caller policy.
