@@ -49,21 +49,39 @@ M2 begins from the accepted M1 core:
 - compile-negative dimensional/semantic tests;
 - consumer probes from geodesy/geometry use cases.
 
-Current M2 scope evidence selects metre, kilometre, international foot, and US
-survey foot. The geospatial consumer audit found no concrete centimetre or
-millimetre requirement, so those units remain deferred rather than being added
-speculatively. The public-unit consumer and compile-negative gates pass on the
-DMD 2.111 / LDC 1.41 baseline; final release-build and branch-review gates
-remain before M2 is closed.
+M2 is complete. PR #11 merged the minimal public length catalogue after the
+DMD 2.111 / LDC 1.41 debug, release, compile-negative, external-consumer, and
+branch-review gates passed.
+
+The accepted M2 scope is metre, kilometre, international foot, and US survey
+foot. The geospatial consumer audit found no concrete centimetre or millimetre
+requirement, so those units remain deferred rather than being added
+speculatively.
 
 ## M3 — Quantity semantics and derived operations
 
+M3 starts with research rather than production API expansion. R04 owns
+arithmetic semantics; the still-open concrete Spec questions from R05 own
+semantic distinctions such as distance/radius/height.
+
 Evaluate from real consumers:
 
-- length versus distance/radius/height specifications;
-- area and derived dimensions;
-- mixed-unit arithmetic ergonomics;
-- mathematical functions required by numerical libraries.
+- whether generic `Length` remains sufficient at reusable library boundaries
+  or concrete distance/radius/height Specs provide justified type safety;
+- which same-Spec and cross-Spec addition/subtraction operations are meaningful;
+- multiplication/division and the minimum justified derived-dimension model;
+- area as the first candidate derived dimension;
+- dimensionless results and scalar multiplication/division;
+- mixed-unit arithmetic ergonomics without bypassing the accepted conversion
+  intent/loss contract;
+- `Rep` result and promotion rules;
+- mathematical functions such as `abs`, `sqrt`, and `hypot` only where
+  numerical consumers demonstrate a need;
+- CTFE, UFCS, `@safe`, `pure`, `nothrow`, and `@nogc` viability;
+- code-generation and compile-time cost before any zero-overhead claim.
+
+Production implementation begins only after the relevant R04/R05 questions
+have evidence-backed decisions.
 
 ## Deferred until justified
 
