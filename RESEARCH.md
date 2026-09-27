@@ -64,9 +64,15 @@ scaling cost for current consumers.
 
 ## R03 — Conversion and loss policy
 
-### Current recommendation
+### Active contract probe
 
 Potentially lossy conversion must not happen silently.
+
+`research/r03-conversion-contract/` now tests three distinct caller intentions:
+exact-required, checked/loss-aware, and explicit-rounded conversion. The probe
+keeps exact Unit scaling separate from target-Rep representability and tests
+signed boundaries and explicit positive/negative rounding on both baseline
+compilers.
 
 Research:
 
