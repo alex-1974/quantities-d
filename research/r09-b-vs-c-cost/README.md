@@ -69,3 +69,44 @@ RUNS=5 ./scripts/measure.sh
 Do not commit generated `results/` until the run has been inspected for
 methodological problems. The first measurement series is evidence collection,
 not yet a performance conclusion.
+
+
+## First measured series — 2026-09-27
+
+Environment:
+
+- Linux x86_64, kernel 6.17.0-22-generic;
+- DUB 1.40.0;
+- DMD 2.111.0;
+- LDC 1.41.0;
+- five repetitions per compiler/configuration with alternating B/C order.
+
+Observed medians:
+
+| Compiler | Model | elapsed | peak RSS |
+|---|---:|---:|---:|
+| DMD | B | 0.19 s | 56,564 KiB |
+| DMD | C | 0.18 s | 56,208 KiB |
+| LDC | B | 0.19 s | 90,172 KiB |
+| LDC | C | 0.17 s | 89,348 KiB |
+
+Binary sizes were completely stable across repetitions:
+
+| Compiler | Model | binary | stripped |
+|---|---:|---:|---:|
+| DMD | B | 935,960 B | 672,088 B |
+| DMD | C | 916,736 B | 660,200 B |
+| LDC | B | 634,448 B | 433,024 B |
+| LDC | C | 634,448 B | 433,024 B |
+
+Interpretation is deliberately limited:
+
+- compile-time samples are too short/noisy for a strong performance claim;
+- peak-RSS differences are small in this tiny workload;
+- DMD shows a reproducible B binary-size increase of 19,224 B unstripped
+  (~2.10%) and 11,888 B stripped (~1.80%);
+- LDC emits identical B/C executable sizes in this workload.
+
+The DMD size difference must be explained by symbol/code-generation inspection
+before it is treated as a representation cost. The next step is therefore
+optimized symbol/assembly comparison, not a larger benchmark or a B/C decision.
