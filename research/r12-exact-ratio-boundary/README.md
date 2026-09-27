@@ -60,3 +60,19 @@ struct InternationalFoot
 
 The public contract is the normalized ratio type and its normalized
 numerator/denominator values. Arithmetic implementation details remain private.
+
+
+## Probe result — 2026-09-27
+
+The R12 probe builds, links and runs successfully on both supported baseline
+compilers:
+
+- DMD 2.111: PASS;
+- LDC 1.41: PASS.
+
+Confirmed cases include ratio reduction, denominator sign normalization,
+zero-to-0/1 normalization, exact international-foot and US-survey-foot scales,
+and full signed numerator handling including `long.min`.
+
+R12 therefore supports promotion of the small public ExactRatio declaration
+vocabulary while keeping ratio algebra internal. See ADR 0004.
