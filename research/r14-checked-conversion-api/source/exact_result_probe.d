@@ -29,6 +29,8 @@ ExactResult!long exactIntegral(long value, long numerator, long denominator)
             return ExactResult!long(false, 0, ExactFailure.inexact);
         case ConversionStatus.overflow:
             return ExactResult!long(false, 0, ExactFailure.overflow);
+        case ConversionStatus.nonFinite:
+            return ExactResult!long(false, 0, ExactFailure.nonFinite);
     }
 }
 
