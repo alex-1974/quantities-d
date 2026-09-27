@@ -115,3 +115,11 @@ ADR 0004 exposes `ExactRatio!(Numerator, Denominator)` as the static public
 vocabulary used by Unit declarations. Ratios normalize at compile time, retain
 normatively exact relationships, and support the full signed `long` numerator
 range. Ratio arithmetic implementation details remain internal to the M1 core.
+
+
+## Promoted conversion semantics
+
+ADR 0005 separates conversion outcome from caller intent. Conversion status
+distinguishes exact, inexact and overflow; exact is relative to the represented
+source value. Potentially lossy integral conversion never rounds implicitly.
+Rounding is explicit caller policy and remains separate from Unit identity.
