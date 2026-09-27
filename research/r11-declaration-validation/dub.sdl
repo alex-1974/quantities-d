@@ -1,0 +1,6 @@
+name "quantities-r11-declaration-validation"
+description "Research probe for quantities-d declaration validation"
+license "MIT"
+targetType "executable"
+sourcePaths "source"
+excludedSourceFiles "source/negative.d"
