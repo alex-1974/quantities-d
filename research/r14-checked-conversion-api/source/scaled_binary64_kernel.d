@@ -104,7 +104,10 @@ double scaleRational(double value, long numerator, long denominator)
     // non-finite result.
     enum minimumSubnormalHalf =
         scaleRational(minimumSubnormal, 1, 2);
-    static assert(minimumSubnormalHalf == 0.0);
+
+    // CTFE probe: baseline compilers may retain extended precision below the
+    // binary64 subnormal floor. Do not assert binary64 rounding here.
+    static assert(minimumSubnormalHalf >= 0.0);
 
     // Scaling a minimum subnormal upward by an exact power of two must recover
     // a representable non-zero value.
@@ -120,4 +123,11 @@ double scaleRational(double value, long numerator, long denominator)
     static assert(twoThirds > oneThird);
 
     assert(scaleRational(double.max, 2, 3) <= double.max);
+
+    // Runtime binary64 must round half the minimum subnormal to zero.
+    const runtimeMinimumSubnormal =
+        double.min_normal * double.epsilon;
+    const runtimeHalf =
+        scaleRational(runtimeMinimumSubnormal, 1, 2);
+    assert(runtimeHalf == 0.0);
 }
