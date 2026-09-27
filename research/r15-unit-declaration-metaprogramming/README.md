@@ -307,3 +307,124 @@ The evidence currently favors:
 
 Candidate E remains only as a challenger: mixin or string-mixin declaration
 generation must demonstrate a concrete advantage over this simpler shape.
+
+
+## E evidence — 2026-09-27
+
+Candidate E was split into two mechanisms because D treats them very
+differently:
+
+- E1: a mixin template injects the structural Unit members into a normal,
+  explicitly named struct;
+- E2: a string mixin generates the declaration from source text.
+
+Both compile successfully with DMD 2.111 and LDC 1.41.
+
+Observed names:
+
+```text
+E1 metre type: Metre
+E1 kilometre type: Kilometre
+E1 kilometre scale: ExactRatio!(1000L, 1L)
+E2 generated type: StringMixinKilometre
+```
+
+### E1 diagnostics
+
+For an invalid zero denominator, both baseline compilers report the normal
+`ExactRatio` invariant and point into the mixin template member:
+
+```text
+ExactRatio denominator must not be zero.
+... instantiated from here: ExactRatio!(1L, 0L)
+alias Scale = ExactRatio!(N, D);
+```
+
+This adds one implementation indirection compared with fully explicit A, but
+the diagnostic remains an ordinary source location with the operative
+`ExactRatio` failure intact. Public type identity remains the named struct.
+
+### E2 diagnostics
+
+The equivalent string-mixin failure reports a synthetic generated-source
+location:
+
+```text
+negative_e.d-mixin-29(29)
+```
+
+LDC additionally echoes the generated declaration text. This is materially
+worse for source navigation, diagnostics, refactoring, and maintenance than a
+normal mixin template. No capability required by M2 was demonstrated that
+requires source-string generation.
+
+### Conclusion
+
+- **E1 mixin template — COMPLEMENT.**
+- **E2 string mixin — REJECT for M2.**
+
+E1 is viable when a repeated structural declaration becomes large enough to
+justify a shared mixin template while preserving nominal Unit types.
+
+However, the current Unit contract contains only two aliases
+(`Dimension`, `Scale`). Therefore E1 should not automatically replace the
+explicit A form. The production choice should favor whichever form makes the
+normative Unit definition clearest at the declaration site.
+
+E2 fails the promotion rule: it adds diagnostic and tooling cost without a
+demonstrated capability unavailable to ordinary D metaprogramming.
+
+## Final R15 decision
+
+| Mechanism | Result | M2 role |
+| --- | --- | --- |
+| Explicit named Unit structs | KEEP | Primary public Unit representation and semantic baseline. |
+| Generic Unit template aliases | DEFER | Do not use as primary public Unit type mechanism. |
+| Exact SI-prefix scale helper | COMPLEMENT | Use for exact mechanical decimal-scale construction where useful. |
+| Descriptor catalogue | REJECT | Unit types + compile-time sequences already provide the required catalogue behavior. |
+| AliasSeq/static foreach | COMPLEMENT | Use for Unit families and generated compile-time validation/test matrices. |
+| Mixin template | COMPLEMENT | Optional declaration helper if repeated structural boilerplate grows enough to justify it. |
+| String mixin | REJECT | No M2 requirement justifies generated-source diagnostics/tooling cost. |
+
+## M2 recommendation
+
+R15 promotes the following design constraints into M2:
+
+1. **Public Units remain nominal named structs.**
+   Compiler-visible domain names such as `Kilometre` are part of API quality.
+
+2. **The Unit type is the single normative source of Dimension and exact Scale.**
+   Do not duplicate those facts in a descriptor catalogue.
+
+3. **Use normal D metaprogramming around, not instead of, the semantic type.**
+   Preferred tools are templates, alias templates, `static if`,
+   `static foreach`, and traits.
+
+4. **Exact SI-prefix construction may be metaprogrammed.**
+   Prefix helpers must produce `ExactRatio` values using integer/rational
+   arithmetic only and must detect representational overflow.
+
+5. **Unit families are compile-time sequences of Unit types.**
+   Generate family invariants and pairwise conversion tests with
+   `AliasSeq`/`static foreach`.
+
+6. **Mixin templates remain optional.**
+   If the Unit contract stays as small as `Dimension` + `Scale`, explicit
+   aliases may remain clearer. A mixin becomes justified only when it removes
+   meaningful repeated structure without obscuring normative definitions.
+
+7. **Do not use string mixins for Unit declaration in M2.**
+   Reconsider only if a future requirement cannot be expressed reasonably with
+   normal templates and traits.
+
+8. **Do not promote broad metadata/runtime catalogue features from R15.**
+   Symbols, parsing, formatting, UCUM, serialization, and runtime registries
+   remain deferred.
+
+## Research status
+
+R15 is complete for the M2 entry decision.
+
+The next implementation step is to define the minimal M2 linear-unit slice
+using the selected shape and then run the normal DMD/LDC, compile-negative,
+CTFE, and consumer gates.
