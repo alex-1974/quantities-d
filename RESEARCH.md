@@ -197,3 +197,8 @@ declarative vocabulary for Unit authors while ratio algebra remains internal.
 
 The probe also closes a known R02 edge case: normalization must handle the full
 signed `long` numerator range without evaluating `-long.min`.
+
+R12 is promoted by `docs/adr/0004-exact-ratio-public-boundary.md`.
+`ExactRatio!(Numerator, Denominator)` is the M1 public declarative vocabulary for
+exact Unit scale. Normalization is part of its contract; GCD, cross-cancellation
+and checked ratio algebra remain internal.
