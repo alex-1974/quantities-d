@@ -110,3 +110,49 @@ void main()
 
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
 }
+
+
+// ---------------------------------------------------------------------------
+// Probe 2: alternative call shapes without changing semantic contracts.
+// ---------------------------------------------------------------------------
+
+struct SpecFactory(Spec)
+{
+    @safe pure nothrow @nogc
+    static auto from(Unit, Rep)(Rep value)
+    {
+        return quantity!(Spec, Unit)(value);
+    }
+}
+
+struct UnitFactory(Unit)
+{
+    @safe pure nothrow @nogc
+    static auto as(Spec, Rep)(Rep value)
+    {
+        return quantity!(Spec, Unit)(value);
+    }
+}
+
+unittest
+{
+    // A — free function / UFCS.
+    enum a1 = quantity!(Length, Kilometre)(1.0);
+    enum a2 = 1.0.quantity!(Length, Kilometre);
+    static assert(a1.canonicalValue == 1000.0);
+    static assert(a2.canonicalValue == 1000.0);
+
+    // B — Spec-centred wrapper factory.
+    enum b = SpecFactory!Length.from!Kilometre(1.0);
+    static assert(b.canonicalValue == 1000.0);
+
+    // C — Unit-centred wrapper factory.
+    enum c = UnitFactory!Kilometre.as!Length(1.0);
+    static assert(c.canonicalValue == 1000.0);
+
+    // Distinct semantic Specs remain distinct for all call shapes.
+    enum radiusB = SpecFactory!Radius.from!Kilometre(1.0);
+    enum radiusC = UnitFactory!Kilometre.as!Radius(1.0);
+    static assert(!is(typeof(b) == typeof(radiusB)));
+    static assert(!is(typeof(c) == typeof(radiusC)));
+}
