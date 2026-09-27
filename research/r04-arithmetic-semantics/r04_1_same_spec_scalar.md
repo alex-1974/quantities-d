@@ -162,3 +162,135 @@ Before choosing A, B, C, or D, test:
 The purpose is not to build checked arithmetic in R04.1. It is to determine
 which raw language behaviors quantities-d may safely expose and which require
 restriction or explicit policy.
+
+
+## Boundary results — 2026-09-27
+
+The boundary probes were run on DMD 2.111 and LDC 1.41 in debug and release
+where applicable.
+
+### Signed/unsigned promotion
+
+Both compilers agreed:
+
+| Expression | Result type | Observed value |
+|---|---:|---:|
+| `-1 int + 1 uint` | `uint` | 0 |
+| `-1 int - 1 uint` | `uint` | 4294967294 |
+| `-1 int * 1 uint` | `uint` | 4294967295 |
+
+This demonstrates that ordinary D promotion can silently reinterpret negative
+signed arithmetic into unsigned modular results.
+
+### Narrow integer promotion
+
+Both compilers agreed that byte/ubyte/short/ushort arithmetic promotes to
+`int` for the tested operations:
+
+- byte + byte -> int
+- ubyte + ubyte -> int
+- short + short -> int
+- ushort + ushort -> int
+- byte + ubyte -> int
+- short + ushort -> int
+- byte * byte -> int
+- short / short -> int
+
+This behavior is regular D arithmetic but means result-Rep identity is not
+preserved for narrow integer Quantity representations.
+
+### Multiplication overflow
+
+`int.max * 2` produced `-2` with exit code 0 under both DMD and LDC, in
+both debug and release builds.
+
+Therefore ordinary signed integer multiplication overflow is observable as
+wraparound for this probe and is not rejected merely by using debug builds.
+
+### `int.min / -1`
+
+Observed behavior:
+
+| Compiler | Debug | Release |
+|---|---|---|
+| DMD 2.111 | runtime failure (program code -8; dub reports failure) | returns int.min |
+| LDC 1.41 | runtime failure (program code -8; dub reports failure) | returns an unrelated observed int value |
+
+The release-mode result is therefore not a stable semantic value across the
+baseline compilers.
+
+### Division by zero
+
+Observed behavior:
+
+| Compiler | Debug | Release |
+|---|---|---|
+| DMD 2.111 | runtime failure (program code -8) | compile-time compiler error in this probe |
+| LDC 1.41 | runtime failure (program code -8) | executable ran and produced an unrelated observed int value |
+
+The exact release manifestation is compiler/optimization dependent and must not
+be exposed by quantities-d as a meaningful arithmetic contract.
+
+## R04.1 conclusion
+
+Candidate B — unconditionally expose ordinary D arithmetic and use the raw
+expression type as ResultRep — is rejected as the complete public integer
+arithmetic policy.
+
+Reasons:
+
+1. signed/unsigned promotion can silently reinterpret negative values;
+2. integer division silently truncates;
+3. signed overflow can wrap without failure;
+4. `int.min / -1` has build-mode/compiler-dependent behavior;
+5. division by zero has build-mode/compiler-dependent behavior;
+6. narrow integer operations change representation type.
+
+This does **not** mean quantities-d must implement checked integer arithmetic for
+every operator. It means integer Quantity arithmetic needs an explicit policy
+about which raw operations are permitted and where callers must opt into
+checked/exact/rounded behavior.
+
+## Narrowed policy candidates
+
+The evidence now favors separating floating and integral arithmetic policy
+rather than forcing one universal Rep rule.
+
+### Integral Quantity arithmetic
+
+Strong candidate:
+
+- direct same-Spec addition/subtraction only under a deliberately defined
+  integral safety/result rule;
+- reject implicit signed/unsigned mixing unless a safe common representation is
+  explicitly established;
+- do not present integer Quantity division as generally exact arithmetic;
+- do not rely on debug-mode traps as semantic protection;
+- overflow policy must be explicit if integral arithmetic enters production.
+
+### Floating Quantity arithmetic
+
+Ordinary D promotion remains a viable candidate for `float`/`double`
+combinations, subject to exact tests for result type, non-finite behavior,
+CTFE, and attributes.
+
+### Mixed integral/floating arithmetic
+
+Potentially acceptable for scalar scaling because the result becomes floating,
+but this still needs an explicit rule rather than accidental language promotion.
+
+## Next experiment
+
+R04.1 should now split into two focused probes:
+
+1. floating same-Spec/scalar arithmetic, including NaN, infinity, signed zero,
+   CTFE, and float/double promotion;
+2. integral arithmetic policy candidates, comparing:
+   - same-Rep only,
+   - safe-widening-only,
+   - explicit checked result API,
+   - rejecting division except through an explicit conversion/rounding intent.
+
+The goal is to avoid designing a large checked-arithmetic subsystem unless
+consumer evidence requires it, while also avoiding undefined or surprising raw
+integer semantics.
