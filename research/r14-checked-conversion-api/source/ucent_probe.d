@@ -67,8 +67,21 @@ Cent divideWithRemainder(Cent numerator, ulong denominator, out Cent remainder)
     }();
 
     static assert(scaledQR[0].hi == 0);
-    static assert(scaledQR[0].lo == significand + 1);
+    static assert(scaledQR[0].lo == significand);
     static assert(!isZero(scaledQR[1]));
+
+    // The quotient is still 2^52. The +1 comes from the final
+    // round-to-nearest, ties-to-even decision based on the remainder.
+    enum doubledRemainder = mul(scaledQR[1], fromUlong(2));
+    enum denominator128 = fromUlong(ratioDenominator);
+
+    static assert(
+        doubledRemainder.hi > denominator128.hi
+        || (doubledRemainder.hi == denominator128.hi
+            && doubledRemainder.lo > denominator128.lo));
+
+    enum roundedSignificand = scaledQR[0].lo + 1;
+    static assert(roundedSignificand == significand + 1);
 
     // Runtime must match CTFE exactly.
     const runtimeProduct = multiply(a, b);
