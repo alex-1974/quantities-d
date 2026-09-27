@@ -107,3 +107,11 @@ validation. Valid Specs and Units satisfy required members and relationships;
 public API boundaries provide explicit `static assert` diagnostics for invalid
 declarations. No inheritance, runtime registration or declaration macro is
 required for the M1 static core.
+
+
+## Promoted exact-scale vocabulary
+
+ADR 0004 exposes `ExactRatio!(Numerator, Denominator)` as the static public
+vocabulary used by Unit declarations. Ratios normalize at compile time, retain
+normatively exact relationships, and support the full signed `long` numerator
+range. Ratio arithmetic implementation details remain internal to the M1 core.
