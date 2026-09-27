@@ -252,3 +252,14 @@ the private Quantity constructor is rejected from the external consumer module.
 DMD reports this as "is not accessible from module" rather than using the word
 "private". The runner now matches the access-control meaning instead of a
 compiler-specific adjective.
+
+
+### Private-field diagnostic behavior
+
+DMD hides the private payload field strongly enough that an external consumer
+may receive "no property canonical_" instead of "not accessible". Both
+diagnostics prove the same required module-boundary property: external code
+cannot observe or mutate the raw canonical payload directly.
+
+The runner therefore accepts either access-control form while still requiring
+the compile to fail.
