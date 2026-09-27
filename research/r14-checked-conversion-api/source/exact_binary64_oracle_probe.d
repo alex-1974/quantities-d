@@ -169,18 +169,29 @@ bool candidateCloserToRational(
     assert(exponent2 < 0);
 
     const shift = -exponent2;
-    const scale = fromUlong(1UL << shift);
 
-    const targetScaled = mul(fromUlong(numerator), scale);
-    const aScaled = mul(fromUlong(candidateA), fromUlong(denominator));
-    const bScaled = mul(fromUlong(candidateB), fromUlong(denominator));
+    // Compare the numerators over the common positive denominator
+    // denominator * 2^shift:
+    //
+    //   candidate * 2^-shift - numerator/denominator
+    // = (candidate*denominator - numerator*2^shift)
+    //   / (denominator*2^shift)
+    //
+    // Only the absolute integer numerators are needed for ordering.
+    const candidateAScaled =
+        mul(fromUlong(candidateA), fromUlong(denominator));
+    const candidateBScaled =
+        mul(fromUlong(candidateB), fromUlong(denominator));
 
-    const Cent aDiff = greater(aScaled, targetScaled)
-        ? subtractNonNegative(aScaled, targetScaled)
-        : subtractNonNegative(targetScaled, aScaled);
-    const Cent bDiff = greater(bScaled, targetScaled)
-        ? subtractNonNegative(bScaled, targetScaled)
-        : subtractNonNegative(targetScaled, bScaled);
+    Cent targetScaled = fromUlong(numerator);
+    targetScaled = shl(targetScaled, shift);
+
+    const Cent aDiff = greater(candidateAScaled, targetScaled)
+        ? subtractNonNegative(candidateAScaled, targetScaled)
+        : subtractNonNegative(targetScaled, candidateAScaled);
+    const Cent bDiff = greater(candidateBScaled, targetScaled)
+        ? subtractNonNegative(candidateBScaled, targetScaled)
+        : subtractNonNegative(targetScaled, candidateBScaled);
 
     return greater(bDiff, aDiff);
 }
