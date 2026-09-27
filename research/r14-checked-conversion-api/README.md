@@ -398,3 +398,31 @@ conversion and are currently mapped to the non-success `overflow` status in
 the research kernel. Before promotion, R14 must decide whether that status name
 is sufficiently precise or whether non-finite input deserves a distinct failure
 category.
+
+
+## Probe 8 — non-finite floating values
+
+R14 now distinguishes non-finite floating input from arithmetic overflow.
+
+Candidate status vocabulary under test:
+
+```d
+enum ConversionStatus
+{
+    exact,
+    inexact,
+    overflow,
+    nonFinite
+}
+```
+
+This keeps two materially different failures separate:
+
+- `overflow`: a finite represented source and exact scale produce a result
+  outside the target representation;
+- `nonFinite`: the source is already NaN or infinity and therefore is outside
+  the ordinary finite quantity-conversion contract.
+
+`ExactFailure` mirrors the same distinction. Integral conversions never
+produce `nonFinite`, but sharing the status type keeps the public checked
+conversion vocabulary uniform across Reps.
