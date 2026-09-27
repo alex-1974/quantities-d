@@ -265,3 +265,22 @@ source-unit identity in the type; C deliberately does not. The next question is
 whether DMD's generated TypeInfo/equality/hash materialization can be avoided
 for the intended B value type, and whether realistic consumer workloads reach
 enough distinct Spec×Unit combinations for the measured cost to matter.
+
+
+## DMD TypeInfo isolation probe
+
+`scripts/probe-typeinfo.sh` compares three B-shaped structs at N = 1, 20, 100,
+and 200 Unit-bearing concrete types:
+
+- `baseline`: compiler-generated equality/hash behavior;
+- `explicit`: explicit value equality and hash implementation;
+- `noeq`: equality explicitly disabled.
+
+The experiment asks whether the DMD metadata-size slope is merely an artifact
+of synthesized equality/hash helpers or follows from the concrete struct type
+identity itself. A compile failure is itself evidence if suppressing a generated
+operation is incompatible with the intended value-type contract.
+
+The probe does not propose any of these variants as public API. In particular,
+an optimization is not acceptable merely because it reduces binary size if it
+weakens ordinary quantity value semantics.
