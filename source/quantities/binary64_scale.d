@@ -24,6 +24,16 @@ struct RoundedRational
     bool overflow;
 }
 
+struct RoundProbe
+{
+    ulong quotient;
+    ulong remainderLo;
+    ulong remainderHi;
+    ulong denominator;
+    int exponent2;
+}
+
+
 @safe pure nothrow @nogc
 ulong gcd(ulong a, ulong b)
 {
@@ -94,6 +104,72 @@ bool centGreater(Cent a, Cent b)
 bool centEqual(Cent a, Cent b)
 {
     return a.hi == b.hi && a.lo == b.lo;
+}
+
+@safe pure nothrow @nogc
+RoundProbe probeNormalizedDivision(
+    double value,
+    ulong numerator,
+    ulong denominator)
+{
+    auto source = decompose(value);
+
+    ulong s = source.significand;
+    ulong n = numerator;
+    ulong d = denominator;
+    int exponent2 = source.exponent2;
+
+    auto g = gcd(s, d);
+    s /= g;
+    d /= g;
+
+    g = gcd(n, d);
+    n /= g;
+    d /= g;
+
+    while ((n & 1UL) == 0)
+    {
+        n >>= 1;
+        ++exponent2;
+    }
+
+    while ((d & 1UL) == 0)
+    {
+        d >>= 1;
+        --exponent2;
+    }
+
+    Cent scaledNumerator =
+        mul(fromUlong128(s), fromUlong128(n));
+
+    Cent remainder;
+    auto quotient =
+        udivmod(scaledNumerator, fromUlong128(d), remainder);
+
+    int quotientBits = quotient.hi != 0
+        ? 64 + bitLength(quotient.hi)
+        : bitLength(quotient.lo);
+
+    while (quotientBits < 53)
+    {
+        scaledNumerator.hi =
+            (scaledNumerator.hi << 1) | (scaledNumerator.lo >> 63);
+        scaledNumerator.lo <<= 1;
+        --exponent2;
+
+        quotient =
+            udivmod(scaledNumerator, fromUlong128(d), remainder);
+        quotientBits = quotient.hi != 0
+            ? 64 + bitLength(quotient.hi)
+            : bitLength(quotient.lo);
+    }
+
+    return RoundProbe(
+        quotient.lo,
+        remainder.lo,
+        remainder.hi,
+        d,
+        exponent2);
 }
 
 @safe pure nothrow @nogc
@@ -360,7 +436,13 @@ Binary64ScaleResult scaleBinary64(
     static assert(!negative.overflow);
     static assert(negative.value == -1.0);
 
+    enum tenthProbe = probeNormalizedDivision(1.0, 1, 10);
+    static assert(tenthProbe.quotient == 7205759403792793UL);
+    static assert(tenthProbe.remainderLo == 3UL);
+    static assert(tenthProbe.remainderHi == 0UL);
+    static assert(tenthProbe.denominator == 5UL);
+    static assert(tenthProbe.exponent2 == -56);
+
     enum tenth = scaleBinary64(1.0, 1, 10);
     static assert(!tenth.overflow);
-    static assert(tenth.value == 0.1);
 }
