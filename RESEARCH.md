@@ -219,3 +219,21 @@ M1 distinguishes conversion intent from outcome status. `exact` is explicitly
 relative to the represented source value and does not claim physical
 measurement exactness. Integral conversions never silently truncate or round;
 rounding is explicit caller policy.
+
+
+## R13 — Public API shape: CTFE and UFCS
+
+### Question
+
+Before M1 implementation, validate the public call shape under normal D usage.
+
+Hard gates:
+
+- representative static-core operations work in CTFE;
+- value-oriented operations compose naturally through UFCS;
+- Unit boundaries remain explicit;
+- no ambiguous raw-scalar Quantity constructor is public;
+- Spec semantics are not inferred from Unit where one Unit can serve multiple
+  Specs.
+
+The active probe is under `research/r13-public-api-ctfe-ufcs/`.
