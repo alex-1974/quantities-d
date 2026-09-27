@@ -64,3 +64,25 @@ version (NonCanonicalExtraction)
     enum q = 1000.0.quantity!(Length, Metre);
     enum x = q.inUnit!Kilometre;
 }
+
+
+version (CheckedWrongDimension)
+{
+    enum x = 1L.checkedQuantity!(Length, Second);
+}
+
+version (CheckedBrokenSpec)
+{
+    enum x = 1L.checkedQuantity!(BrokenSpec, Metre);
+}
+
+version (CheckedBrokenUnit)
+{
+    enum x = 1L.checkedQuantity!(Length, BrokenUnit);
+}
+
+version (CheckedExtractionWrongDimension)
+{
+    enum q = 1L.quantity!(Length, Metre);
+    enum x = q.checkedIn!Second;
+}

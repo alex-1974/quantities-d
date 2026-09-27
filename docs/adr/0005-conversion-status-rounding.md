@@ -25,7 +25,7 @@ value exactly represented an earlier physical measurement or decimal source.
 
 M1 distinguishes conversion **status** from conversion **intent**.
 
-The status model is conceptually:
+The original status model selected here was conceptually:
 
 ```d
 enum ConversionStatus
@@ -35,6 +35,11 @@ enum ConversionStatus
     overflow
 }
 ```
+
+ADR 0007 extends this vocabulary with `nonFinite` for NaN/infinity input.
+That extension supersedes this ADR only for the status vocabulary; the
+exact/inexact/overflow meanings and conversion-intent rules below remain in
+force.
 
 The names are part of the semantic decision; exact final public spelling and
 module placement may still be adjusted before API stabilization.

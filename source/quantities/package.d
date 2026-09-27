@@ -1,5 +1,17 @@
 module quantities;
 
+public import quantities.conversion :
+    ConversionResult,
+    ConversionStatus,
+    ExactFailure,
+    ExactResult,
+    RoundingMode,
+    checkedIn,
+    checkedQuantity,
+    exactIn,
+    exactQuantity,
+    roundedIn,
+    roundedQuantity;
 public import quantities.quantity : Quantity, inUnit, quantity;
 public import quantities.ratio : ExactRatio;
 public import quantities.traits : isQuantitySpec, isUnit;

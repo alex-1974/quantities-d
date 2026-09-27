@@ -44,6 +44,10 @@ jobs:
         shell: bash
         run: dub test --compiler="$DC" --force
 
+      - name: Run compile-negative tests
+        shell: bash
+        run: bash tests/negative/run.sh "$DC"
+
       - name: Run external consumer
         shell: bash
         run: |

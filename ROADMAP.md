@@ -31,11 +31,13 @@ Resolve, with prototypes and evidence:
 - CTFE, `@safe`, `pure`, `nothrow`, and `@nogc` viability;
 - compile-time cost on DMD and LDC.
 
-No stable API commitment is implied until these questions are closed.
+ADR 0001–0007 now close the M1 storage, static metadata, conversion-intent,
+CTFE/UFCS, and checked-conversion decisions. Final branch-level verification
+remains before the M1 integration PR is promoted from draft.
 
 ## M2 — Minimal linear-unit slice
 
-Only after M1 decisions:
+After final M1 branch verification:
 
 - metre;
 - kilometre;
@@ -63,3 +65,22 @@ Evaluate from real consumers:
 - serialization formats;
 - CRS/reference-frame semantics;
 - a broad SI/physics catalogue.
+
+
+## Consumer integration policy
+
+A domain library with a documented canonical-unit scalar API does not
+automatically require quantities-d.
+
+Prefer:
+
+- dependency-light scalar kernels with explicit documented unit contracts where
+  the domain already has a clear canonical convention;
+- strong domain types where the domain itself owns the distinction;
+- optional quantities-d boundary adapters when users benefit from compile-time
+  dimension/unit checking and conversion;
+- a hard quantities-d dependency only when concrete consumer evidence shows
+  quantities are part of the library's core semantic model.
+
+The current geospatial consumer audit does not justify a hard dependency from
+geodesy-d, geo-d, geo3-d, raster-d, or imagery-d.
