@@ -59,6 +59,9 @@ run_compiler() {
     run_case "$compiler" "$flag" CheckedBrokenSpec "checkedQuantity: Spec must define Dimension and a valid CanonicalUnit."
     run_case "$compiler" "$flag" CheckedBrokenUnit "checkedQuantity: Unit must define Dimension and a valid exact Scale."
     run_case "$compiler" "$flag" CheckedExtractionWrongDimension "checkedIn: Quantity Spec and Unit must have the same Dimension."
+    run_case "$compiler" "$flag" M2NonCanonicalKilometreConstruction "quantity: non-canonical Unit construction requires checkedQuantity, exactQuantity, or roundedQuantity."
+    run_case "$compiler" "$flag" M2NonCanonicalInternationalFootExtraction "inUnit: non-canonical Unit extraction requires checkedIn, exactIn, or roundedIn."
+    run_case "$compiler" "$flag" M2WrongDimensionConstruction "checkedQuantity: Spec and Unit must have the same Dimension."
 }
 
 if [[ $# -gt 0 ]]; then
