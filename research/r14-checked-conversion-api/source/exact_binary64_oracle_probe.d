@@ -144,11 +144,51 @@ Parts roundPositiveRational(Cent numerator, ulong denominator, int exponent2)
     return Parts(q, outExponent);
 }
 
+@safe pure nothrow @nogc
+bool candidateCloserToRational(
+    ulong candidateA,
+    ulong candidateB,
+    int exponent2,
+    ulong numerator,
+    ulong denominator)
+{
+    // Compare |candidate * 2^exponent2 - numerator/denominator|
+    // exactly for the negative-exponent cases used by this oracle probe.
+    assert(exponent2 < 0);
+
+    const shift = -exponent2;
+    const scale = fromUlong(1UL << shift);
+
+    const targetScaled = mul(fromUlong(numerator), scale);
+    const aScaled = mul(fromUlong(candidateA), fromUlong(denominator));
+    const bScaled = mul(fromUlong(candidateB), fromUlong(denominator));
+
+    Cent aDiff = greater(aScaled, targetScaled)
+        ? Cent(aScaled.lo - targetScaled.lo, aScaled.hi - targetScaled.hi)
+        : Cent(targetScaled.lo - aScaled.lo, targetScaled.hi - aScaled.hi);
+    Cent bDiff = greater(bScaled, targetScaled)
+        ? Cent(bScaled.lo - targetScaled.lo, bScaled.hi - targetScaled.hi)
+        : Cent(targetScaled.lo - bScaled.lo, targetScaled.hi - bScaled.hi);
+
+    return greater(bDiff, aDiff);
+}
+
 @safe unittest
 {
     // 1/10 should match the actual binary64 literal exactly.
-    enum oneTenth = roundPositiveRational(fromUlong(1), 10, 0);
     enum literalTenth = decompose(0.1);
+    static assert(literalTenth.significand == 7205759403792793UL);
+    static assert(literalTenth.exponent2 == -56);
+
+    // Direct nearest-neighbour oracle around 0.1.
+    static assert(candidateCloserToRational(
+        7205759403792793UL,
+        7205759403792794UL,
+        -56,
+        1,
+        10));
+
+    enum oneTenth = roundPositiveRational(fromUlong(1), 10, 0);
     static assert(oneTenth.significand == literalTenth.significand);
     static assert(oneTenth.exponent2 == literalTenth.exponent2);
 
