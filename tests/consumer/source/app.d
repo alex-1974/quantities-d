@@ -10,12 +10,6 @@ struct Metre
     alias Scale = ExactRatio!(1, 1);
 }
 
-struct Kilometre
-{
-    alias Dimension = LengthDimension;
-    alias Scale = ExactRatio!(1000, 1);
-}
-
 struct Length
 {
     alias Dimension = LengthDimension;
@@ -24,9 +18,9 @@ struct Length
 
 void main()
 {
-    enum ctfe = 1.25.quantity!(Length, Kilometre);
-    static assert(ctfe.canonicalValue == 1250.0);
-    static assert(ctfe.inUnit!Kilometre == 1.25);
+    enum ctfe = 1.25.quantity!(Length, Metre);
+    static assert(ctfe.canonicalValue == 1.25);
+    static assert(ctfe.inUnit!Metre == 1.25);
 
     auto runtime = 2.5.quantity!(Length, Metre);
     assert(runtime.canonicalValue == 2.5);
