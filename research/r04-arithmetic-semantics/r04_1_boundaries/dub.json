@@ -1,0 +1,5 @@
+{
+    "name": "quantities-r04-1-boundaries",
+    "description": "R04.1 boundary probe for D arithmetic promotion",
+    "targetType": "executable"
+}
