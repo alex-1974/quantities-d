@@ -359,5 +359,10 @@ Binary64ScaleResult scaleBinary64(
 
     enum tenth = scaleBinary64(1.0, 1, 10);
     static assert(!tenth.overflow);
-    static assert(tenth.value == 0.1);
+
+    enum tenthParts = decompose(tenth.value);
+    enum literalTenthParts = decompose(0.1);
+
+    static assert(tenthParts.exponent2 == literalTenthParts.exponent2);
+    static assert(tenthParts.significand == literalTenthParts.significand);
 }
