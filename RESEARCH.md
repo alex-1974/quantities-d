@@ -31,10 +31,18 @@ C  Quantity!(Spec, Rep) with canonical storage
 - compile-negative contract tests;
 - representative geodesy, geometry, and raster-adjacent call sites.
 
-### Current recommendation
+### Promoted decision
 
-Do not choose yet. Preserve `Spec` as a first-class design question because
-same-dimension quantities can have materially different semantics.
+R01 is promoted by `docs/adr/0001-canonical-quantity-identity.md`.
+
+M1 selects `Quantity!(Spec, Rep)` with canonical storage. `Spec` remains a
+first-class semantic axis and defines the canonical Unit contract. Source Unit
+is explicit compile-time metadata at construction/conversion boundaries rather
+than part of stored Quantity type identity.
+
+Candidate B remains a documented alternative in the research record; its
+persistent source-Unit identity did not justify the measured type-instantiation
+scaling cost for current consumers.
 
 ## R02 — Unit representation and exact conversion
 
