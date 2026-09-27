@@ -46,7 +46,7 @@ jobs:
 
       - name: Run compile-negative tests
         shell: bash
-        run: bash tests/negative/run.sh
+        run: bash tests/negative/run.sh "$DC"
 
       - name: Run external consumer
         shell: bash
