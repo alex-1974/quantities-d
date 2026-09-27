@@ -59,3 +59,17 @@ This probe does not freeze public names such as `isQuantitySpec`,
 
 It also does not decide derived dimensions, arithmetic, formatting, runtime
 parsing, angle semantics, or Spec hierarchies.
+
+
+## Diagnostic harness correction — 2026-09-27
+
+The first diagnostic run established:
+
+- all five DMD negative cases were rejected with the intended boundary
+  diagnostic;
+- the initial LDC portion was invalid because the runner passed DMD's
+  `-version=Name` syntax to LDC.
+
+LDC expects `-d-version=Name`. The runner was corrected to select the
+compiler-specific version flag. No conclusion about LDC diagnostics is drawn
+from the invalid first run; it must be rerun with the corrected harness.
