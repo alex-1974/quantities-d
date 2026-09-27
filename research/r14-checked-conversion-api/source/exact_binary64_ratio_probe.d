@@ -403,4 +403,37 @@ double rebuild(bool negative, RoundedRational value)
     static assert(!scaleUp.overflow);
     static assert(rebuild(false, scaleUp)
         == 1.5 * cast(double)(1UL << 20));
+
+    // Negative values share the same magnitude kernel.
+    enum negativeThreeHalves = scaleExact(decompose(-1.5), 2, 3);
+    static assert(rebuild(true, negativeThreeHalves) == -1.0);
+
+    // Signed zero must be preserved by final reconstruction.
+    enum zeroScaled = scaleExact(decompose(-0.0), 3, 2);
+    static assert(rebuild(true, zeroScaled) == 0.0);
+    static assert(1.0 / rebuild(true, zeroScaled) == -double.infinity);
+
+    // Largest subnormal -> exact transition into the minimum normal value.
+    enum largestSubnormal =
+        decompose(double.min_normal - minSubnormalValue);
+    enum nextQuantum = scaleExact(largestSubnormal, 1, 1);
+    static assert(rebuild(false, nextQuantum)
+        == double.min_normal - minSubnormalValue);
+
+    // Scaling the largest subnormal upward by one minimum-subnormal quantum
+    // equivalent crosses exactly onto the normal boundary.
+    enum normalBoundarySource =
+        decompose(double.min_normal / 2.0);
+    enum normalBoundary = scaleExact(normalBoundarySource, 2, 1);
+    static assert(rebuild(false, normalBoundary) == double.min_normal);
+
+    // A ratio with a very large odd denominator exercises denominator growth
+    // near the current research-kernel limit without changing the value much.
+    enum largeOddDenominator = cast(ulong) long.max;
+    enum denominatorStress = scaleExact(
+        decompose(1.0),
+        largeOddDenominator - 2,
+        largeOddDenominator);
+    static assert(!denominatorStress.overflow);
+    static assert(rebuild(false, denominatorStress) == 1.0);
 }
