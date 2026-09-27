@@ -512,6 +512,57 @@ Binary64ScaleResult scaleBinary64(
     assert(!negativeZeroNegativeScale.overflow);
     assert((binary64Bits(negativeZeroNegativeScale.value) >> 63) == 0);
 
+    // Normal/subnormal transition. The exact midpoint between the largest
+    // subnormal and the smallest normal binary64 value is
+    //
+    //   min_normal - 0.5 * min_subnormal.
+    //
+    // Ties-to-even selects min_normal because its least-significant stored
+    // significand bit is even, while the largest subnormal is odd.
+    const belowNormalMidpoint = scaleBinary64(
+        double.min_normal,
+        18014398509481981L,
+        18014398509481984L);
+    assert(!belowNormalMidpoint.overflow);
+    assert(belowNormalMidpoint.value
+        == double.min_normal - minSubnormal);
+
+    const atNormalMidpoint = scaleBinary64(
+        double.min_normal,
+        9007199254740991L,
+        9007199254740992L);
+    assert(!atNormalMidpoint.overflow);
+    assert(atNormalMidpoint.value == double.min_normal);
+
+    const aboveNormalMidpoint = scaleBinary64(
+        double.min_normal,
+        18014398509481983L,
+        18014398509481984L);
+    assert(!aboveNormalMidpoint.overflow);
+    assert(aboveNormalMidpoint.value == double.min_normal);
+
+    const negativeBelowNormalMidpoint = scaleBinary64(
+        -double.min_normal,
+        18014398509481981L,
+        18014398509481984L);
+    assert(!negativeBelowNormalMidpoint.overflow);
+    assert(negativeBelowNormalMidpoint.value
+        == -(double.min_normal - minSubnormal));
+
+    const negativeAtNormalMidpoint = scaleBinary64(
+        -double.min_normal,
+        9007199254740991L,
+        9007199254740992L);
+    assert(!negativeAtNormalMidpoint.overflow);
+    assert(negativeAtNormalMidpoint.value == -double.min_normal);
+
+    const negativeAboveNormalMidpoint = scaleBinary64(
+        -double.min_normal,
+        18014398509481983L,
+        18014398509481984L);
+    assert(!negativeAboveNormalMidpoint.overflow);
+    assert(negativeAboveNormalMidpoint.value == -double.min_normal);
+
     const trueOverflow = scaleBinary64(double.max, 2, 1);
     assert(trueOverflow.overflow);
 
