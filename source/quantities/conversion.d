@@ -659,4 +659,19 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
     enum overflowDouble =
         double.max.checkedQuantity!(Length, Kilometre);
     static assert(overflowDouble.status == ConversionStatus.overflow);
+
+    struct TwoThirdsMetre
+    {
+        alias Dimension = LengthDimension;
+        alias Scale = ExactRatio!(2, 3);
+    }
+
+    // Regression: the exact rational result is finite even though evaluating
+    // double.max * 2 first would overflow.
+    enum avoidableIntermediateOverflow =
+        double.max.checkedQuantity!(Length, TwoThirdsMetre);
+    static assert(avoidableIntermediateOverflow.status
+        != ConversionStatus.overflow);
+    static assert(avoidableIntermediateOverflow.value.canonicalValue
+        <= double.max);
 }
