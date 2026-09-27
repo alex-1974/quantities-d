@@ -135,3 +135,44 @@ is the next probe.
 The LDC byte-identical result remains important: any DMD materialization cost
 observed here is compiler/code-generation behavior, not an unavoidable runtime
 storage cost of B.
+
+
+## DMD model-specific symbol result — 2026-09-27
+
+The symbol comparison strongly supports the materialization hypothesis.
+
+Observed unique-symbol counts:
+
+- B: 2,747 total, 82 B-only;
+- C: 2,689 total, 24 C-only.
+
+The controlled probe has four Specs and five Units. B therefore creates twenty
+distinct `QuantityB!(Spec, Unit, double)` concrete types. For each observed B
+quantity instantiation, DMD emits model-specific infrastructure including:
+
+- `__xopEquals`;
+- `__xtoHash`;
+- a TypeInfo initializer;
+- a struct initializer.
+
+C creates only four `QuantityC!(Spec, double)` concrete quantity types, one per
+Spec, with corresponding type infrastructure. Unit diversity instead appears
+primarily in boundary conversion instantiations such as `fromUnit!(Spec, Unit)`.
+
+This explains the direction of the DMD section-size result: B's Unit-bearing
+type identity increases the number of concrete D types and therefore DMD
+runtime/type/symbol materialization. The observed executable-size delta is not
+evidence of per-value storage overhead and only a small fraction is additional
+`.text`.
+
+LDC's byte-identical B/C executables show that this materialization cost is not
+an unavoidable property of the semantic model. It is currently a
+compiler-sensitive implementation/code-generation cost.
+
+Next R09 discriminator:
+
+1. measure growth as the number of concrete Spec×Unit combinations increases;
+2. determine whether DMD TypeInfo/equality/hash emission can be suppressed or
+   structurally avoided for the intended quantity value type;
+3. keep runtime arithmetic benchmarking secondary unless generated numerical
+   code diverges materially.
