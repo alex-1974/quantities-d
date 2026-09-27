@@ -551,3 +551,69 @@ R14 establishes semantics and API vocabulary, but does not yet freeze:
 
 These remain production implementation / follow-up research concerns and must not
 weaken the accepted semantics above.
+
+
+## Probe 9 — binary64 value generation and CTFE/runtime rounding parity
+
+The first production-facing floating implementation exposed a separate problem
+from exactness classification:
+
+```d
+(value * cast(double) numerator) / cast(double) denominator
+```
+
+can overflow or underflow in an intermediate even when the exact rational result
+is representable. A concrete regression is:
+
+```text
+double.max * 2 / 3
+```
+
+The exact mathematical result is finite, but multiplying by 2 first overflows.
+
+R14 therefore prototypes a value-generation kernel based on `frexp` / `ldexp`
+that separates the source binary exponent from the rational scale and absorbs
+powers of two into the exponent before applying the remaining odd ratio.
+
+Baseline probes confirm that `frexp` / `ldexp` are CTFE-usable on:
+
+- DMD 2.111;
+- LDC 1.41.
+
+The prototype also avoids the known `double.max * 2 / 3` intermediate-overflow
+failure on both compilers.
+
+### Important CTFE finding
+
+At the lower binary64 boundary, CTFE and runtime do not necessarily expose the
+same rounding behavior when using ordinary floating operations alone.
+
+For half the minimum positive binary64 subnormal, the CTFE expression can retain
+a positive value below the binary64 subnormal quantum, while runtime binary64
+rounds the same result to `0.0`.
+
+Therefore:
+
+> CTFE support of `frexp` / `ldexp` is necessary but not sufficient to prove
+> CTFE/runtime binary64 semantic equivalence.
+
+This becomes a promotion gate for the production floating kernel.
+
+### Promotion gate
+
+Before replacing the production floating value-generation expression, the kernel
+must demonstrate:
+
+1. no avoidable intermediate overflow or underflow for finite representable
+   rational results;
+2. explicit binary64 quantization/rounding semantics where CTFE would otherwise
+   retain excess precision;
+3. identical observable result/status semantics at CTFE and runtime for the
+   tested binary64 boundary matrix;
+4. DMD 2.111 and LDC 1.41 compatibility;
+5. `@safe pure nothrow @nogc`;
+6. preservation of the represented-source exactness classification established
+   earlier in R14.
+
+Until this gate is satisfied, the floating production slice remains blocked and
+PR #9 must remain draft.
