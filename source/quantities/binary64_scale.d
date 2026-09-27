@@ -374,32 +374,31 @@ Binary64ScaleResult scaleBinary64(
 
 @safe unittest
 {
-    enum minSubnormal = double.min_normal * double.epsilon;
+    // ADR 0007: represented-source binary64 semantics are a runtime contract.
+    // The exact bit decomposition uses memcpy and is intentionally not CTFE.
+    const minSubnormal = double.min_normal * double.epsilon;
 
-    enum maxTwoThirds = scaleBinary64(double.max, 2, 3);
-    static assert(!maxTwoThirds.overflow);
-    static assert(maxTwoThirds.value > 0.0);
-    static assert(maxTwoThirds.value <= double.max);
+    const maxTwoThirds = scaleBinary64(double.max, 2, 3);
+    assert(!maxTwoThirds.overflow);
+    assert(maxTwoThirds.value > 0.0);
+    assert(maxTwoThirds.value <= double.max);
 
-    enum subnormalTie = scaleBinary64(minSubnormal, 3, 2);
-    static assert(!subnormalTie.overflow);
-    static assert(subnormalTie.value == minSubnormal * 2.0);
+    const subnormalTie = scaleBinary64(minSubnormal, 3, 2);
+    assert(!subnormalTie.overflow);
+    assert(subnormalTie.value == minSubnormal * 2.0);
 
-    enum halfMin = scaleBinary64(minSubnormal, 1, 2);
-    static assert(!halfMin.overflow);
-    static assert(halfMin.value == 0.0);
+    const halfMin = scaleBinary64(minSubnormal, 1, 2);
+    assert(!halfMin.overflow);
+    assert(halfMin.value == 0.0);
 
-    enum trueOverflow = scaleBinary64(double.max, 2, 1);
-    static assert(trueOverflow.overflow);
+    const trueOverflow = scaleBinary64(double.max, 2, 1);
+    assert(trueOverflow.overflow);
 
-    enum negative = scaleBinary64(-1.5, 2, 3);
-    static assert(!negative.overflow);
-    static assert(negative.value == -1.0);
+    const negative = scaleBinary64(-1.5, 2, 3);
+    assert(!negative.overflow);
+    assert(negative.value == -1.0);
 
-    // R14/ADR 0007: arbitrary double CTFE does not promise reconstruction
-    // of the stored binary64 source lattice on the baseline compilers.
-    // Keep compile-time coverage for overflow classification here, but do not
-    // assert represented-source binary64 equality for 1/10 at CTFE.
-    enum tenth = scaleBinary64(1.0, 1, 10);
-    static assert(!tenth.overflow);
+    const tenth = scaleBinary64(1.0, 1, 10);
+    assert(!tenth.overflow);
+    assert(tenth.value == 0.1);
 }
