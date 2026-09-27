@@ -192,4 +192,29 @@ ConversionResult!long convertIntegral(
 
     enum overflow = convertIntegral(long.max, 2, 1);
     static assert(overflow.status == ConversionStatus.overflow);
+
+    enum minNegIdentity = convertIntegral(long.min, -1, -1);
+    static assert(minNegIdentity.status == ConversionStatus.exact);
+    static assert(minNegIdentity.value == long.min);
+
+    enum minHalf = convertIntegral(long.min, 1, 2);
+    static assert(minHalf.status == ConversionStatus.exact);
+    static assert(minHalf.value == long.min / 2);
+
+    enum cancelled = convertIntegral(long.max - 1, 2, 2);
+    static assert(cancelled.status == ConversionStatus.exact);
+    static assert(cancelled.value == long.max - 1);
+
+    enum negativeScale = convertIntegral(3, -1, 2, RoundingMode.towardZero);
+    static assert(negativeScale.status == ConversionStatus.inexact);
+    static assert(negativeScale.value == -1);
+
+    enum negativeScaleFloor = convertIntegral(3, -1, 2, RoundingMode.floor);
+    static assert(negativeScaleFloor.value == -2);
+
+    enum negativeScaleCeiling = convertIntegral(3, -1, 2, RoundingMode.ceiling);
+    static assert(negativeScaleCeiling.value == -1);
+
+    enum negativeScaleTie = convertIntegral(3, -1, 2, RoundingMode.nearestTiesAway);
+    static assert(negativeScaleTie.value == -2);
 }
