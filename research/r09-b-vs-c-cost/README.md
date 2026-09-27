@@ -401,3 +401,76 @@ This range is an architectural estimate from current workspace contracts, not
 a measured census of downstream applications. The public design must still
 remain viable at high N, but normal-consumer cost should be judged primarily
 in the first two bands.
+
+
+## R01 + R02 + R09 synthesis — representation decision candidate
+
+The combined evidence now supports promoting candidate C as the M1 static
+quantity representation:
+
+`Quantity!(Spec, Rep)`, with a canonical unit defined by the Spec contract and
+source Unit supplied at explicit construction/conversion boundaries.
+
+This is not a claim that B is incorrect. B remains a coherent alternative whose
+principal semantic distinction is persistent source-Unit identity in every
+quantity type. The decision is that this distinction is not sufficiently
+valuable for the current consumers to justify making Unit part of every
+concrete quantity type.
+
+### Evidence
+
+- A is insufficient as the primary model because Unit does not replace the
+  independent Spec semantic axis.
+- B and C both meet zero-per-value-storage, CTFE and safety/attribute feasibility
+  constraints in the probes.
+- R02 demonstrates that canonicalization need not imply silent loss: exact,
+  checked/loss-aware, and explicitly rounded conversion intents can preserve
+  representability policy at the boundary.
+- B needs the same conversion/loss machinery whenever units are mixed, so it
+  does not eliminate the R02 problem.
+- Current consumers benefit from Spec-level distinctions but generally do not
+  require source Unit to remain part of the stored value's permanent type
+  identity after an explicit normalization boundary.
+- geodesy-d already demonstrates successful canonical storage for angular
+  domain types (radians internally, degree/radian boundaries).
+- strong-boundary / scalar-kernel architecture limits quantity proliferation
+  and fits C naturally.
+- R09 measures a real Unit-diversity scaling cost for B on both supported
+  compiler baselines, especially DMD type/runtime metadata. C ties concrete
+  quantity-type growth primarily to Spec and Rep instead.
+
+### Required constraints on C
+
+Selecting C is only safe if all of the following become normative M1 rules:
+
+1. Every Spec has one explicit canonical Unit contract.
+2. Unit identity is compile-time boundary metadata; it is not inferred from a
+   scalar value.
+3. Normatively exact Unit scales remain exact compile-time rational values.
+4. Construction/conversion to canonical storage obeys the R02 conversion-intent
+   policy.
+5. Integral canonical storage may reject a source value that is not exactly
+   representable; it must not silently truncate or round.
+6. Explicit rounding, where offered, is caller-selected and separate from Unit
+   identity.
+7. Quantity storage remains exactly the Rep payload where the language permits;
+   no runtime Unit/Spec field is added.
+8. Domain/reference semantics such as CRS, datum, vertical reference frame and
+   raster georeferencing remain outside Quantity.
+9. Strong quantities protect boundaries; numerical kernels may explicitly
+   extract canonical scalars.
+10. The public API must not expose a raw-scalar constructor whose Unit would be
+    ambiguous. Construction from a scalar must name or otherwise statically
+    establish the source Unit.
+
+### Consequences
+
+B should remain documented as the rejected alternative for M1, not deleted from
+research history. Future evidence could justify a distinct source-unit-preserving
+type for a specialized use case, but it should not redefine the core Quantity
+identity without a new ADR.
+
+The next promotion step is an ADR plus an M1 implementation contract. Public
+conversion names, generic Rep support, arithmetic rules and the minimal rounding
+surface remain separate decisions and must not be invented by the representation
+ADR.
