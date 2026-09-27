@@ -60,12 +60,12 @@ echo "Detailed artifacts: ${OUT}"
 
 
 # Compare demangled symbol names to identify model-specific materialization.
-cut -d' ' -f4- "${OUT}/probe-b.nm.txt" | sort -u > "${OUT}/probe-b.symbol-names.txt"
-cut -d' ' -f4- "${OUT}/probe-c.nm.txt" | sort -u > "${OUT}/probe-c.symbol-names.txt"
+cut -d' ' -f4- "${OUT}/probe-b.nm.txt" | LC_ALL=C sort -u > "${OUT}/probe-b.symbol-names.txt"
+cut -d' ' -f4- "${OUT}/probe-c.nm.txt" | LC_ALL=C sort -u > "${OUT}/probe-c.symbol-names.txt"
 
-comm -23 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
+LC_ALL=C comm -23 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
     > "${OUT}/b-only-symbols.txt"
-comm -13 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
+LC_ALL=C comm -13 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
     > "${OUT}/c-only-symbols.txt"
 
 {
