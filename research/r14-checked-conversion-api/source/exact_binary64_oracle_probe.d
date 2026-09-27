@@ -219,29 +219,32 @@ Cent rationalDistanceNumerator(
 
 @safe unittest
 {
-    // 1/10 should match the actual binary64 literal exactly.
+    // Canonical decomposition strips powers of two. The binary64 value 0.1
+    // is therefore 3602879701896397 * 2^-55, equivalently
+    // 7205759403792794 * 2^-56.
     enum literalTenth = decompose(0.1);
-    static assert(literalTenth.significand == 7205759403792793UL);
-    static assert(literalTenth.exponent2 == -56);
+    static assert(literalTenth.significand == 3602879701896397UL);
+    static assert(literalTenth.exponent2 == -55);
 
-    // Direct nearest-neighbour oracle around 0.1.
+    // At the common 2^-56 lattice:
+    // lower neighbour = 7205759403792793 * 2^-56
+    // binary64 0.1    = 7205759403792794 * 2^-56
+    // upper neighbour = 7205759403792795 * 2^-56
+    //
+    // Against exact 1/10, the distance numerators over 10*2^56 are
+    // 6, 4, and 14 respectively.
     enum lowerDistance = rationalDistanceNumerator(
         7205759403792793UL, -56, 1, 10);
-    enum upperDistance = rationalDistanceNumerator(
+    enum roundedDistance = rationalDistanceNumerator(
         7205759403792794UL, -56, 1, 10);
+    enum upperDistance = rationalDistanceNumerator(
+        7205759403792795UL, -56, 1, 10);
 
-    static assert(lowerDistance.hi == 0);
-    static assert(upperDistance.hi == 0);
-    static assert(lowerDistance.lo == 2UL);
-    static assert(upperDistance.lo == 8UL);
-    static assert(greater(upperDistance, lowerDistance));
-
-    static assert(candidateCloserToRational(
-        7205759403792793UL,
-        7205759403792794UL,
-        -56,
-        1,
-        10));
+    static assert(lowerDistance.hi == 0 && lowerDistance.lo == 6UL);
+    static assert(roundedDistance.hi == 0 && roundedDistance.lo == 4UL);
+    static assert(upperDistance.hi == 0 && upperDistance.lo == 14UL);
+    static assert(greater(lowerDistance, roundedDistance));
+    static assert(greater(upperDistance, roundedDistance));
 
     enum oneTenth = roundPositiveRational(fromUlong(1), 10, 0);
     static assert(oneTenth.significand == literalTenth.significand);
