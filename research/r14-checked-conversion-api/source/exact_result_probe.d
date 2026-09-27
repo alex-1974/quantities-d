@@ -2,12 +2,7 @@ module exact_result_probe;
 
 import checked_kernel : convertIntegral;
 import common : ConversionStatus;
-
-enum ExactFailure
-{
-    inexact,
-    overflow
-}
+import exact_result : ExactFailure;
 
 struct ExactResult(T)
 {
