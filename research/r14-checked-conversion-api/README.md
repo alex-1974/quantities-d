@@ -222,3 +222,55 @@ than a public `bool + value + failure` aggregate while retaining:
 A true overlapping union is deliberately not assumed yet. D safety rules and
 destructor/postblit behavior for generic `T` would need separate evidence
 before such a representation could be accepted.
+
+
+## Probe 3 result — exact result representation
+
+Both E1 and the private-state E2 shape compile and execute in CTFE on DMD 2.111
+and LDC 1.41.
+
+### Comparison
+
+#### E1 — public `bool + value + failure`
+
+Advantages:
+
+- mechanically simple;
+- aggregate construction is trivial;
+- CTFE-friendly.
+
+Disadvantages:
+
+- permits contradictory states such as `hasValue == true` together with an
+  arbitrary failure value;
+- callers can read `value` even when the result is inexact or overflow;
+- invariants depend on convention rather than the type.
+
+#### E2 — private state with constructors/accessors
+
+Advantages:
+
+- the public type owns its invariant;
+- success and failure construction are explicit;
+- callers cannot mutate the state into contradictory combinations;
+- `value` and `failure` can enforce their preconditions;
+- remains CTFE-compatible and allocation-free.
+
+Costs:
+
+- stores both payload and failure discriminator rather than overlapping them;
+- therefore not representation-minimal.
+
+### R14 direction
+
+Prefer E2 semantics for the public exact-required result.
+
+R14 does **not** yet require an overlapping `union`. For quantities-d's numeric
+Reps, the extra discriminator/storage is paid only by a conversion result
+temporary, not by every `Quantity`. A union optimization would add D-specific
+generic lifetime and `@safe` complexity without evidence that it materially
+matters.
+
+The result type should therefore optimize first for invariant safety and simple
+CTFE behavior. Representation compaction remains a later evidence-driven
+optimization.
