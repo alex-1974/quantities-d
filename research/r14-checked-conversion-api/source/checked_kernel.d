@@ -218,3 +218,90 @@ ConversionResult!long convertIntegral(
     enum negativeScaleTie = convertIntegral(3, -1, 2, RoundingMode.nearestTiesAway);
     static assert(negativeScaleTie.value == -2);
 }
+
+
+@safe pure nothrow @nogc
+ConversionResult!long convertIntegralComposed(
+    long value,
+    long fromNumerator,
+    long fromDenominator,
+    long toNumerator,
+    long toDenominator,
+    RoundingMode mode = RoundingMode.towardZero)
+{
+    auto fromRatio = reduce(fromNumerator, fromDenominator);
+    auto toRatio = reduce(toNumerator, toDenominator);
+
+    // value * (fromN / fromD) / (toN / toD)
+    //       = value * fromN * toD / (fromD * toN)
+    //
+    // Cross-cancel across the two ratios before composition so that otherwise
+    // equivalent large exact scales do not overflow merely while forming the
+    // intermediate ratio.
+    ulong a = magnitude(fromRatio.numerator);
+    ulong b = cast(ulong) fromRatio.denominator;
+    ulong c = magnitude(toRatio.numerator);
+    ulong d = cast(ulong) toRatio.denominator;
+
+    const g1 = gcd(a, c);
+    a /= g1;
+    c /= g1;
+
+    const g2 = gcd(d, b);
+    d /= g2;
+    b /= g2;
+
+    const bool negative =
+        (fromRatio.numerator < 0) != (toRatio.numerator < 0);
+
+    if (a > cast(ulong) long.max || d > cast(ulong) long.max
+        || b > cast(ulong) long.max || c > cast(ulong) long.max)
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    long composedNumerator;
+    if (!multiplyChecked(cast(long) a, cast(long) d, composedNumerator))
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    long composedDenominator;
+    if (!multiplyChecked(cast(long) b, cast(long) c, composedDenominator))
+        return ConversionResult!long(0, ConversionStatus.overflow);
+
+    if (negative)
+    {
+        if (composedNumerator == long.min)
+            return convertIntegral(
+                value,
+                long.min,
+                composedDenominator,
+                mode);
+
+        composedNumerator = -composedNumerator;
+    }
+
+    return convertIntegral(
+        value,
+        composedNumerator,
+        composedDenominator,
+        mode);
+}
+
+@safe unittest
+{
+    // The naïve products overflow even though the composed ratio is exactly 1.
+    enum large = long.max;
+    enum composedIdentity = convertIntegralComposed(
+        42,
+        large, large - 1,
+        large, large - 1);
+    static assert(composedIdentity.status == ConversionStatus.exact);
+    static assert(composedIdentity.value == 42);
+
+    enum kmToM = convertIntegralComposed(2, 1000, 1, 1, 1);
+    static assert(kmToM.status == ConversionStatus.exact);
+    static assert(kmToM.value == 2000);
+
+    enum mToKm = convertIntegralComposed(
+        1500, 1, 1, 1000, 1, RoundingMode.nearestTiesAway);
+    static assert(mToKm.status == ConversionStatus.inexact);
+    static assert(mToKm.value == 2);
+}
