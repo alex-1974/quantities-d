@@ -242,3 +242,13 @@ than as unrelated deep-template failures.
 One final gate remains before promotion: verify in a multi-module probe that
 the raw Quantity payload cannot be constructed directly by external consumer
 code.
+
+
+### Module-boundary probe adjustment
+
+The first DMD run confirmed the intended semantic boundary for raw construction:
+the private Quantity constructor is rejected from the external consumer module.
+
+DMD reports this as "is not accessible from module" rather than using the word
+"private". The runner now matches the access-control meaning instead of a
+compiler-specific adjective.
