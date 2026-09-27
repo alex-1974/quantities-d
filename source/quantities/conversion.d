@@ -1,5 +1,6 @@
 module quantities.conversion;
 
+import quantities.binary64_scale : scaleBinary64;
 import quantities.floating_exact : rationalResultExactlyBinary64;
 import quantities.quantity : Quantity;
 import quantities.traits : isQuantitySpec, isUnit;
@@ -318,10 +319,9 @@ ConversionResult!double convertFloating(
     if (!finite(value))
         return ConversionResult!double(0.0, ConversionStatus.nonFinite);
 
-    const double scaled =
-        (value * cast(double) numerator) / cast(double) denominator;
+    const scaled = scaleBinary64(value, numerator, denominator);
 
-    if (!finite(scaled))
+    if (scaled.overflow)
         return ConversionResult!double(0.0, ConversionStatus.overflow);
 
     const status = rationalResultExactlyBinary64(
@@ -329,7 +329,7 @@ ConversionResult!double convertFloating(
             ? ConversionStatus.exact
             : ConversionStatus.inexact;
 
-    return ConversionResult!double(scaled, status);
+    return ConversionResult!double(scaled.value, status);
 }
 
 @safe pure nothrow @nogc
