@@ -1,0 +1,5 @@
+name "quantities-r12-exact-ratio-boundary"
+description "Research probe for quantities-d ExactRatio boundary"
+license "MIT"
+targetType "executable"
+sourcePaths "source"
