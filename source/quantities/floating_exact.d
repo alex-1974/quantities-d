@@ -85,13 +85,17 @@ bool rationalResultExactlyBinary64(
     n /= g;
     d /= g;
 
+    int denominatorPower2;
     while ((d & 1UL) == 0)
+    {
         d >>= 1;
+        ++denominatorPower2;
+    }
 
     if (d != 1UL)
         return false;
 
-    int exponent2 = parts.exponent2;
+    int exponent2 = parts.exponent2 - denominatorPower2;
     while ((sig & 1UL) == 0)
     {
         sig >>= 1;
@@ -133,5 +137,16 @@ bool rationalResultExactlyBinary64(
     if (topExponent > 1023)
         return false;
 
+    if (topExponent >= -1022)
+    {
+        // Normal binary64 values need at most 53 significant bits. At this
+        // point product is odd, so exponent2 is already the exact quantum.
+        return product <= maxSignificand;
+    }
+
+    // Subnormal binary64 values lie on the fixed 2^-1074 lattice.
+    // An exact result with an exponent below -1074 is representable only if
+    // its integer significand contains enough factors of two to lift it onto
+    // that lattice. product is odd here, so no such factors remain.
     return exponent2 >= -1074;
 }
