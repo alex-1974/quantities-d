@@ -119,3 +119,44 @@ It is not yet promoted because:
 Do not add arithmetic status wrappers merely because NaN or infinity can occur.
 That would replace ordinary floating semantics with a new quantities-specific
 numerical model without consumer evidence.
+
+
+## Isolated infinity-cancellation follow-up
+
+A dedicated probe tested `+infinity + -infinity` through four data-flow shapes:
+
+- direct constants;
+- function parameters;
+- local variables;
+- global memory.
+
+Results:
+
+- DMD 2.111 debug: NaN in all four cases;
+- DMD 2.111 release: NaN in all four cases;
+- LDC 1.41 debug: NaN in all four cases;
+- LDC 1.41 release: NaN in all four cases.
+
+LDC release varied the observed NaN sign depending on data flow. Therefore NaN
+sign and payload are explicitly outside the quantities-d arithmetic contract.
+
+The earlier DMD-release observation of +0 for the same exceptional expression
+was not reproduced by the isolated probe and must not be treated as an
+established compiler-version defect.
+
+### Revised conclusion
+
+For the measured x86_64 Linux baseline:
+
+- ordinary finite float/double arithmetic is stable across DMD 2.111 and LDC
+  1.41, debug and release;
+- IEEE exceptional categories observed here are preserved: infinities, NaNs,
+  signed zero, and subnormals;
+- NaN bit pattern, payload, and sign are not stable enough to expose as API
+  semantics;
+- CTFE still differs from runtime quantization because extended precision may
+  survive during compile-time evaluation.
+
+This is sufficient evidence to promote ordinary runtime floating arithmetic as
+the preferred M3 basis, subject to wrapper-level attribute/code-generation
+verification.
