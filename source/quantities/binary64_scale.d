@@ -3,7 +3,6 @@ module quantities.binary64_scale;
 import core.int128 : Cent, mul, udivmod;
 import std.math : frexp, ldexp;
 
-package(quantities):
 struct Binary64ScaleResult
 {
     double value;
@@ -267,6 +266,7 @@ double rebuild(bool negative, RoundedRational value)
     return negative ? -result : result;
 }
 
+public:
 @safe pure nothrow @nogc
 Binary64ScaleResult scaleBinary64(
     double value,
