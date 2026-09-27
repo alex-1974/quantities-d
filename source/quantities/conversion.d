@@ -33,9 +33,8 @@ struct ConversionResult(T)
 private:
     bool hasValue_;
     T value_;
-    ConversionStatus status_;
+    ConversionStatus status_ = ConversionStatus.inexact;
 
-public:
     @safe pure nothrow @nogc
     static ConversionResult withValue(T value, ConversionStatus status)
     {
@@ -59,6 +58,7 @@ public:
         return result;
     }
 
+public:
     @safe pure nothrow @nogc
     bool hasValue() const
     {
@@ -87,7 +87,7 @@ struct ExactResult(T)
 private:
     bool hasValue_;
     T value_;
-    ExactFailure failure_;
+    ExactFailure failure_ = ExactFailure.inexact;
 
 public:
     @safe pure nothrow @nogc
@@ -570,6 +570,24 @@ auto checkedIn(Unit, Spec)(Quantity!(Spec, double) value)
 auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 {
     return exactResult(value.checkedIn!Unit);
+}
+
+@safe unittest
+{
+    // Default initialization must itself be a valid public state.
+    ConversionResult!long conversionDefault;
+    assert(!conversionDefault.hasValue);
+    assert(conversionDefault.status == ConversionStatus.inexact);
+    long conversionValue;
+    assert(!conversionDefault.tryValue(conversionValue));
+
+    ExactResult!long exactDefault;
+    assert(!exactDefault.hasValue);
+    long exactValue;
+    assert(!exactDefault.tryValue(exactValue));
+    ExactFailure exactFailure;
+    assert(exactDefault.tryFailure(exactFailure));
+    assert(exactFailure == ExactFailure.inexact);
 }
 
 @safe unittest
