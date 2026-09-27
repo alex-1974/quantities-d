@@ -10,10 +10,11 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core in active development. No stable public API exists yet.**
+**M1 static core implemented; final branch verification is in progress. No
+stable public API exists yet.**
 
-The repository now contains the first production quantity core plus an
-experimental checked-conversion implementation promoted from R14 research.
+The repository now contains the first production quantity core and the checked
+conversion contract accepted by ADR 0007.
 
 Current production coverage includes:
 
@@ -29,7 +30,8 @@ Current production coverage includes:
 `float`, `real`, mixed-Rep conversion, arithmetic, affine quantity points, and
 runtime-parsed unit metadata are not yet production-complete.
 
-The public API remains pre-stable while these M1 contracts are being validated.
+The public API remains pre-stable until the final branch-level compile-negative,
+external-consumer, and compiler gates are rerun.
 
 ## Intended domain
 
@@ -108,10 +110,7 @@ is intentionally ignored by Git and is not package content.
 
 ## M1 implementation status
 
-The first M1 static-core slice is under implementation on
-`feat/m1-static-core`.
-
-The implemented slice is intentionally narrow and follows ADR 0001–0006:
+The M1 static core and checked conversion slice follow ADR 0001–0007:
 
 ```d
 enum distance = 1.25.quantity!(Length, Kilometre);
@@ -119,6 +118,12 @@ static assert(distance.canonicalValue == 1250.0);
 static assert(distance.inUnit!Kilometre == 1.25);
 ```
 
-Non-canonical Unit conversion for integral Reps is deliberately not enabled
-until the checked/rounding conversion machinery from ADR 0005 is implemented.
-No silent integer truncation is permitted.
+Non-canonical Unit conversion is explicit. Integral conversion never silently
+truncates or rounds; checked, exact-required, and explicitly rounded operations
+carry the conversion intent.
+
+Domain libraries do not need to depend on quantities-d merely because their
+scalar APIs have documented canonical units. For example, a geodetic library
+may define metres for linear scalars and strong angle types in its own contract.
+A quantities-d integration should be an optional boundary adapter unless a
+consumer demonstrates that quantities belong in its core model.
