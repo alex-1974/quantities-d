@@ -216,25 +216,34 @@ RoundedRational scaleExact(
             --ratioExponent;
     }
 
-    // A normal binary64 significand has 53 bits. Choose the exponent so that
-    // rounding exactNumerator/d at this scale yields those 53 bits directly.
+    // Let r = exactNumerator / d. The represented value is r * 2^exponent2.
+    // If floor(log2(r)) == ratioExponent, a normalized 53-bit significand is
+    //
+    //     M = round(r * 2^(52 - ratioExponent))
+    //
+    // and the corresponding binary exponent is
+    //
+    //     E = exponent2 + ratioExponent - 52.
+    //
+    // Note that exponent2 belongs only in E. It must not also influence the
+    // scaling used to compute M.
     const int targetExponent = exponent2 + ratioExponent - 52;
-    const int scaleShift = exponent2 - targetExponent;
+    const int significandShift = 52 - ratioExponent;
 
     Cent scaledNumerator = exactNumerator;
     ulong scaledDenominator = d;
 
-    if (scaleShift > 0)
+    if (significandShift > 0)
     {
         bool shiftOverflow;
         scaledNumerator = shlCent(
-            scaledNumerator, scaleShift, shiftOverflow);
+            scaledNumerator, significandShift, shiftOverflow);
         if (shiftOverflow)
             return RoundedRational(0, 0, true);
     }
-    else if (scaleShift < 0)
+    else if (significandShift < 0)
     {
-        const shift = -scaleShift;
+        const shift = -significandShift;
         if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
             return RoundedRational(0, 0, true);
 
