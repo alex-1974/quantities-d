@@ -130,3 +130,91 @@ bool valueEquals(T)(ConversionResult!T result, T expected)
         return !checkedIntegralInexact.tryValue(unavailable);
     }());
 }
+
+
+enum ExactFailure
+{
+    inexact,
+    overflow,
+    nonFinite
+}
+
+struct ExactResult(T)
+{
+private:
+    bool hasValue_;
+    T value_;
+    ExactFailure failure_;
+
+public:
+    @safe pure nothrow @nogc
+    static ExactResult success(T value)
+    {
+        ExactResult result;
+        result.hasValue_ = true;
+        result.value_ = value;
+        return result;
+    }
+
+    @safe pure nothrow @nogc
+    static ExactResult failed(ExactFailure failure)
+    {
+        ExactResult result;
+        result.failure_ = failure;
+        return result;
+    }
+
+    @safe pure nothrow @nogc
+    bool hasValue() const
+    {
+        return hasValue_;
+    }
+
+    // Safe in debug and release builds: no precondition is enforced only
+    // by assert. The caller can observe success/failure explicitly.
+    @safe pure nothrow @nogc
+    bool tryValue(out T value) const
+    {
+        if (!hasValue_)
+            return false;
+
+        value = value_;
+        return true;
+    }
+
+    @safe pure nothrow @nogc
+    bool tryFailure(out ExactFailure failure) const
+    {
+        if (hasValue_)
+            return false;
+
+        failure = failure_;
+        return true;
+    }
+}
+
+@safe unittest
+{
+    enum exactSuccess = ExactResult!long.success(42);
+    static assert(exactSuccess.hasValue);
+    static assert({
+        long value;
+        return exactSuccess.tryValue(value) && value == 42;
+    }());
+    static assert({
+        ExactFailure failure;
+        return !exactSuccess.tryFailure(failure);
+    }());
+
+    enum exactFailure = ExactResult!long.failed(ExactFailure.inexact);
+    static assert(!exactFailure.hasValue);
+    static assert({
+        long value;
+        return !exactFailure.tryValue(value);
+    }());
+    static assert({
+        ExactFailure failure;
+        return exactFailure.tryFailure(failure)
+            && failure == ExactFailure.inexact;
+    }());
+}
