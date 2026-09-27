@@ -57,3 +57,36 @@ build_and_capture c
 
 echo
 echo "Detailed artifacts: ${OUT}"
+
+
+# Compare demangled symbol names to identify model-specific materialization.
+cut -d' ' -f4- "${OUT}/probe-b.nm.txt" | sort -u > "${OUT}/probe-b.symbol-names.txt"
+cut -d' ' -f4- "${OUT}/probe-c.nm.txt" | sort -u > "${OUT}/probe-c.symbol-names.txt"
+
+comm -23 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
+    > "${OUT}/b-only-symbols.txt"
+comm -13 "${OUT}/probe-b.symbol-names.txt" "${OUT}/probe-c.symbol-names.txt" \
+    > "${OUT}/c-only-symbols.txt"
+
+{
+    echo
+    echo '=== SYMBOL COUNTS ==='
+    printf 'B total unique: '
+    wc -l < "${OUT}/probe-b.symbol-names.txt"
+    printf 'C total unique: '
+    wc -l < "${OUT}/probe-c.symbol-names.txt"
+    printf 'B-only: '
+    wc -l < "${OUT}/b-only-symbols.txt"
+    printf 'C-only: '
+    wc -l < "${OUT}/c-only-symbols.txt"
+
+    echo
+    echo '=== B-ONLY QUANTITY/UNIT SYMBOLS ==='
+    grep -E 'QuantityB|LengthSpec|RadiusSpec|HeightSpec|LinearResolutionSpec|Metre|Kilometre|Millimetre|InternationalFoot|USSurveyFoot' \
+        "${OUT}/b-only-symbols.txt" || true
+
+    echo
+    echo '=== C-ONLY QUANTITY/UNIT SYMBOLS ==='
+    grep -E 'QuantityC|LengthSpec|RadiusSpec|HeightSpec|LinearResolutionSpec|Metre|Kilometre|Millimetre|InternationalFoot|USSurveyFoot' \
+        "${OUT}/c-only-symbols.txt" || true
+} | tee -a "${OUT}/report.txt"
