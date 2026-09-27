@@ -84,19 +84,28 @@ Parts roundPositiveRational(Cent numerator, ulong denominator, int exponent2)
     assert(denominator != 0);
 
     // Determine k = floor(log2(numerator / denominator)).
-    int k = bitLength(numerator) - bitLength(denominator);
+    int k = bitLength(numerator) - bitLength(denominator) - 1;
 
     if (k >= 0)
     {
-        const scaledDen = shl(fromUlong(denominator), k);
-        if (greater(scaledDen, numerator))
+        const atK = shl(fromUlong(denominator), k);
+        const atKPlusOne = shl(fromUlong(denominator), k + 1);
+
+        if (greater(atK, numerator))
             --k;
+        else if (!greater(atKPlusOne, numerator))
+            ++k;
     }
     else
     {
-        const scaledNum = shl(numerator, -k);
-        if (greater(fromUlong(denominator), scaledNum))
+        const negK = -k;
+        const atK = shl(numerator, negK);
+        const atKPlusOne = shl(numerator, negK - 1);
+
+        if (greater(fromUlong(denominator), atK))
             --k;
+        else if (!greater(fromUlong(denominator), atKPlusOne))
+            ++k;
     }
 
     // Normal candidate: M = round((numerator/denominator) * 2^(52-k)).
