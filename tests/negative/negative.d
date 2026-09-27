@@ -1,6 +1,7 @@
 module negative;
 
 import quantities;
+import production = quantities;
 
 struct LengthDimension {}
 struct TimeDimension {}
@@ -90,16 +91,16 @@ version (CheckedExtractionWrongDimension)
 
 version (M2NonCanonicalKilometreConstruction)
 {
-    enum x = 1L.quantity!(Length, Kilometre);
+    enum x = 1L.quantity!(production.Length, production.Kilometre);
 }
 
 version (M2NonCanonicalInternationalFootExtraction)
 {
-    enum q = 381L.quantity!(Length, Metre);
-    enum x = q.inUnit!InternationalFoot;
+    enum q = 381L.quantity!(production.Length, production.Metre);
+    enum x = q.inUnit!(production.InternationalFoot);
 }
 
 version (M2WrongDimensionConstruction)
 {
-    enum x = 1L.checkedQuantity!(Length, Second);
+    enum x = 1L.checkedQuantity!(production.Length, Second);
 }
