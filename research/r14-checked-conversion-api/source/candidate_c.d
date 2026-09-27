@@ -3,6 +3,7 @@ module candidate_c;
 import checked_kernel : convertIntegralComposed;
 import common;
 import exact_result : ExactFailure, ExactResult;
+import floating_probe : convertFloating;
 
 struct ProbeQuantity(Spec, Rep)
 {
@@ -140,4 +141,78 @@ auto roundedQuantity(Spec, Unit, RoundingMode mode)(long value)
         Kilometre, RoundingMode.nearestTiesAway);
     static assert(roundedKm.status == ConversionStatus.inexact);
     static assert(roundedKm.value == 2);
+}
+
+
+@safe pure nothrow @nogc
+auto checkedIn(Unit, Spec)(ProbeQuantity!(Spec, double) value)
+{
+    return convertFloating(
+        value.value,
+        Spec.CanonicalUnit.UnitScale.numerator * Unit.UnitScale.denominator,
+        Spec.CanonicalUnit.UnitScale.denominator * Unit.UnitScale.numerator);
+}
+
+@safe pure nothrow @nogc
+auto exactIn(Unit, Spec)(ProbeQuantity!(Spec, double) value)
+{
+    const checked = value.checkedIn!Unit;
+    final switch (checked.status)
+    {
+        case ConversionStatus.exact:
+            return ExactResult!double.success(checked.value);
+        case ConversionStatus.inexact:
+            return ExactResult!double.failed(ExactFailure.inexact);
+        case ConversionStatus.overflow:
+            return ExactResult!double.failed(ExactFailure.overflow);
+    }
+}
+
+@safe pure nothrow @nogc
+auto checkedQuantity(Spec, Unit)(double value)
+{
+    const converted = convertFloating(
+        value,
+        Unit.UnitScale.numerator * Spec.CanonicalUnit.UnitScale.denominator,
+        Unit.UnitScale.denominator * Spec.CanonicalUnit.UnitScale.numerator);
+
+    return ConversionResult!(ProbeQuantity!(Spec, double))(
+        ProbeQuantity!(Spec, double)(converted.value),
+        converted.status);
+}
+
+@safe pure nothrow @nogc
+auto exactQuantity(Spec, Unit)(double value)
+{
+    const converted = value.checkedQuantity!(Spec, Unit);
+    final switch (converted.status)
+    {
+        case ConversionStatus.exact:
+            return ExactResult!(ProbeQuantity!(Spec, double)).success(
+                converted.value);
+        case ConversionStatus.inexact:
+            return ExactResult!(ProbeQuantity!(Spec, double)).failed(
+                ExactFailure.inexact);
+        case ConversionStatus.overflow:
+            return ExactResult!(ProbeQuantity!(Spec, double)).failed(
+                ExactFailure.overflow);
+    }
+}
+
+@safe unittest
+{
+    enum half = 3.0.exactQuantity!(Length, HalfMetre);
+    static assert(half.hasValue);
+    static assert(half.value.value == 1.5);
+
+    enum tenth = 1.0.exactQuantity!(Length, TenthMetre);
+    static assert(!tenth.hasValue);
+    static assert(tenth.failure == ExactFailure.inexact);
+
+    enum checkedTenth = 1.0.checkedQuantity!(Length, TenthMetre);
+    static assert(checkedTenth.status == ConversionStatus.inexact);
+
+    enum back = half.value.exactIn!HalfMetre;
+    static assert(back.hasValue);
+    static assert(back.value == 3.0);
 }
