@@ -274,3 +274,25 @@ matters.
 The result type should therefore optimize first for invariant safety and simple
 CTFE behavior. Representation compaction remains a later evidence-driven
 optimization.
+
+
+## Probe 4 — floating conversion semantics
+
+ADR 0005 defines floating exactness relative to the represented floating source value,
+not to an earlier decimal spelling or physical measurement.
+
+R14 therefore evaluates floating conversion separately from the integral kernel.
+
+Initial contract under test:
+
+- finite source and finite result only;
+- overflow is distinct from inexact;
+- exact means that applying the exact rational scale and then representing the result
+  in the target floating Rep introduces no additional rounding relative to the represented
+  source value;
+- NaN and infinities are not silently classified as ordinary exact/inexact conversions;
+- no caller-selected integer-style rounding mode is applied to floating-to-floating
+  conversion.
+
+The first probe intentionally uses binary-exact examples (powers of two) and
+binary-inexact decimal-style scales to make the distinction observable.
