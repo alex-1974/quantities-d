@@ -13,8 +13,13 @@ compile_ok() {
     local case_name="$3"
     local log="$OUT/${compiler}-${case_name}.log"
 
-    "$compiler" "$CORE" "$CONSUMER" "$flag$case_name" -of=/tmp/quantities-r13-module-boundary >"$log" 2>&1
-    echo "PASS: $compiler accepted $case_name"
+    if "$compiler" "$CORE" "$CONSUMER" "$flag$case_name" -of=/tmp/quantities-r13-module-boundary >"$log" 2>&1; then
+        echo "PASS: $compiler accepted $case_name"
+    else
+        echo "FAIL: $compiler rejected expected-positive $case_name"
+        cat "$log"
+        return 1
+    fi
 }
 
 compile_reject() {
