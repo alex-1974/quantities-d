@@ -284,3 +284,39 @@ operation is incompatible with the intended value-type contract.
 The probe does not propose any of these variants as public API. In particular,
 an optimization is not acceptable merely because it reduces binary size if it
 weakens ordinary quantity value semantics.
+
+
+## DMD TypeInfo isolation result — 2026-09-27
+
+The TypeInfo isolation probe rejects the simple hypothesis that B's DMD size
+slope is mainly removable synthesized equality/hash machinery.
+
+At N=200:
+
+| variant | stripped | quantity symbols | TypeInfo | __xopEquals | __xtoHash |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| baseline | 931,440 B | 600 | 200 | 200 | 200 |
+| explicit | 1,040,848 B | 800 | 400 | 0 | 0 |
+| noeq | 884,784 B | 400 | 200 | 0 | 200 |
+
+Findings:
+
+- Explicit user-defined equality/hash does not suppress the underlying concrete
+  type metadata cost; in this probe it makes the result materially worse and
+  doubles the observed TypeInfo-symbol count.
+- Disabling equality removes the generated `__xopEquals` symbols and reduces
+  stripped size by 46,656 B at N=200 versus baseline, but TypeInfo remains one
+  per concrete quantity type and `__xtoHash` remains present.
+- Therefore generated equality is a measurable component of the DMD B cost,
+  but it is not the root cause.
+- The persistent cost tracks the number of distinct
+  `Quantity!(Spec, Unit, Rep)` struct types themselves.
+
+The `noeq` variant is not an acceptable public-design optimization by default:
+it weakens ordinary value semantics. The result is useful as causal isolation,
+not as a recommended API.
+
+R09 now has evidence that the B scaling cost cannot be removed merely by
+providing or disabling equality/hash in the obvious way. Any further mitigation
+would need to change how DMD materializes type information, how the public type
+is represented, or how Unit participates in concrete type identity.
