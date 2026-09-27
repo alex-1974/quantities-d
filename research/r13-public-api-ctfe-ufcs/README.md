@@ -263,3 +263,29 @@ cannot observe or mutate the raw canonical payload directly.
 
 The runner therefore accepts either access-control form while still requiring
 the compile to fail.
+
+
+## Final result — promoted
+
+The final module-boundary gate passes on both baseline compilers:
+
+- DMD 2.111:
+  - public construction accepted;
+  - raw constructor rejected;
+  - private payload access rejected;
+- LDC 1.41:
+  - public construction accepted;
+  - raw constructor rejected;
+  - private payload access rejected.
+
+R13 is therefore promoted by
+`docs/adr/0006-ctfe-ufcs-construction-api.md`.
+
+Selected M1 call shape:
+
+```d
+quantity!(Spec, Unit)(value)
+value.quantity!(Spec, Unit)
+```
+
+CTFE and UFCS are normative requirements for the static core.
