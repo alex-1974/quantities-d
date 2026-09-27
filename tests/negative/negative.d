@@ -86,3 +86,20 @@ version (CheckedExtractionWrongDimension)
     enum q = 1L.quantity!(Length, Metre);
     enum x = q.checkedIn!Second;
 }
+
+
+version (M2NonCanonicalKilometreConstruction)
+{
+    enum x = 1L.quantity!(Length, Kilometre);
+}
+
+version (M2NonCanonicalInternationalFootExtraction)
+{
+    enum q = 381L.quantity!(Length, Metre);
+    enum x = q.inUnit!InternationalFoot;
+}
+
+version (M2WrongDimensionConstruction)
+{
+    enum x = 1L.checkedQuantity!(Length, Second);
+}
