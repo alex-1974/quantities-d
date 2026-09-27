@@ -176,3 +176,21 @@ Next R09 discriminator:
    structurally avoided for the intended quantity value type;
 3. keep runtime arithmetic benchmarking secondary unless generated numerical
    code diverges materially.
+
+
+## Scaling probe
+
+`scripts/measure-scaling.sh` generates controlled B/C source programs for
+N = 1, 5, 10, 20, 50, 100, and 200 unit variants. It deliberately uses one
+Spec so N maps directly to B's number of concrete `QuantityB!(Spec,Unit,double)`
+types, while C retains one `QuantityC!(Spec,double)` type and grows only
+boundary conversion functions.
+
+The probe uses direct compiler invocation rather than DUB so the measured
+compile/link time is not dominated by DUB startup. It records three repetitions
+per point by default for DMD and LDC, alternating B/C order, plus binary and
+stripped size and quantity-related TypeInfo/equality/hash symbol counts.
+
+This is a synthetic scaling experiment. It measures the marginal compiler/type
+materialization behavior isolated by the previous probe; it is not intended to
+model a complete application.
