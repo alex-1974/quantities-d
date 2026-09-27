@@ -163,9 +163,15 @@ RoundedRational scaleExact(
     const exactNumerator =
         mul(fromUlong128(s), fromUlong128(n));
 
+    // Normalize the exact rational so that integer division yields roughly
+    // 53 significant bits. This also handles values smaller than 1, where the
+    // unscaled integer quotient would otherwise be zero.
+    Cent scaledNumerator = exactNumerator;
+    ulong scaledDenominator = d;
+
     Cent remainder;
-    const quotient =
-        udivmod(exactNumerator, fromUlong128(d), remainder);
+    auto quotient =
+        udivmod(scaledNumerator, fromUlong128(scaledDenominator), remainder);
 
     int quotientBits;
     if (quotient.hi != 0)
@@ -183,11 +189,44 @@ RoundedRational scaleExact(
         quotientBits = bitLength(quotient.lo);
     }
 
-    const shift = quotientBits > 53 ? quotientBits - 53 : 0;
-    ulong scaledDenominator = d;
-
-    if (shift > 0)
+    // For ratios below 1, generate binary fraction bits by shifting the exact
+    // numerator left. Cent gives enough headroom for the 53-bit source
+    // significand times a 64-bit scale plus this normalization.
+    while (quotientBits < 53)
     {
+        if ((scaledNumerator.hi & (1UL << 63)) != 0)
+            break;
+
+        scaledNumerator.hi =
+            (scaledNumerator.hi << 1) | (scaledNumerator.lo >> 63);
+        scaledNumerator.lo <<= 1;
+        --exponent2;
+
+        quotient =
+            udivmod(scaledNumerator, fromUlong128(scaledDenominator), remainder);
+
+        if (quotient.hi != 0)
+        {
+            quotientBits = 64;
+            ulong scan = quotient.hi;
+            while (scan != 0)
+            {
+                ++quotientBits;
+                scan >>= 1;
+            }
+        }
+        else
+        {
+            quotientBits = bitLength(quotient.lo);
+        }
+    }
+
+    // If the quotient has more than 53 bits, reduce by shifting the
+    // denominator instead. This preserves the exact rational and defers the
+    // only rounding decision to roundCentQuotientNearestEven.
+    if (quotientBits > 53)
+    {
+        const shift = quotientBits - 53;
         if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
             return RoundedRational(0, 0, true);
 
@@ -196,7 +235,7 @@ RoundedRational scaleExact(
     }
 
     ulong rounded = roundCentQuotientNearestEven(
-        exactNumerator, scaledDenominator);
+        scaledNumerator, scaledDenominator);
 
     if (bitLength(rounded) > 53)
     {
@@ -320,4 +359,8 @@ Binary64ScaleResult scaleBinary64(
     enum negative = scaleBinary64(-1.5, 2, 3);
     static assert(!negative.overflow);
     static assert(negative.value == -1.0);
+
+    enum tenth = scaleBinary64(1.0, 1, 10);
+    static assert(!tenth.overflow);
+    static assert(tenth.value == 0.1);
 }
