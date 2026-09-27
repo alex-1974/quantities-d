@@ -51,6 +51,6 @@ for c in dmd ldc2; do
     fi
 
     compile_ok "$c" "$flag" ValidPublicConstruction
-    compile_reject "$c" "$flag" RawConstructor "private"
-    compile_reject "$c" "$flag" RawField "private"
+    compile_reject "$c" "$flag" RawConstructor "not accessible"
+    compile_reject "$c" "$flag" RawField "not accessible"
 done
