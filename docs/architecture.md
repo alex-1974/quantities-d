@@ -123,3 +123,17 @@ ADR 0005 separates conversion outcome from caller intent. Conversion status
 distinguishes exact, inexact and overflow; exact is relative to the represented
 source value. Potentially lossy integral conversion never rounds implicitly.
 Rounding is explicit caller policy and remains separate from Unit identity.
+
+
+## Promoted construction API shape
+
+ADR 0006 selects Unit-explicit free-function construction with natural UFCS:
+
+```d
+quantity!(Spec, Unit)(value)
+value.quantity!(Spec, Unit)
+```
+
+Rep is inferred from the value. CTFE and UFCS are required properties of the
+static core. Raw external Quantity construction and direct canonical-payload
+access are intentionally blocked by module visibility.
