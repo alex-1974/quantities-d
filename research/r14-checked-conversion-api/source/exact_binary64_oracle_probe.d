@@ -1,7 +1,6 @@
 module exact_binary64_oracle_probe;
 
 import core.int128 : Cent, mul, udivmod;
-import std.math : frexp, ldexp;
 
 struct Parts
 {
@@ -57,17 +56,45 @@ Cent shl(Cent value, int shift)
     return value;
 }
 
-@safe pure nothrow @nogc
+@trusted pure nothrow @nogc
+ulong rawBits(double value)
+{
+    union Bits
+    {
+        double d;
+        ulong u;
+    }
+
+    Bits bits;
+    bits.d = value;
+    return bits.u;
+}
+
+@trusted pure nothrow @nogc
 Parts decompose(double value)
 {
-    if (value == 0.0)
+    const ulong raw = rawBits(value);
+    const ulong exponentBits = (raw >> 52) & 0x7FFUL;
+    const ulong fractionBits = raw & 0x000F_FFFF_FFFF_FFFFUL;
+
+    if (exponentBits == 0 && fractionBits == 0)
         return Parts(0, 0);
 
-    const x = value < 0.0 ? -value : value;
-    int exponent;
-    const fraction = frexp(x, exponent);
-    ulong significand = cast(ulong) ldexp(fraction, 53);
-    int exponent2 = exponent - 53;
+    ulong significand;
+    int exponent2;
+
+    if (exponentBits == 0)
+    {
+        // Subnormal: value = fractionBits * 2^-1074.
+        significand = fractionBits;
+        exponent2 = -1074;
+    }
+    else
+    {
+        // Normal: value = (2^52 + fractionBits) * 2^(biasedExponent-1023-52).
+        significand = (1UL << 52) | fractionBits;
+        exponent2 = cast(int) exponentBits - 1023 - 52;
+    }
 
     while ((significand & 1UL) == 0)
     {
