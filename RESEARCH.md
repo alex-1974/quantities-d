@@ -185,3 +185,15 @@ M1 uses ordinary user-defined D types plus structural compile-time traits and
 explicit API-boundary `static assert` diagnostics. The full five-case negative
 matrix passes on both DMD 2.111 and LDC 1.41. Inheritance, runtime registration
 and declaration macros are not required by the static core.
+
+
+## R12 — ExactRatio public boundary
+
+### Question
+
+ADR 0002 requires exact rational Unit scale metadata. R12 evaluates whether a
+small normalized `ExactRatio!(Numerator, Denominator)` should be the public
+declarative vocabulary for Unit authors while ratio algebra remains internal.
+
+The probe also closes a known R02 edge case: normalization must handle the full
+signed `long` numerator range without evaluating `-long.min`.
