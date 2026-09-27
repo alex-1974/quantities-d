@@ -336,6 +336,7 @@ auto roundedIn(Unit, RoundingMode mode, Spec)(Quantity!(Spec, long) value)
 
 @safe unittest
 {
+    import quantities.quantity : quantity;
     import quantities.ratio : ExactRatio;
 
     struct LengthDimension {}
