@@ -126,6 +126,34 @@ ulong roundCentQuotientNearestEven(
 }
 
 @safe pure nothrow @nogc
+int centBitLength(Cent value)
+{
+    if (value.hi != 0)
+        return 64 + bitLength(value.hi);
+    return bitLength(value.lo);
+}
+
+@safe pure nothrow @nogc
+Cent shlCent(Cent value, int shift, out bool overflow)
+{
+    overflow = false;
+
+    foreach (_; 0 .. shift)
+    {
+        if ((value.hi & (1UL << 63)) != 0)
+        {
+            overflow = true;
+            return value;
+        }
+
+        value.hi = (value.hi << 1) | (value.lo >> 63);
+        value.lo <<= 1;
+    }
+
+    return value;
+}
+
+@safe pure nothrow @nogc
 RoundedRational scaleExact(
     Binary64Exact source,
     ulong numerator,
@@ -161,84 +189,70 @@ RoundedRational scaleExact(
         --exponent2;
     }
 
-    Cent exactNumerator =
+    const exactNumerator =
         mul(fromUlong128(s), fromUlong128(n));
 
-    // Determine the binary magnitude of exactNumerator / d without rounding.
-    // We then scale so that the rounded quotient carries exactly 53
-    // significand bits for normal numbers.
-    Cent remainder;
-    auto quotient =
-        udivmod(exactNumerator, fromUlong128(d), remainder);
+    // Determine floor(log2(exactNumerator / d)) exactly.
+    // Start from the bit-length difference, then correct by one comparison.
+    int ratioExponent = centBitLength(exactNumerator) - bitLength(d);
 
-    int quotientBits = quotient.hi != 0
-        ? 64 + bitLength(quotient.hi)
-        : bitLength(quotient.lo);
-
-    if (quotientBits == 0)
+    if (ratioExponent >= 0)
     {
-        // Value < 1. Shift numerator until the quotient becomes non-zero,
-        // tracking the corresponding binary exponent exactly.
-        while (quotientBits == 0)
-        {
-            if ((exactNumerator.hi & (1UL << 63)) != 0)
-                return RoundedRational(0, 0, true);
+        bool shiftOverflow;
+        const scaledDen =
+            shlCent(fromUlong128(d), ratioExponent, shiftOverflow);
 
-            exactNumerator.hi =
-                (exactNumerator.hi << 1) | (exactNumerator.lo >> 63);
-            exactNumerator.lo <<= 1;
-            --exponent2;
+        if (shiftOverflow || centGreater(scaledDen, exactNumerator))
+            --ratioExponent;
+    }
+    else
+    {
+        bool shiftOverflow;
+        const scaledNum =
+            shlCent(exactNumerator, -ratioExponent, shiftOverflow);
 
-            quotient =
-                udivmod(exactNumerator, fromUlong128(d), remainder);
-            quotientBits = quotient.hi != 0
-                ? 64 + bitLength(quotient.hi)
-                : bitLength(quotient.lo);
-        }
+        if (!shiftOverflow
+            && centGreater(fromUlong128(d), scaledNum))
+            --ratioExponent;
     }
 
-    // Adjust to exactly 53 quotient bits before the one and only rounding
-    // decision. For values below 1 this may require additional numerator
-    // shifts; for large values it requires denominator shifts.
-    if (quotientBits < 53)
+    // A normal binary64 significand has 53 bits. Choose the exponent so that
+    // rounding exactNumerator/d at this scale yields those 53 bits directly.
+    const int targetExponent = exponent2 + ratioExponent - 52;
+    const int scaleShift = exponent2 - targetExponent;
+
+    Cent scaledNumerator = exactNumerator;
+    ulong scaledDenominator = d;
+
+    if (scaleShift > 0)
     {
-        const shift = 53 - quotientBits;
-
-        foreach (_; 0 .. shift)
-        {
-            if ((exactNumerator.hi & (1UL << 63)) != 0)
-                return RoundedRational(0, 0, true);
-
-            exactNumerator.hi =
-                (exactNumerator.hi << 1) | (exactNumerator.lo >> 63);
-            exactNumerator.lo <<= 1;
-        }
-
-        exponent2 -= shift;
+        bool shiftOverflow;
+        scaledNumerator = shlCent(
+            scaledNumerator, scaleShift, shiftOverflow);
+        if (shiftOverflow)
+            return RoundedRational(0, 0, true);
     }
-    else if (quotientBits > 53)
+    else if (scaleShift < 0)
     {
-        const shift = quotientBits - 53;
-
-        if (shift >= 64 || d > (ulong.max >> shift))
+        const shift = -scaleShift;
+        if (shift >= 64 || scaledDenominator > (ulong.max >> shift))
             return RoundedRational(0, 0, true);
 
-        d <<= shift;
-        exponent2 += shift;
+        scaledDenominator <<= shift;
     }
 
-    ulong rounded = roundCentQuotientNearestEven(exactNumerator, d);
+    ulong rounded = roundCentQuotientNearestEven(
+        scaledNumerator, scaledDenominator);
 
-    // The normalization above targets a 53-bit quotient. Only a true carry
-    // from 2^53-1 to 2^53 creates a 54th bit and therefore advances the
-    // binary exponent. Do not renormalize a 53-bit result again.
-    if (bitLength(rounded) == 54)
+    int roundedExponent = targetExponent;
+
+    if (bitLength(rounded) > 53)
     {
         rounded >>= 1;
-        ++exponent2;
+        ++roundedExponent;
     }
 
-    return RoundedRational(rounded, exponent2, false);
+    return RoundedRational(rounded, roundedExponent, false);
 }
 
 @safe pure nothrow @nogc
