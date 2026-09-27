@@ -335,4 +335,31 @@ double rebuild(bool negative, RoundedRational value)
         scaleExact(runtimeMaximum, 2, 3);
     assert(!runtimeTwoThirds.overflow);
     assert(rebuild(false, runtimeTwoThirds) <= double.max);
+
+    // True overflow must be distinguished from avoidable intermediate overflow.
+    enum trueOverflow = scaleExact(maximum, 2, 1);
+    static assert(
+        quantizeBinary64(trueOverflow).overflow
+        || rebuild(false, trueOverflow) > double.max);
+
+    // True underflow below half the minimum subnormal rounds to zero.
+    enum halfMin = scaleExact(minSub, 1, 2);
+    static assert(rebuild(false, halfMin) == 0.0);
+
+    // Large rational components should not invent overflow when the exact
+    // ratio is close to one.
+    enum oneValue = decompose(1.0);
+    enum largeBalanced = scaleExact(
+        oneValue,
+        cast(ulong) long.max,
+        cast(ulong)(long.max - 2));
+    static assert(!largeBalanced.overflow);
+    static assert(rebuild(false, largeBalanced) > 1.0);
+    static assert(rebuild(false, largeBalanced) < 2.0);
+
+    // Exact large power-of-two scale remains representable where expected.
+    enum scaleUp = scaleExact(oneAndHalf, 1UL << 20, 1);
+    static assert(!scaleUp.overflow);
+    static assert(rebuild(false, scaleUp)
+        == 1.5 * cast(double)(1UL << 20));
 }
