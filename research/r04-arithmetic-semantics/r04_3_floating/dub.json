@@ -1,0 +1,5 @@
+{
+    "name": "quantities-r04-3-floating",
+    "description": "R04.3 floating arithmetic semantics probe",
+    "targetType": "executable"
+}
