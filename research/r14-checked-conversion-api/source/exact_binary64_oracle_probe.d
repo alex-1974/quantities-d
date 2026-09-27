@@ -57,56 +57,6 @@ Cent shl(Cent value, int shift)
 }
 
 @safe pure nothrow @nogc
-Parts decompose(double value)
-{
-    if (value == 0.0)
-        return Parts(0, 0);
-
-    double x = value < 0.0 ? -value : value;
-    int exponent2;
-
-    // Normalize arithmetically into [1, 2). Multiplication/division by two
-    // is exact for finite binary64 values and remains CTFE-friendly.
-    while (x >= 2.0)
-    {
-        x *= 0.5;
-        ++exponent2;
-    }
-
-    while (x < 1.0)
-    {
-        x *= 2.0;
-        --exponent2;
-    }
-
-    // Recover the 53-bit integer significand exactly by repeated binary
-    // digit extraction instead of frexp/ldexp or bit reinterpretation.
-    ulong significand;
-    double fraction = x;
-
-    foreach (_; 0 .. 53)
-    {
-        significand <<= 1;
-        if (fraction >= 1.0)
-        {
-            significand |= 1UL;
-            fraction -= 1.0;
-        }
-        fraction *= 2.0;
-    }
-
-    exponent2 -= 52;
-
-    while ((significand & 1UL) == 0)
-    {
-        significand >>= 1;
-        ++exponent2;
-    }
-
-    return Parts(significand, exponent2);
-}
-
-@safe pure nothrow @nogc
 Parts roundPositiveRational(Cent numerator, ulong denominator, int exponent2)
 {
     assert(denominator != 0);
@@ -247,19 +197,12 @@ Cent rationalDistanceNumerator(
 
 @safe unittest
 {
-    // decompose() strips powers of two from the significand. Therefore
-    // binary64 0.1 appears canonically as:
-    //
-    //     3602879701896397 * 2^-55
-    //
-    // which is exactly the same value as
-    //
-    //     7205759403792794 * 2^-56.
-    enum literalTenth = decompose(0.1);
-    static assert(literalTenth.significand == 3602879701896397UL);
-    static assert(literalTenth.exponent2 == -55);
+    // The oracle is intentionally rational-only. D floating-point precision
+    // is a minimum rather than a maximum, so CTFE must not be used to recover
+    // the stored binary64 representation from floating arithmetic.
 
-    // Compare the actual binary64 neighbours on a shared 2^-56 lattice.
+    // Exact 1/10 rounds to the binary64 lattice point
+    // 7205759403792794 * 2^-56.
     enum lowerDistance = rationalDistanceNumerator(
         7205759403792793UL, -56, 1, 10);
     enum roundedDistance = rationalDistanceNumerator(
@@ -270,24 +213,20 @@ Cent rationalDistanceNumerator(
     static assert(lowerDistance.hi == 0 && lowerDistance.lo == 6UL);
     static assert(roundedDistance.hi == 0 && roundedDistance.lo == 4UL);
     static assert(upperDistance.hi == 0 && upperDistance.lo == 14UL);
-
     static assert(greater(lowerDistance, roundedDistance));
     static assert(greater(upperDistance, roundedDistance));
 
-    // The standalone rational-rounding oracle must agree with decompose(0.1)
-    // after canonical power-of-two reduction.
     enum oneTenth = roundPositiveRational(fromUlong(1), 10, 0);
-    static assert(oneTenth.significand == literalTenth.significand);
-    static assert(oneTenth.exponent2 == literalTenth.exponent2);
+    static assert(oneTenth.significand == 7205759403792794UL);
+    static assert(oneTenth.exponent2 == -56);
 
-    // Exact sanity cases.
+    // Exact sanity cases. roundPositiveRational returns a 53-bit lattice
+    // representation rather than an odd-significand canonical reduction.
     enum half = roundPositiveRational(fromUlong(1), 2, 0);
-    enum literalHalf = decompose(0.5);
-    static assert(half.significand == literalHalf.significand);
-    static assert(half.exponent2 == literalHalf.exponent2);
+    static assert(half.significand == 4503599627370496UL);
+    static assert(half.exponent2 == -53);
 
     enum threeHalves = roundPositiveRational(fromUlong(3), 2, 0);
-    enum literalThreeHalves = decompose(1.5);
-    static assert(threeHalves.significand == literalThreeHalves.significand);
-    static assert(threeHalves.exponent2 == literalThreeHalves.exponent2);
+    static assert(threeHalves.significand == 6755399441055744UL);
+    static assert(threeHalves.exponent2 == -52);
 }
