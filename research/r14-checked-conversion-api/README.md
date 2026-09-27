@@ -111,3 +111,33 @@ rounded paths drift apart. Named convenience operations can then express caller
 intent without forcing users to manipulate policy enums at every call site.
 
 Evidence, not this preference, decides R14.
+
+
+## Probe 1 — API shape
+
+Implemented candidates:
+
+- A: named intent operations with independent implementations;
+- B: one operation parameterized by a conversion-policy enum;
+- C: named intent operations layered over one checked primitive.
+
+All three probes use the same deliberately trivial semantic kernel. This first
+probe tests call shape, UFCS, CTFE and compiler acceptance only; it does not yet
+claim conversion-algorithm correctness.
+
+Run:
+
+```bash
+cd research/r14-checked-conversion-api
+bash scripts/run.sh
+```
+
+### Early structural observation
+
+A and C expose essentially the same readable call sites. Their important
+difference is internal: C makes checked conversion the semantic primitive and
+derives exact/rounded behavior from it.
+
+B exposes policy machinery at ordinary call sites and still needs a separate
+rounding-mode argument for the rounded case. It therefore has no demonstrated
+surface-area advantage yet.
