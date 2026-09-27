@@ -1,0 +1,5 @@
+name "quantities-r03-conversion-contract"
+description "Research probe for quantities-d conversion contract"
+license "MIT"
+targetType "executable"
+sourcePaths "source"
