@@ -73,3 +73,14 @@ The first diagnostic run established:
 LDC expects `-d-version=Name`. The runner was corrected to select the
 compiler-specific version flag. No conclusion about LDC diagnostics is drawn
 from the invalid first run; it must be rerun with the corrected harness.
+
+
+## Corrected diagnostic result — 2026-09-27
+
+With compiler-specific version flags, the full negative matrix passes:
+
+- DMD: 5/5 cases rejected with the intended API-boundary diagnostic;
+- LDC: 5/5 cases rejected with the intended API-boundary diagnostic.
+
+The structural trait + explicit boundary `static assert` mechanism is therefore
+confirmed on both baseline compilers and promoted by ADR 0003.
