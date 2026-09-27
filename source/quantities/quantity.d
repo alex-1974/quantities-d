@@ -53,8 +53,11 @@ auto quantity(Spec, Unit, Rep)(Rep value)
     else static if (isFloatingRep!Rep)
     {
         const canonical = cast(Rep)(
-            value * cast(Rep) Unit.Scale.numerator
-            / cast(Rep) Unit.Scale.denominator);
+            value
+            * cast(Rep) Unit.Scale.numerator
+            * cast(Rep) Spec.CanonicalUnit.Scale.denominator
+            / cast(Rep) Unit.Scale.denominator
+            / cast(Rep) Spec.CanonicalUnit.Scale.numerator);
         return Quantity!(Spec, Rep).fromCanonical(canonical);
     }
     else
@@ -80,7 +83,9 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     {
         return cast(Rep)(
             value.canonicalValue
+            * cast(Rep) Spec.CanonicalUnit.Scale.numerator
             * cast(Rep) Unit.Scale.denominator
+            / cast(Rep) Spec.CanonicalUnit.Scale.denominator
             / cast(Rep) Unit.Scale.numerator);
     }
     else
