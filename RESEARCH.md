@@ -97,12 +97,17 @@ Dimension equality alone does not prove semantic interchangeability. Distance,
 radius, width, and height may all have length dimension while representing
 different domain concepts.
 
-### Active type-relationship probe
+### Promoted type-relationship decision
 
-`research/r05-type-relationships/` tests the minimal relationship selected for
-further evidence: Spec owns Dimension and canonical Unit; Unit owns Dimension
-and exact rational scale; Quantity identity remains Spec × Rep. The probe
-intentionally avoids deciding declaration syntax or Spec hierarchies.
+R05 is promoted by `docs/adr/0002-static-type-relationships.md`.
+
+The M1 relationship is now fixed at the architectural level: Spec names
+Dimension and CanonicalUnit; Unit names Dimension and exact rational scale;
+Quantity identity remains Spec × Rep. Positive and compile-negative probes pass
+on DMD 2.111 and LDC 1.41.
+
+Concrete declaration syntax, validation traits, derived dimensions and Spec
+hierarchies remain open.
 
 ### Questions
 
