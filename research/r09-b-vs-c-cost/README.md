@@ -194,3 +194,74 @@ stripped size and quantity-related TypeInfo/equality/hash symbol counts.
 This is a synthetic scaling experiment. It measures the marginal compiler/type
 materialization behavior isolated by the previous probe; it is not intended to
 model a complete application.
+
+
+## Scaling result — 2026-09-27
+
+The N = 1, 5, 10, 20, 50, 100, 200 scaling series materially strengthens
+the R09 result and refines the earlier LDC interpretation.
+
+### DMD
+
+With one Spec and N Units, B's measured quantity-related symbol counts scale
+directly with N:
+
+- quantity symbols: 3N;
+- TypeInfo symbols: N;
+- `__xopEquals`: N;
+- `__xtoHash`: N.
+
+C remains constant at three quantity-related symbols and one each of TypeInfo,
+equality and hash across the full series.
+
+At N=200:
+
+- B stripped binary: 925,744 B;
+- C stripped binary: 747,584 B;
+- delta: +178,160 B for B;
+- B unstripped: 1,295,208 B;
+- C unstripped: 1,033,024 B;
+- delta: +262,184 B for B.
+
+A linear fit over the sampled stripped-size delta is approximately 892 bytes
+per additional Unit-bearing B type. This is descriptive for this synthetic
+probe and compiler/toolchain, not a promised universal per-type cost.
+
+Compile-time medians remain close at small N. At N=200, B is 0.20 s versus
+0.18 s for C, with peak RSS about 58,044 KiB versus 56,256 KiB.
+
+### LDC
+
+The earlier small workload suggested byte-identical B/C output, but the scaling
+probe shows that conclusion does not generalize.
+
+At N=200:
+
+- B median compile/link time: 0.35 s;
+- C: 0.19 s;
+- B peak RSS: about 104,548 KiB;
+- C: about 94,612 KiB;
+- B stripped binary: 438,712 B;
+- C: 433,016 B;
+- B unstripped: 657,480 B;
+- C: 634,424 B.
+
+The GNU `nm` patterns used for DMD do not expose corresponding LDC
+quantity-TypeInfo symbols in this optimized binary, so zero counts here mean
+"not observed by this probe", not "LDC creates no compile-time type cost".
+
+### R09 interpretation
+
+B has a demonstrated compiler/type-instantiation scaling cost because Unit is
+part of every concrete quantity type. The cost is especially visible in DMD
+runtime/type metadata and becomes visible in LDC compile resources as N grows.
+
+C keeps the number of concrete quantity types tied primarily to Spec/Rep rather
+than Spec/Unit/Rep and therefore scales more gently with unit diversity in this
+probe.
+
+This remains a cost result, not by itself a semantic design verdict. B provides
+source-unit identity in the type; C deliberately does not. The next question is
+whether DMD's generated TypeInfo/equality/hash materialization can be avoided
+for the intended B value type, and whether realistic consumer workloads reach
+enough distinct Spec×Unit combinations for the measured cost to matter.
