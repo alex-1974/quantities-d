@@ -57,6 +57,7 @@ Binary64 decompose(double value)
     return Binary64(significand, exponent2 - 52, negative);
 }
 
+public:
 @safe pure nothrow @nogc
 bool rationalResultExactlyBinary64(double value, long numerator, long denominator)
 {
