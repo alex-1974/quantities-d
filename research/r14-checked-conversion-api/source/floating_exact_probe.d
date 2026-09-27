@@ -25,30 +25,36 @@ ulong gcd(ulong a, ulong b)
 @safe pure nothrow @nogc
 Binary64 decompose(double value)
 {
-    union Bits
+    const bool negative = value < 0.0;
+    double x = negative ? -value : value;
+
+    if (x == 0.0)
+        return Binary64(0, 0, negative);
+
+    // Normalize arithmetically into [1, 2) without bit reinterpretation so
+    // the path remains CTFE-compatible on the D baseline compilers.
+    int exponent2 = 0;
+    while (x >= 2.0)
     {
-        double value;
-        ulong raw;
+        x *= 0.5;
+        ++exponent2;
+    }
+    while (x < 1.0)
+    {
+        x *= 2.0;
+        --exponent2;
     }
 
-    Bits bits;
-    bits.value = value;
+    // A binary64 normal significand has 53 precision bits including the
+    // implicit leading bit. Multiplying a normalized value by 2^52 therefore
+    // yields its exact integer significand for finite normal values.
+    ulong significand = 0;
+    double scaled = x;
+    foreach (_; 0 .. 52)
+        scaled *= 2.0;
+    significand = cast(ulong) scaled;
 
-    const sign = (bits.raw >> 63) != 0;
-    const rawExp = cast(uint)((bits.raw >> 52) & 0x7ffUL);
-    const fraction = bits.raw & ((1UL << 52) - 1UL);
-
-    if (rawExp == 0)
-    {
-        // Subnormal: value = fraction * 2^-1074.
-        return Binary64(fraction, -1074, sign);
-    }
-
-    // Normal: value = (2^52 + fraction) * 2^(rawExp-1023-52).
-    return Binary64(
-        (1UL << 52) | fraction,
-        cast(int) rawExp - 1023 - 52,
-        sign);
+    return Binary64(significand, exponent2 - 52, negative);
 }
 
 @safe pure nothrow @nogc
