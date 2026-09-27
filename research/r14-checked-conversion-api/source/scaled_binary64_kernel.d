@@ -79,5 +79,45 @@ double scaleRational(double value, long numerator, long denominator)
     enum negative = scaleRational(-1.5, 2, 3);
     static assert(negative == -1.0);
 
+    // Large odd rational components should remain finite when the exact
+    // result is finite and should not overflow merely because the scale
+    // components are large.
+    enum hugeOddBalanced = scaleRational(
+        1.0,
+        long.max,
+        long.max - 2);
+    static assert(hugeOddBalanced > 1.0);
+    static assert(hugeOddBalanced < 2.0);
+
+    // Powers of two are absorbed into the exponent exactly.
+    enum powerOfTwoUp = scaleRational(1.5, 1024, 1);
+    static assert(powerOfTwoUp == 1536.0);
+
+    enum powerOfTwoDown = scaleRational(1536.0, 1, 1024);
+    static assert(powerOfTwoDown == 1.5);
+
+    // A true overflow must still overflow.
+    enum trueOverflow = scaleRational(double.max, 2, 1);
+    static assert(trueOverflow > double.max);
+
+    // A true underflow may round to zero; this must not be mistaken for a
+    // non-finite result.
+    enum minimumSubnormalHalf =
+        scaleRational(minimumSubnormal, 1, 2);
+    static assert(minimumSubnormalHalf == 0.0);
+
+    // Scaling a minimum subnormal upward by an exact power of two must recover
+    // a representable non-zero value.
+    enum minimumSubnormalUp =
+        scaleRational(minimumSubnormal, 2, 1);
+    static assert(minimumSubnormalUp > minimumSubnormal);
+
+    // Check a halfway-style value where operation ordering could otherwise
+    // expose double-rounding differences.
+    enum oneThird = scaleRational(1.0, 1, 3);
+    enum twoThirds = scaleRational(1.0, 2, 3);
+    static assert(oneThird > 0.0);
+    static assert(twoThirds > oneThird);
+
     assert(scaleRational(double.max, 2, 3) <= double.max);
 }
