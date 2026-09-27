@@ -171,11 +171,13 @@ public:
     enum tenth = rationalResultExactlyBinary64(1.0, 1, 10);
     static assert(!tenth);
 
-    // The represented binary value of 0.1 multiplied by 10 is a rational whose
-    // denominator factors may cancel against the represented significand.
+    // Although ordinary floating arithmetic yields 1.0 here, the exact
+    // mathematical product of the represented binary64 value for 0.1 and 10
+    // is not exactly representable in binary64. The arithmetic result is
+    // rounded to 1.0, so ADR 0005 classifies this conversion as inexact.
     enum representedTenthTimesTen =
         rationalResultExactlyBinary64(0.1, 10, 1);
-    static assert(representedTenthTimesTen);
+    static assert(!representedTenthTimesTen);
 
     enum third = rationalResultExactlyBinary64(1.0, 1, 3);
     static assert(!third);
