@@ -89,3 +89,21 @@ dub run --compiler=ldc2 --force
 When checked out inside `d-geospatial-workspace/libs/quantities-d`, canonical
 workspace documents are exposed locally through `.workspace/`. That directory
 is intentionally ignored by Git and is not package content.
+
+
+## M1 implementation status
+
+The first M1 static-core slice is under implementation on
+`feat/m1-static-core`.
+
+The implemented slice is intentionally narrow and follows ADR 0001–0006:
+
+```d
+enum distance = 1.25.quantity!(Length, Kilometre);
+static assert(distance.canonicalValue == 1250.0);
+static assert(distance.inUnit!Kilometre == 1.25);
+```
+
+Non-canonical Unit conversion for integral Reps is deliberately not enabled
+until the checked/rounding conversion machinery from ADR 0005 is implemented.
+No silent integer truncation is permitted.
