@@ -50,6 +50,8 @@ ExactResult!long exactFromChecked(ConversionResult!long result)
             return ExactResult!long.failed(ExactFailure.inexact);
         case ConversionStatus.overflow:
             return ExactResult!long.failed(ExactFailure.overflow);
+        case ConversionStatus.nonFinite:
+            return ExactResult!long.failed(ExactFailure.nonFinite);
     }
 }
 
@@ -96,6 +98,9 @@ auto exactQuantity(Spec, Unit)(long value)
         case ConversionStatus.overflow:
             return ExactResult!(ProbeQuantity!(Spec, long)).failed(
                 ExactFailure.overflow);
+        case ConversionStatus.nonFinite:
+            return ExactResult!(ProbeQuantity!(Spec, long)).failed(
+                ExactFailure.nonFinite);
     }
 }
 
@@ -165,6 +170,8 @@ auto exactIn(Unit, Spec)(ProbeQuantity!(Spec, double) value)
             return ExactResult!double.failed(ExactFailure.inexact);
         case ConversionStatus.overflow:
             return ExactResult!double.failed(ExactFailure.overflow);
+        case ConversionStatus.nonFinite:
+            return ExactResult!double.failed(ExactFailure.nonFinite);
     }
 }
 
@@ -196,6 +203,9 @@ auto exactQuantity(Spec, Unit)(double value)
         case ConversionStatus.overflow:
             return ExactResult!(ProbeQuantity!(Spec, double)).failed(
                 ExactFailure.overflow);
+        case ConversionStatus.nonFinite:
+            return ExactResult!(ProbeQuantity!(Spec, double)).failed(
+                ExactFailure.nonFinite);
     }
 }
 
@@ -215,4 +225,15 @@ auto exactQuantity(Spec, Unit)(double value)
     enum back = half.value.exactIn!HalfMetre;
     static assert(back.hasValue);
     static assert(back.value == 3.0);
+}
+
+
+@safe unittest
+{
+    enum nanChecked = double.nan.checkedQuantity!(Length, Metre);
+    static assert(nanChecked.status == ConversionStatus.nonFinite);
+
+    enum nanExact = double.nan.exactQuantity!(Length, Metre);
+    static assert(!nanExact.hasValue);
+    static assert(nanExact.failure == ExactFailure.nonFinite);
 }
