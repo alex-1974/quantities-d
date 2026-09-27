@@ -376,8 +376,12 @@ double rebuild(bool negative, RoundedRational value)
     if (value.significand == 0)
         return negative ? -0.0 : 0.0;
 
-    const result =
-        ldexp(cast(double) value.significand, value.exponent2);
+    // value.significand is already rounded to at most 53 bits. Converting that
+    // integer to double is therefore exact, and ldexp only applies a power of
+    // two. No additional decimal/rational rounding decision is permitted here.
+    const double exactSignificand = cast(double) value.significand;
+    const double result = ldexp(exactSignificand, value.exponent2);
+
     return negative ? -result : result;
 }
 
@@ -443,6 +447,11 @@ Binary64ScaleResult scaleBinary64(
     static assert(tenthProbe.denominator == 5UL);
     static assert(tenthProbe.exponent2 == -56);
 
+    enum tenthRounded = scaleExact(decompose(1.0), 1, 10);
+    static assert(tenthRounded.significand == 7205759403792794UL);
+    static assert(tenthRounded.exponent2 == -56);
+
     enum tenth = scaleBinary64(1.0, 1, 10);
     static assert(!tenth.overflow);
+    static assert(tenth.value == 0.1);
 }
