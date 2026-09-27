@@ -221,3 +221,24 @@ for:
 
 Diagnostics should fail at the quantities-d API boundary, not as deep template
 errors.
+
+
+## Compile-negative diagnostic result — 2026-09-27
+
+The API-boundary diagnostic gate passes on both baseline compilers:
+
+- DMD 2.111: 3/3 PASS;
+- LDC 1.41: 3/3 PASS.
+
+Confirmed boundary failures:
+
+- mismatched Spec/Unit Dimension;
+- invalid Spec declaration;
+- invalid Unit declaration.
+
+The diagnostics are emitted at the quantities-d construction boundary rather
+than as unrelated deep-template failures.
+
+One final gate remains before promotion: verify in a multi-module probe that
+the raw Quantity payload cannot be constructed directly by external consumer
+code.
