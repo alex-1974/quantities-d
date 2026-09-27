@@ -26,7 +26,7 @@ ConversionResult!double convertFloating(
     assert(denominator != 0);
 
     if (!finite(value))
-        return ConversionResult!double(0.0, ConversionStatus.overflow);
+        return ConversionResult!double(0.0, ConversionStatus.nonFinite);
 
     const double scaled =
         (value * cast(double) numerator) / cast(double) denominator;
@@ -66,4 +66,13 @@ ConversionResult!double convertFloating(
 
     enum overflow = convertFloating(double.max, 2, 1);
     static assert(overflow.status == ConversionStatus.overflow);
+
+    enum nan = convertFloating(double.nan, 1, 1);
+    static assert(nan.status == ConversionStatus.nonFinite);
+
+    enum posInf = convertFloating(double.infinity, 1, 1);
+    static assert(posInf.status == ConversionStatus.nonFinite);
+
+    enum negInf = convertFloating(-double.infinity, 1, 1);
+    static assert(negInf.status == ConversionStatus.nonFinite);
 }
