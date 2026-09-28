@@ -61,3 +61,77 @@ The candidate is accepted only if it matches the BigInt reference for all
 
 A mismatch is evidence that the formula is incomplete; the reference remains
 authoritative for this research stage.
+
+
+## Final observed result — DMD 2.111 / LDC 1.41, x86_64
+
+The corrected type-only derivation matches the independent BigInt reference
+exactly on both baseline compilers:
+
+```text
+checked pairs=64 operations=192 mismatches=0
+```
+
+This covers every ordered pair drawn from:
+
+- byte;
+- ubyte;
+- short;
+- ushort;
+- int;
+- uint;
+- long;
+- ulong.
+
+and independently covers:
+
+- addition;
+- subtraction;
+- multiplication.
+
+## R04.2.7 conclusion
+
+The operation-safe integral ResultRep can be derived entirely from compile-time
+type properties.
+
+The accepted research model requires no BigInt in the candidate arithmetic
+path and does not evaluate overflowing integer endpoints.
+
+The derivation is operation-specific:
+
+- AddRep models the complete mathematical sum range;
+- SubRep independently models the asymmetric mathematical difference range;
+- MulRep models all multiplication extrema.
+
+The selected result is the smallest supported built-in integer type containing
+the complete mathematical result range. If no such built-in type exists, the
+operation belongs to Class O and the plain operator is unavailable.
+
+The BigInt implementation remains a research oracle, not production machinery.
+
+### Established invariant
+
+For the audited built-in integer Rep family:
+
+> If a Class-W integral operator is admitted by the ResultRep trait, every
+> mathematical result representable by the operand type ranges fits the selected
+> built-in ResultRep.
+
+This invariant is now exhaustively checked across 192 type/operation cases on
+both baseline compilers.
+
+## Promotion gate
+
+Before production use, apply these exact traits to a Quantity-shaped wrapper
+and verify:
+
+1. same-Spec + and -;
+2. Quantity * integral scalar and scalar * Quantity;
+3. compile-negative Class-O cases;
+4. exact boundary values, including minima and maxima;
+5. @safe pure nothrow @nogc;
+6. CTFE;
+7. optimized code generation versus explicitly widened raw arithmetic.
+
+Division remains outside this result because representability loss, not only
+overflow, governs integral division semantics.
