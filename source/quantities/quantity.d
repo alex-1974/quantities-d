@@ -2,8 +2,11 @@ module quantities.quantity;
 
 import std.traits : isIntegral;
 
-import quantities.arithmetic_rep : AddRep, SubRep;
-import quantities.arithmetic_traits : AddResult, SubResult;
+import quantities.arithmetic_rep : AddRep, MulRep, SubRep;
+import quantities.arithmetic_traits :
+    AddResult,
+    SubResult,
+    isScalableValue;
 import quantities.traits : isQuantitySpec, isUnit;
 
 struct Quantity(Spec, Rep)
@@ -65,6 +68,37 @@ public:
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ -
             cast(ResultRep)rhs.canonicalValue);
+    }
+}
+
+    @safe pure nothrow @nogc
+    auto opBinary(string op, Scalar)(Scalar scalar) const
+        if (op == "*" &&
+            isIntegral!Rep &&
+            isIntegral!Scalar &&
+            isScalableValue!Spec &&
+            !is(MulRep!(Rep, Scalar) == void))
+    {
+        alias ResultRep = MulRep!(Rep, Scalar);
+
+        return Quantity!(Spec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ *
+            cast(ResultRep)scalar);
+    }
+
+    @safe pure nothrow @nogc
+    auto opBinaryRight(string op, Scalar)(Scalar scalar) const
+        if (op == "*" &&
+            isIntegral!Rep &&
+            isIntegral!Scalar &&
+            isScalableValue!Spec &&
+            !is(MulRep!(Scalar, Rep) == void))
+    {
+        alias ResultRep = MulRep!(Scalar, Rep);
+
+        return Quantity!(Spec, ResultRep).fromCanonical(
+            cast(ResultRep)scalar *
+            cast(ResultRep)canonical_);
     }
 }
 
@@ -140,4 +174,23 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         1.quantity!(Radius, Metre) + 2.quantity!(Radius, Metre)));
     static assert(!__traits(compiles,
         1.quantity!(Length, Metre) + 2.quantity!(Radius, Metre)));
+
+    enum product =
+        uint.max.quantity!(Length, Metre) * uint.max;
+    static assert(is(typeof(product) == Quantity!(Length, ulong)));
+    static assert(product.canonicalValue
+        == cast(ulong)uint.max * cast(ulong)uint.max);
+
+    enum productRight =
+        uint.max * uint.max.quantity!(Length, Metre);
+    static assert(is(typeof(productRight) == Quantity!(Length, ulong)));
+    static assert(productRight.canonicalValue == product.canonicalValue);
+
+    static assert(!__traits(compiles,
+        ulong.max.quantity!(Length, Metre) * ulong.max));
+
+    static assert(!__traits(compiles,
+        2.quantity!(Radius, Metre) * 3));
+    static assert(!__traits(compiles,
+        3 * 2.quantity!(Radius, Metre)));
 }
