@@ -17,26 +17,41 @@ struct DivisionResult(T)
 {
 private:
     T payload_;
+    bool hasValue_;
+    DivisionStatus status_ = DivisionStatus.inexact;
 
 public:
-    bool hasValue;
-    DivisionStatus status;
+    @property bool hasValue() const @safe pure nothrow @nogc
+    {
+        return hasValue_;
+    }
+
+    @property DivisionStatus status() const @safe pure nothrow @nogc
+    {
+        return status_;
+    }
 
     package(quantities) static DivisionResult exact(T value)
         @safe pure nothrow @nogc
     {
-        return DivisionResult(value, true, DivisionStatus.exact);
+        DivisionResult result;
+        result.payload_ = value;
+        result.hasValue_ = true;
+        result.status_ = DivisionStatus.exact;
+        return result;
     }
 
     package(quantities) static DivisionResult failure(DivisionStatus status)
         @safe pure nothrow @nogc
     {
-        return DivisionResult(T.init, false, status);
+        DivisionResult result;
+        result.status_ = status;
+        return result;
     }
 
     bool tryValue(out T value) const @safe pure nothrow @nogc
     {
-        if (!hasValue)
+        if (!hasValue_)
             return false;
 
         value = payload_;
@@ -74,6 +89,10 @@ auto exactDiv(Spec, Rep, Scalar)(
 {
     import quantities.length : Length, Metre;
     import quantities.quantity : quantity;
+
+    enum defaultResult = DivisionResult!(Quantity!(Length, int)).init;
+    static assert(defaultResult.status == DivisionStatus.inexact);
+    static assert(!defaultResult.hasValue);
 
     enum exact = 6.quantity!(Length, Metre).exactDiv(3);
     static assert(exact.status == DivisionStatus.exact);
