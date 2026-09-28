@@ -94,6 +94,10 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3QuantityProductMissingRelation
     run_reject "$compiler" "$flag" M3QuantityProductClassO
     run_reject "$compiler" "$flag" M3QuantityProductCanonicalRescale
+    run_reject "$compiler" "$flag" M3ExternalProductMissingRelation
+    run_case "$compiler" "$flag" M3ExternalProductWrongResultDimension "external Quantity product ResultSpec has the wrong physical Dimension."
+    run_reject "$compiler" "$flag" M3ExternalProductClassO
+    run_reject "$compiler" "$flag" M3ExternalProductCanonicalRescale
 }
 
 if [[ $# -gt 0 ]]; then
