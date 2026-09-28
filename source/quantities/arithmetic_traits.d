@@ -114,6 +114,33 @@ template ProductResultSpec(Lhs, Rhs)
     }
 }
 
+
+/// Semantic result Spec supplied explicitly by a consumer-owned relation set.
+///
+/// Unlike ProductResultSpec, this resolver does not fall back to operand-owned
+/// ProductWith/ProductFromLeft hooks. Supplying Relations is an explicit
+/// semantic choice.
+template ExternalProductResultSpec(alias Relations, Lhs, Rhs)
+{
+    static if (__traits(hasMember, Relations, "Product"))
+        alias Candidate = Relations.Product!(Lhs, Rhs);
+    else
+        alias Candidate = void;
+
+    static if (is(Candidate == void))
+        alias ExternalProductResultSpec = void;
+    else
+    {
+        static assert(isQuantitySpec!Candidate,
+            "external Quantity product relation must resolve to a valid Quantity Spec.");
+        static assert(is(
+            Candidate.Dimension ==
+            MultiplyDimension!(Lhs.Dimension, Rhs.Dimension)),
+            "external Quantity product ResultSpec has the wrong physical Dimension.");
+        alias ExternalProductResultSpec = Candidate;
+    }
+}
+
 private struct Additive
 {
     enum closedAdditiveValue = true;
