@@ -17,7 +17,7 @@ struct Shape { size_t minPow; size_t maxBits; }
 
 // ceil(log2((2^a-1)+(2^b-1)+1)) for positive maxima.
 enum sumMaxBits(size_t a, size_t b) =
-    a == b ? a + 1 : (a > b ? a : b);
+    (a > b ? a : b) + 1;
 
 // For multiplication of non-negative maxima:
 // (2^a-1)(2^b-1) < 2^(a+b), and for nonzero widths needs a+b bits
