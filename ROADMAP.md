@@ -94,11 +94,23 @@ slice. PR #15 promotes:
 - constructive `DivisionResult` states and positive/negative external API
   gates.
 
-This is a partial M3 implementation, not M3 completion. Floating-point
-arithmetic, cross-Spec relationships, `Quantity * Quantity`, derived
-dimensions such as Area, dimensionless Quantity results, Class-O named checked
-arithmetic, broader promotion policy, and consumer-driven mathematical
-functions remain open research-first work.
+Subsequent R04 work extends the partial M3 implementation with:
+
+- open canonical dimension algebra over consumer-defined dimension tags;
+- exact multiplication, division, and integer-power unit algebra;
+- `Area` / `SquareMetre` as the first production derived-dimension case;
+- explicit semantic product resolution separated from physical dimension,
+  unit-scale, and representation algebra;
+- total-safe integral `Quantity * Quantity` when the complete operand type
+  ranges fit and canonical rescaling is identity;
+- value-dependent exact integral `exactMul` for nontrivial canonical rescale;
+- explicit consumer-owned product relation sets for pairs of foreign Specs,
+  without a central registry or modification of either operand library.
+
+This is still a partial M3 implementation, not M3 completion. Floating-point
+arithmetic, general cross-Spec addition/subtraction, dimensionless Quantity
+results, broader Class-O named checked arithmetic, broader promotion policy,
+and consumer-driven mathematical functions remain open research-first work.
 
 ## Deferred until justified
 
