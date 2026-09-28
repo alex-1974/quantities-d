@@ -1,5 +1,21 @@
 module quantities;
 
+public import quantities.arithmetic_traits : ProductResult;
+public import quantities.area : Area, AreaDimension, SquareMetre;
+public import quantities.dimension :
+    BaseDimension,
+    Dimension,
+    DimensionTerm,
+    Dimensionless,
+    DivideDimension,
+    MultiplyDimension,
+    PowerDimension;
+public import quantities.unit :
+    DerivedUnit,
+    DivideUnit,
+    MultiplyUnit,
+    PowerUnit;
+
 public import quantities.arithmetic :
     DivisionResult,
     DivisionStatus,
@@ -23,6 +39,7 @@ public import quantities.length :
     Kilometre,
     Length,
     LengthDimension,
+    LengthDimensionTag,
     LengthUnits,
     Metre,
     USSurveyFoot;
