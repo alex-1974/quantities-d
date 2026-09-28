@@ -293,8 +293,8 @@ auto exactDiv(Spec, Rep, Scalar)(
         }
 
         enum scaledUp =
-            cast(byte)1.quantity!(KilometreLengthProduct, Kilometre)
-            .exactMul(cast(byte)1.quantity!(KilometreLengthProduct, Kilometre));
+            (cast(byte)1).quantity!(KilometreLengthProduct, Kilometre)
+            .exactMul((cast(byte)1).quantity!(KilometreLengthProduct, Kilometre));
         static assert(scaledUp.hasValue);
         static assert(({
             Quantity!(Area, long) area;
