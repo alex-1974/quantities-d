@@ -1,6 +1,6 @@
 module quantities;
 
-public import quantities.arithmetic_traits : ProductResult;
+public import quantities.arithmetic_traits : ProductResultSpec;
 public import quantities.area : Area, AreaDimension, SquareMetre;
 public import quantities.dimension :
     BaseDimension,
