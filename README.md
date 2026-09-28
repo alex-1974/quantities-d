@@ -10,7 +10,7 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core is complete; M2 minimal linear-unit work is in validation. No stable public release exists yet.**
+**M1 static core and M2 minimal linear-unit work are complete. M3 is in progress; its first integral-arithmetic slice is implemented. No stable public release exists yet.**
 
 The repository now contains the first production quantity core and the checked
 conversion contract accepted by ADR 0007.
@@ -24,15 +24,18 @@ Current production coverage includes:
 - explicit checked / exact-required / rounded non-canonical conversion for
   signed `long`;
 - checked / exact-required non-canonical conversion for binary64 `double`;
+- first M3 integral-arithmetic slice: safe same-Spec `+` / `-`, symmetric integral scalar multiplication, and explicit `exactDiv`;
 - compile-negative API-boundary tests;
 - external-consumer tests on DMD 2.111 and LDC 1.41.
 
-`float`, `real`, mixed-Rep conversion, arithmetic, affine quantity points, and
+`float`, `real`, mixed-Rep conversion, floating-point arithmetic, cross-Spec
+arithmetic, derived-dimension arithmetic, affine quantity points, and
 runtime-parsed unit metadata are not yet production-complete.
 
-The M1 branch-level compile-negative, external-consumer, DMD, and LDC gates
-have passed. The API remains pre-release while M2 adds the first standard
-linear-unit catalogue and further consumer validation.
+M1 and M2 are complete. PR #15 promoted the first evidence-backed R04
+arithmetic slice after DMD/LDC debug and release tests, external-consumer
+validation, and compile-negative gates. The API remains pre-release while M3
+continues research-first expansion.
 
 ## Intended domain
 
@@ -147,3 +150,25 @@ they remain candidates for a later consumer-backed extension.
 `geodesy-d` documents metres as its normal linear convention. The current
 audit therefore also does not justify a hard quantities-d dependency in those
 libraries.
+
+
+## M3 integral-arithmetic slice
+
+PR #15 promotes the first evidence-backed R04 arithmetic decisions into the
+production API.
+
+For integral representations, same-Spec `Length` addition and subtraction and
+symmetric multiplication by integral scalars are admitted only when both the
+semantic Spec relationship and a result representation safe for the complete
+operand type ranges are known. Operations for which no built-in result
+representation can satisfy that invariant are not exposed as unchecked direct
+operators.
+
+Integral division is explicit through `exactDiv` rather than raw `/`.
+`DivisionResult` distinguishes exact results, inexact division, and division
+by zero without permitting contradictory public result states.
+
+This is not the completion of M3. Floating-point arithmetic, cross-Spec
+relationships, `Quantity * Quantity`, derived dimensions such as Area,
+dimensionless Quantity results, and broader checked arithmetic remain
+research-first work.
