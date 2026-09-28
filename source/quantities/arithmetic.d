@@ -10,6 +10,10 @@ import quantities.arithmetic_traits :
     isScalableValue;
 import quantities.quantity : Quantity;
 
+/// Failure classification for exact Quantity product operations.
+///
+/// `inexact` means that the mathematical product cannot be represented
+/// exactly in the selected result Spec's canonical integral unit.
 enum ProductFailure : ubyte
 {
     inexact
@@ -152,6 +156,13 @@ private auto exactMulKernel(ResultSpec, LhsSpec, LhsRep, RhsSpec, RhsRep)(
         ResultQuantity.fromCanonical(scaled / denominator));
 }
 
+/// Multiplies two integral Quantities using operand-owned product semantics.
+///
+/// The result Spec is resolved through `ProductResultSpec`. This overload is
+/// available only when the complete scaled product range fits a built-in
+/// integral result Rep. Non-integral canonical rescaling returns an inexact
+/// result rather than truncating. The operation is CTFE-capable and performs
+/// no allocation.
 auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
     Quantity!(LhsSpec, LhsRep) lhs,
     Quantity!(RhsSpec, RhsRep) rhs)
@@ -186,6 +197,12 @@ auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
     return exactMulKernel!ResultSpec(lhs, rhs);
 }
 
+/// Multiplies two integral Quantities using an explicit consumer relation set.
+///
+/// `Relations.Product!(LhsSpec, RhsSpec)` is authoritative. The operation is
+/// exposed only when the complete operand ranges are representable and the
+/// mathematical product unit already equals the result Spec's CanonicalUnit;
+/// no canonical-unit truncation or runtime failure is possible.
 auto product(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
     Quantity!(LhsSpec, LhsRep) lhs,
     Quantity!(RhsSpec, RhsRep) rhs)
@@ -216,6 +233,12 @@ auto product(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
         cast(ResultRep)rhs.canonicalValue);
 }
 
+/// Multiplies two integral Quantities using an explicit consumer relation set.
+///
+/// Unlike the operand-owned overload, semantic resolution is exclusively
+/// `ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec)`. Exact canonical
+/// rescaling is performed when the compile-time range proof admits it; a
+/// value-dependent non-integral rescale reports `ProductFailure.inexact`.
 auto exactMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
     Quantity!(LhsSpec, LhsRep) lhs,
     Quantity!(RhsSpec, RhsRep) rhs)
