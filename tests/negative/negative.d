@@ -170,3 +170,21 @@ version (M3ClassOMultiplication)
     enum x = ulong.max.quantity!(production.Length, production.Metre)
         * ulong.max;
 }
+
+
+version (M3NonScalableExactDivision)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 6.quantity!(Radius, production.Metre).exactDiv(3);
+}
+
+version (M3ClassOExactDivision)
+{
+    enum x = long(6).quantity!(production.Length, production.Metre)
+        .exactDiv(long(3));
+}
