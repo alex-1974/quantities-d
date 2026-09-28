@@ -75,6 +75,49 @@ void main()
     assert(internationalValue.canonicalValue
         != surveyValue.canonicalValue);
 
+    enum arithmeticLhs = int.max.quantity!(Length, Metre);
+    enum arithmeticRhs = uint.max.quantity!(Length, Metre);
+    enum arithmeticSum = arithmeticLhs + arithmeticRhs;
+    static assert(is(typeof(arithmeticSum) == Quantity!(Length, long)));
+    static assert(arithmeticSum.canonicalValue
+        == cast(long)int.max + cast(long)uint.max);
+
+    enum arithmeticDifference =
+        0u.quantity!(Length, Metre)
+        - uint.max.quantity!(Length, Metre);
+    static assert(is(typeof(arithmeticDifference) == Quantity!(Length, long)));
+    static assert(arithmeticDifference.canonicalValue
+        == -cast(long)uint.max);
+
+    enum arithmeticProduct =
+        uint.max.quantity!(Length, Metre) * uint.max;
+    enum arithmeticProductRight =
+        uint.max * uint.max.quantity!(Length, Metre);
+    static assert(is(typeof(arithmeticProduct) == Quantity!(Length, ulong)));
+    static assert(is(typeof(arithmeticProductRight) == Quantity!(Length, ulong)));
+    static assert(arithmeticProduct.canonicalValue
+        == arithmeticProductRight.canonicalValue);
+
+    enum exactDivision =
+        int.min.quantity!(Length, Metre).exactDiv(-1);
+    static assert(exactDivision.status == DivisionStatus.exact);
+    static assert(exactDivision.hasValue);
+    static assert({
+        Quantity!(Length, long) value;
+        return exactDivision.tryValue(value)
+            && value.canonicalValue == -(cast(long)int.min);
+    }());
+
+    enum inexactDivision =
+        5.quantity!(Length, Metre).exactDiv(2);
+    static assert(inexactDivision.status == DivisionStatus.inexact);
+    static assert(!inexactDivision.hasValue);
+
+    enum zeroDivision =
+        5.quantity!(Length, Metre).exactDiv(0);
+    static assert(zeroDivision.status == DivisionStatus.divisionByZero);
+    static assert(!zeroDivision.hasValue);
+
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
     static assert(Quantity!(Length, long).sizeof == long.sizeof);
 }

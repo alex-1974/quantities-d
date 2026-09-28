@@ -31,6 +31,23 @@ run_case() {
     fi
 }
 
+run_reject() {
+    local compiler="$1"
+    local version_flag="$2"
+    local case_name="$3"
+    local compiler_name
+    compiler_name="$(basename "$compiler")"
+    local log="$OUT/${compiler_name}-${case_name}.log"
+
+    if "$compiler" -c "$SRC" -I"$IMPORT" "$version_flag$case_name" \
+        -of=/tmp/quantities-negative.o >"$log" 2>&1; then
+        echo "FAIL: $compiler_name accepted $case_name"
+        return 1
+    fi
+
+    echo "PASS: $compiler_name rejected $case_name"
+}
+
 run_compiler() {
     local compiler="$1"
     local compiler_name
@@ -62,6 +79,15 @@ run_compiler() {
     run_case "$compiler" "$flag" M2NonCanonicalKilometreConstruction "quantity: non-canonical Unit construction requires checkedQuantity, exactQuantity, or roundedQuantity."
     run_case "$compiler" "$flag" M2NonCanonicalInternationalFootExtraction "inUnit: non-canonical Unit extraction requires checkedIn, exactIn, or roundedIn."
     run_case "$compiler" "$flag" M2WrongDimensionConstruction "checkedQuantity: Spec and Unit must have the same Dimension."
+    run_reject "$compiler" "$flag" M3NonAdditiveSameSpecAddition
+    run_reject "$compiler" "$flag" M3CrossSpecAddition
+    run_reject "$compiler" "$flag" M3ClassOAddition
+    run_reject "$compiler" "$flag" M3RawIntegralDivision
+    run_reject "$compiler" "$flag" M3NonScalableMultiplication
+    run_reject "$compiler" "$flag" M3NonScalableRightMultiplication
+    run_reject "$compiler" "$flag" M3ClassOMultiplication
+    run_reject "$compiler" "$flag" M3NonScalableExactDivision
+    run_reject "$compiler" "$flag" M3ClassOExactDivision
 }
 
 if [[ $# -gt 0 ]]; then

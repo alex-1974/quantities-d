@@ -20,6 +20,11 @@ struct Length
 {
     alias Dimension = LengthDimension;
     alias CanonicalUnit = Metre;
+
+    // Length is a generic linear magnitude: same-Spec addition/subtraction
+    // and dimensionless scalar scaling preserve its semantic meaning.
+    enum closedAdditiveValue = true;
+    enum scalableValue = true;
 }
 
 /// Kilometre: exactly 1000 metres.
@@ -63,6 +68,20 @@ static foreach (Unit; LengthUnits)
 }
 
 static assert(is(Length.CanonicalUnit == Metre));
+
+static assert(({
+    import quantities.arithmetic_traits :
+        AddResult,
+        SubResult,
+        hasClosedAdditiveValue,
+        isScalableValue;
+
+    static assert(hasClosedAdditiveValue!Length);
+    static assert(isScalableValue!Length);
+    static assert(is(AddResult!(Length, Length) == Length));
+    static assert(is(SubResult!(Length, Length) == Length));
+    return true;
+}()));
 static assert(is(Metre.Scale == ExactRatio!(1, 1)));
 static assert(is(Kilometre.Scale == ExactRatio!(1000, 1)));
 static assert(is(InternationalFoot.Scale == ExactRatio!(381, 1250)));

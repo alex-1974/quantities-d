@@ -1,5 +1,10 @@
 module quantities;
 
+public import quantities.arithmetic :
+    DivisionResult,
+    DivisionStatus,
+    exactDiv;
+
 public import quantities.conversion :
     ConversionResult,
     ConversionStatus,
