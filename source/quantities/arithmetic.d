@@ -480,6 +480,47 @@ auto exactDiv(Spec, Rep, Scalar)(
             return exact.tryValue(area) && area.canonicalValue == 12;
         }()));
 
+        import quantities.area : AreaDimension;
+        import quantities.ratio : ExactRatio;
+        import quantities.unit : DerivedUnit;
+
+        alias SquareKilometre = DerivedUnit!(
+            AreaDimension,
+            ExactRatio!(1_000_000, 1));
+
+        struct AreaKm2
+        {
+            alias Dimension = AreaDimension;
+            alias CanonicalUnit = SquareKilometre;
+        }
+
+        struct RescaledRelations
+        {
+            template Product(Lhs, Rhs)
+            {
+                static if (is(Lhs == ForeignLeft) && is(Rhs == ForeignRight))
+                    alias Product = AreaKm2;
+                else
+                    alias Product = void;
+            }
+        }
+
+        static assert(!__traits(compiles,
+            1000.quantity!(ForeignLeft, Metre)
+                .product!RescaledRelations(
+                    1000.quantity!(ForeignRight, Metre))));
+
+        enum rescaledExact =
+            1000.quantity!(ForeignLeft, Metre)
+            .exactMul!RescaledRelations(
+                1000.quantity!(ForeignRight, Metre));
+        static assert(rescaledExact.hasValue);
+        static assert(({
+            Quantity!(AreaKm2, long) area;
+            return rescaledExact.tryValue(area)
+                && area.canonicalValue == 1;
+        }()));
+
         return true;
     }()));
 
