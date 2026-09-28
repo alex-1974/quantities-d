@@ -5,7 +5,7 @@ import std.traits : isIntegral;
 import quantities.arithmetic_rep : QuotientRep, ScaledMulRep;
 import quantities.arithmetic_traits :
     ProductCanonicalRescale,
-    ProductResult,
+    ProductResultSpec,
     isScalableValue;
 import quantities.quantity : Quantity;
 
@@ -130,20 +130,20 @@ auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
     @safe pure nothrow @nogc
     if (isIntegral!LhsRep &&
         isIntegral!RhsRep &&
-        !is(ProductResult!(LhsSpec, RhsSpec) == void) &&
+        !is(ProductResultSpec!(LhsSpec, RhsSpec) == void) &&
         ProductCanonicalRescale!(
             LhsSpec,
             RhsSpec,
-            ProductResult!(LhsSpec, RhsSpec)).numerator > 0 &&
+            ProductResultSpec!(LhsSpec, RhsSpec)).numerator > 0 &&
         !is(ScaledMulRep!(
             LhsRep,
             RhsRep,
             cast(ulong)ProductCanonicalRescale!(
                 LhsSpec,
                 RhsSpec,
-                ProductResult!(LhsSpec, RhsSpec)).numerator) == void))
+                ProductResultSpec!(LhsSpec, RhsSpec)).numerator) == void))
 {
-    alias ResultSpec = ProductResult!(LhsSpec, RhsSpec);
+    alias ResultSpec = ProductResultSpec!(LhsSpec, RhsSpec);
     alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
     alias ResultRep = ScaledMulRep!(
         LhsRep, RhsRep, cast(ulong)Scale.numerator);
