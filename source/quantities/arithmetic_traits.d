@@ -60,20 +60,20 @@ template ProductCanonicalRescale(Lhs, Rhs, ResultSpec)
     alias ProductCanonicalRescale = StorageRatioUnit.Scale;
 }
 
-private template ForwardProductResult(Lhs, Rhs)
+private template ForwardProductResultSpec(Lhs, Rhs)
 {
     static if (__traits(hasMember, Lhs, "ProductWith"))
-        alias ForwardProductResult = Lhs.ProductWith!Rhs;
+        alias ForwardProductResultSpec = Lhs.ProductWith!Rhs;
     else
-        alias ForwardProductResult = void;
+        alias ForwardProductResultSpec = void;
 }
 
-private template ReverseProductResult(Lhs, Rhs)
+private template ReverseProductResultSpec(Lhs, Rhs)
 {
     static if (__traits(hasMember, Rhs, "ProductFromLeft"))
-        alias ReverseProductResult = Rhs.ProductFromLeft!Lhs;
+        alias ReverseProductResultSpec = Rhs.ProductFromLeft!Lhs;
     else
-        alias ReverseProductResult = void;
+        alias ReverseProductResultSpec = void;
 }
 
 /// Semantic result Spec for Quantity multiplication.
@@ -82,10 +82,10 @@ private template ReverseProductResult(Lhs, Rhs)
 /// the right operand through ProductFromLeft!Lhs. If both hooks exist they
 /// must agree. The selected result must be a valid Quantity Spec whose
 /// dimension is exactly the mathematical product dimension.
-template ProductResult(Lhs, Rhs)
+template ProductResultSpec(Lhs, Rhs)
 {
-    alias Forward = ForwardProductResult!(Lhs, Rhs);
-    alias Reverse = ReverseProductResult!(Lhs, Rhs);
+    alias Forward = ForwardProductResultSpec!(Lhs, Rhs);
+    alias Reverse = ReverseProductResultSpec!(Lhs, Rhs);
 
     static if (!is(Forward == void) && !is(Reverse == void))
     {
@@ -101,7 +101,7 @@ template ProductResult(Lhs, Rhs)
         alias Candidate = void;
 
     static if (is(Candidate == void))
-        alias ProductResult = void;
+        alias ProductResultSpec = void;
     else
     {
         static assert(isQuantitySpec!Candidate,
@@ -110,7 +110,7 @@ template ProductResult(Lhs, Rhs)
             Candidate.Dimension ==
             MultiplyDimension!(Lhs.Dimension, Rhs.Dimension)),
             "Quantity product ResultSpec has the wrong physical Dimension.");
-        alias ProductResult = Candidate;
+        alias ProductResultSpec = Candidate;
     }
 }
 
@@ -126,7 +126,7 @@ static assert(!hasClosedAdditiveValue!Plain);
 static assert(({
     import quantities.area : Area;
     import quantities.length : Length;
-    static assert(is(ProductResult!(Length, Length) == Area));
+    static assert(is(ProductResultSpec!(Length, Length) == Area));
     return true;
 }()));
 
