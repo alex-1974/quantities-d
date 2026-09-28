@@ -141,3 +141,32 @@ version (M3RawIntegralDivision)
 {
     enum x = 5.quantity!(production.Length, production.Metre) / 2;
 }
+
+
+version (M3NonScalableMultiplication)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 2.quantity!(Radius, production.Metre) * 3;
+}
+
+version (M3NonScalableRightMultiplication)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 3 * 2.quantity!(Radius, production.Metre);
+}
+
+version (M3ClassOMultiplication)
+{
+    enum x = ulong.max.quantity!(production.Length, production.Metre)
+        * ulong.max;
+}
