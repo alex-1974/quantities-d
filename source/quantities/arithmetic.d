@@ -14,11 +14,12 @@ enum ProductFailure : ubyte
     inexact
 }
 
-struct ProductResultValue(T)
+private struct ExactArithmeticResult(T, Failure)
+    if (is(Failure == enum))
 {
 private:
     T payload_;
-    ProductFailure failure_ = ProductFailure.inexact;
+    Failure failure_ = Failure.init;
     bool hasValue_;
 
 public:
@@ -27,19 +28,19 @@ public:
         return hasValue_;
     }
 
-    package(quantities) static ProductResultValue exact(T value)
+    package(quantities) static ExactArithmeticResult exact(T value)
         @safe pure nothrow @nogc
     {
-        ProductResultValue result;
+        ExactArithmeticResult result;
         result.payload_ = value;
         result.hasValue_ = true;
         return result;
     }
 
-    package(quantities) static ProductResultValue failed(ProductFailure failure)
+    package(quantities) static ExactArithmeticResult failed(Failure failure)
         @safe pure nothrow @nogc
     {
-        ProductResultValue result;
+        ExactArithmeticResult result;
         result.failure_ = failure;
         return result;
     }
@@ -52,7 +53,7 @@ public:
         return true;
     }
 
-    bool tryFailure(out ProductFailure failure) const
+    bool tryFailure(out Failure failure) const
         @safe pure nothrow @nogc
     {
         if (hasValue_)
@@ -61,6 +62,8 @@ public:
         return true;
     }
 }
+
+alias ProductResultValue(T) = ExactArithmeticResult!(T, ProductFailure);
 
 enum DivisionStatus : ubyte
 {
