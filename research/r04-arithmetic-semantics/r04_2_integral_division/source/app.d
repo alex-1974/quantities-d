@@ -1,6 +1,6 @@
 module app;
 
-import std.stdio : writeln;
+import std.stdio : writeln, writefln;
 
 void probe(T, S)(T value, S divisor)
 {
