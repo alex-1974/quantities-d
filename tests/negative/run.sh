@@ -86,6 +86,8 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3NonScalableMultiplication
     run_reject "$compiler" "$flag" M3NonScalableRightMultiplication
     run_reject "$compiler" "$flag" M3ClassOMultiplication
+    run_reject "$compiler" "$flag" M3NonScalableExactDivision
+    run_reject "$compiler" "$flag" M3ClassOExactDivision
 }
 
 if [[ $# -gt 0 ]]; then
