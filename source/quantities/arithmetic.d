@@ -273,6 +273,35 @@ auto exactDiv(Spec, Rep, Scalar)(
                 && area.canonicalValue == 1;
         }()));
 
+        // Opposite rescale direction: the mathematical product unit is km²
+        // while canonical storage is m², so the exact rescale numerator is
+        // 1_000_000. ScaledMulRep must widen before multiplication.
+        alias productionKilometre = quantities.length.Kilometre;
+
+        struct KilometreLengthProduct
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = productionKilometre;
+
+            template ProductWith(Rhs)
+            {
+                static if (is(Rhs == KilometreLengthProduct))
+                    alias ProductWith = Area;
+                else
+                    alias ProductWith = void;
+            }
+        }
+
+        enum scaledUp =
+            1.quantity!(KilometreLengthProduct, productionKilometre)
+            .exactMul(1.quantity!(KilometreLengthProduct, productionKilometre));
+        static assert(scaledUp.hasValue);
+        static assert(({
+            Quantity!(Area, long) area;
+            return scaledUp.tryValue(area)
+                && area.canonicalValue == 1_000_000;
+        }()));
+
         return true;
     }()));
 
