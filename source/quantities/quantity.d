@@ -5,10 +5,10 @@ import std.traits : isIntegral;
 import quantities.arithmetic_rep : AddRep, MulRep, SubRep;
 import quantities.arithmetic_traits :
     AddResult,
+    ProductCanonicalRescale,
     ProductResult,
     SubResult,
     isScalableValue;
-import quantities.unit : MultiplyUnit;
 import quantities.traits : isQuantitySpec, isUnit;
 
 struct Quantity(Spec, Rep)
@@ -80,21 +80,14 @@ public:
             isIntegral!OtherRep &&
             !is(ProductResult!(Spec, OtherSpec) == void) &&
             !is(MulRep!(Rep, OtherRep) == void) &&
-            is(
-                MultiplyUnit!(
-                    Spec.CanonicalUnit,
-                    OtherSpec.CanonicalUnit).Dimension ==
-                ProductResult!(Spec, OtherSpec).Dimension) &&
-            MultiplyUnit!(
-                Spec.CanonicalUnit,
-                OtherSpec.CanonicalUnit).Scale.numerator ==
-                ProductResult!(
-                    Spec, OtherSpec).CanonicalUnit.Scale.numerator &&
-            MultiplyUnit!(
-                Spec.CanonicalUnit,
-                OtherSpec.CanonicalUnit).Scale.denominator ==
-                ProductResult!(
-                    Spec, OtherSpec).CanonicalUnit.Scale.denominator)
+            ProductCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                ProductResult!(Spec, OtherSpec)).numerator == 1 &&
+            ProductCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                ProductResult!(Spec, OtherSpec)).denominator == 1)
     {
         alias ResultSpec = ProductResult!(Spec, OtherSpec);
         alias ResultRep = MulRep!(Rep, OtherRep);
