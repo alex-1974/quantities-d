@@ -312,6 +312,34 @@ auto exactDiv(Spec, Rep, Scalar)(
                 && area.canonicalValue == 1_000_000;
         }()));
 
+        // A denominator must never be narrowed into ResultRep. Until exactMul
+        // grows a wider/cross-cancelled denominator kernel, reject such a
+        // specialization at compile time rather than corrupting the divisor.
+        alias HugeDenominatorSquareUnit = DerivedUnit!(
+            AreaDimension,
+            ExactRatio!(1_000_000, 1));
+        struct HugeDenominatorArea
+        {
+            alias Dimension = AreaDimension;
+            alias CanonicalUnit = HugeDenominatorSquareUnit;
+        }
+        struct TinyProduct
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+
+            template ProductWith(Rhs)
+            {
+                static if (is(Rhs == TinyProduct))
+                    alias ProductWith = HugeDenominatorArea;
+                else
+                    alias ProductWith = void;
+            }
+        }
+        static assert(!__traits(compiles,
+            (cast(byte)1).quantity!(TinyProduct, Metre)
+                .exactMul((cast(byte)1).quantity!(TinyProduct, Metre))));
+
         return true;
     }()));
 
