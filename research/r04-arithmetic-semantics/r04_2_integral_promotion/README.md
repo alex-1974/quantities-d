@@ -43,3 +43,30 @@ example values.
 
 Passing this gate establishes semantic suitability of the exact traits in a
 Quantity-shaped API. Code-generation equivalence remains a separate next gate.
+
+
+## Observed promotion result
+
+The complete promotion gate passed on the baseline matrix:
+
+- DMD 2.111 debug: pass;
+- DMD 2.111 release: pass;
+- LDC 1.41 debug: pass;
+- LDC 1.41 release: pass.
+
+All runs exited with status 0.
+
+Therefore the R04.2.7 ResultRep model survives promotion into a
+Quantity-shaped operator API for the tested semantics:
+
+- exact widened boundary arithmetic;
+- signed and unsigned result ranges;
+- symmetric integral scalar multiplication;
+- compile-time rejection of tested Class-O expressions;
+- CTFE;
+- @safe pure nothrow @nogc.
+
+No runtime overflow machinery is required for admitted Class-W operators.
+
+The remaining promotion gate is optimized code generation versus equivalent
+raw arithmetic with explicit widening.
