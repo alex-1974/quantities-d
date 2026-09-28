@@ -1,5 +1,9 @@
 module quantities.quantity;
 
+import std.traits : isIntegral;
+
+import quantities.arithmetic_rep : AddRep, SubRep;
+import quantities.arithmetic_traits : AddResult, SubResult;
 import quantities.traits : isQuantitySpec, isUnit;
 
 struct Quantity(Spec, Rep)
@@ -27,6 +31,40 @@ public:
     Rep canonicalValue() const
     {
         return canonical_;
+    }
+
+    @safe pure nothrow @nogc
+    auto opBinary(string op, OtherSpec, OtherRep)(
+        Quantity!(OtherSpec, OtherRep) rhs) const
+        if (op == "+" &&
+            isIntegral!Rep &&
+            isIntegral!OtherRep &&
+            !is(AddResult!(Spec, OtherSpec) == void) &&
+            !is(AddRep!(Rep, OtherRep) == void))
+    {
+        alias ResultSpec = AddResult!(Spec, OtherSpec);
+        alias ResultRep = AddRep!(Rep, OtherRep);
+
+        return Quantity!(ResultSpec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ +
+            cast(ResultRep)rhs.canonicalValue);
+    }
+
+    @safe pure nothrow @nogc
+    auto opBinary(string op, OtherSpec, OtherRep)(
+        Quantity!(OtherSpec, OtherRep) rhs) const
+        if (op == "-" &&
+            isIntegral!Rep &&
+            isIntegral!OtherRep &&
+            !is(SubResult!(Spec, OtherSpec) == void) &&
+            !is(SubRep!(Rep, OtherRep) == void))
+    {
+        alias ResultSpec = SubResult!(Spec, OtherSpec);
+        alias ResultRep = SubRep!(Rep, OtherRep);
+
+        return Quantity!(ResultSpec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ -
+            cast(ResultRep)rhs.canonicalValue);
     }
 }
 
@@ -68,4 +106,38 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         static assert(false,
             "inUnit: non-canonical Unit extraction requires checkedIn, exactIn, or roundedIn.");
     }
+}
+
+
+@safe unittest
+{
+    import quantities.length : Length, Metre;
+
+    enum lhs = int.max.quantity!(Length, Metre);
+    enum rhs = uint.max.quantity!(Length, Metre);
+    enum sum = lhs + rhs;
+    static assert(is(typeof(sum) == Quantity!(Length, long)));
+    static assert(sum.canonicalValue
+        == cast(long)int.max + cast(long)uint.max);
+
+    enum zero = 0u.quantity!(Length, Metre);
+    enum umax = uint.max.quantity!(Length, Metre);
+    enum difference = zero - umax;
+    static assert(is(typeof(difference) == Quantity!(Length, long)));
+    static assert(difference.canonicalValue == -cast(long)uint.max);
+
+    static assert(!__traits(compiles,
+        long.max.quantity!(Length, Metre)
+            + long.max.quantity!(Length, Metre)));
+
+    struct Radius
+    {
+        alias Dimension = Length.Dimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    static assert(!__traits(compiles,
+        1.quantity!(Radius, Metre) + 2.quantity!(Radius, Metre)));
+    static assert(!__traits(compiles,
+        1.quantity!(Length, Metre) + 2.quantity!(Radius, Metre)));
 }
