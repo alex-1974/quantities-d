@@ -4,6 +4,7 @@ import std.traits : isIntegral;
 
 import quantities.arithmetic_rep : QuotientRep, ScaledMulRep;
 import quantities.arithmetic_traits :
+    ExternalProductResultSpec,
     ProductCanonicalRescale,
     ProductResultSpec,
     isScalableValue;
@@ -168,6 +169,93 @@ auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
         cast(ResultRep)rhs.canonicalValue;
     const ResultRep scaled =
         product * cast(ResultRep)Scale.numerator;
+    const ResultRep denominator = cast(ResultRep)Scale.denominator;
+
+    if (scaled % denominator != 0)
+        return Result.failed(ProductFailure.inexact);
+
+    return Result.exact(
+        ResultQuantity.fromCanonical(scaled / denominator));
+}
+
+auto product(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(ExternalProductResultSpec!(
+            Relations, LhsSpec, RhsSpec) == void) &&
+        !is(ScaledMulRep!(LhsRep, RhsRep, 1) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).numerator == 1 &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).denominator == 1)
+{
+    alias ResultSpec =
+        ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec);
+    alias ResultRep = ScaledMulRep!(LhsRep, RhsRep, 1);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+
+    return ResultQuantity.fromCanonical(
+        cast(ResultRep)lhs.canonicalValue *
+        cast(ResultRep)rhs.canonicalValue);
+}
+
+auto exactMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(ExternalProductResultSpec!(
+            Relations, LhsSpec, RhsSpec) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).numerator > 0 &&
+        !is(ScaledMulRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)ProductCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ExternalProductResultSpec!(
+                    Relations, LhsSpec, RhsSpec)).numerator) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).denominator <=
+            ScaledMulRep!(
+                LhsRep,
+                RhsRep,
+                cast(ulong)ProductCanonicalRescale!(
+                    LhsSpec,
+                    RhsSpec,
+                    ExternalProductResultSpec!(
+                        Relations, LhsSpec, RhsSpec)).numerator).max)
+{
+    alias ResultSpec =
+        ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec);
+    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = ScaledMulRep!(
+        LhsRep, RhsRep, cast(ulong)Scale.numerator);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = ProductResultValue!ResultQuantity;
+
+    const ResultRep productValue =
+        cast(ResultRep)lhs.canonicalValue *
+        cast(ResultRep)rhs.canonicalValue;
+    const ResultRep scaled =
+        productValue * cast(ResultRep)Scale.numerator;
     const ResultRep denominator = cast(ResultRep)Scale.denominator;
 
     if (scaled % denominator != 0)
