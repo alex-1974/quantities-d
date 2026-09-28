@@ -1,6 +1,6 @@
 # R04 — Arithmetic Semantics
 
-Status: research, not production API.
+Status: active research. The first integral arithmetic slice has been promoted to production on this branch; floating arithmetic, derived dimensions, cross-Spec relationships, and broader math operations remain research.
 
 ## Purpose
 
@@ -116,3 +116,48 @@ No arithmetic operator enters production until R04 can state:
 - compile-negative behavior;
 - CTFE/UFCS/attribute expectations;
 - consumer justification for any derived Spec or math function.
+
+
+## Promoted integral arithmetic slice
+
+The first R04 production slice is complete and gated on this branch.
+
+Promoted semantics:
+
+- `Length` explicitly declares closed same-Spec additive semantics and scalar scalability.
+- Same-Spec integral `Quantity + Quantity` and `Quantity - Quantity` are admitted only when the Spec result trait permits the operation.
+- Integral `Quantity * scalar` and `scalar * Quantity` are admitted only for scalable Specs.
+- Integral result Reps for addition, subtraction, and multiplication are derived from the complete mathematical operand-type ranges. If no built-in D integral Rep can contain every possible result, the direct operator does not compile.
+- Raw integral `Quantity / scalar` is intentionally absent.
+- Exact integral division is exposed as `exactDiv`, with exactly three result states: `exact`, `inexact`, and `divisionByZero`.
+- `exactDiv` uses a proven quotient Rep before remainder or division, including the `int.min / -1` case.
+- Cross-Spec arithmetic remains rejected unless a future explicit semantic relationship is introduced.
+- `Quantity * Quantity`, derived dimensions, dimensionless results, rounded integral division, and general Class-O checked arithmetic remain deferred.
+
+Production implementation:
+
+- `quantities.arithmetic_rep` is the single normative implementation of integral result-Rep derivation.
+- `quantities.arithmetic_traits` separates semantic Spec validity from representation validity.
+- `quantities.quantity` owns the direct `+`, `-`, and scalar-`*` operators.
+- `quantities.arithmetic` owns `DivisionStatus`, `DivisionResult`, and `exactDiv`.
+- Internal ResultRep and Spec-result traits are not exported from the root package.
+- `DivisionResult` keeps payload and state private; `.init` is a valid `inexact`/no-payload state.
+
+Promotion evidence:
+
+- DMD 2.111 debug unit tests: pass.
+- DMD 2.111 release unit tests: pass.
+- LDC 1.41 debug unit tests: pass.
+- LDC 1.41 release unit tests: pass.
+- External root-API consumer: pass on DMD and LDC.
+- Compile-negative API gates: pass on DMD and LDC.
+- Measured optimized inlineable Class-W arithmetic generated the same code as explicit raw widened integer arithmetic on x86_64 for DMD 2.111 and LDC 1.41. This is a scoped measured claim, not a universal ABI claim.
+
+R04 remains open. The following topics are not promoted by this slice:
+
+- floating arithmetic;
+- derived dimensions and derived Specs, with Area as the first candidate;
+- dimensionless quantity results;
+- explicit cross-Spec result relationships;
+- consumer-driven `abs`, `sqrt`, and `hypot`;
+- broader Class-O checked arithmetic.
