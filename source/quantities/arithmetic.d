@@ -127,6 +127,31 @@ public:
     }
 }
 
+private auto exactMulKernel(ResultSpec, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+{
+    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = ScaledMulRep!(
+        LhsRep, RhsRep, cast(ulong)Scale.numerator);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = ProductResultValue!ResultQuantity;
+
+    const ResultRep productValue =
+        cast(ResultRep)lhs.canonicalValue *
+        cast(ResultRep)rhs.canonicalValue;
+    const ResultRep scaled =
+        productValue * cast(ResultRep)Scale.numerator;
+    const ResultRep denominator = cast(ResultRep)Scale.denominator;
+
+    if (scaled % denominator != 0)
+        return Result.failed(ProductFailure.inexact);
+
+    return Result.exact(
+        ResultQuantity.fromCanonical(scaled / denominator));
+}
+
 auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
     Quantity!(LhsSpec, LhsRep) lhs,
     Quantity!(RhsSpec, RhsRep) rhs)
@@ -158,24 +183,7 @@ auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
                     ProductResultSpec!(LhsSpec, RhsSpec)).numerator).max)
 {
     alias ResultSpec = ProductResultSpec!(LhsSpec, RhsSpec);
-    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
-    alias ResultRep = ScaledMulRep!(
-        LhsRep, RhsRep, cast(ulong)Scale.numerator);
-    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
-    alias Result = ProductResultValue!ResultQuantity;
-
-    const ResultRep product =
-        cast(ResultRep)lhs.canonicalValue *
-        cast(ResultRep)rhs.canonicalValue;
-    const ResultRep scaled =
-        product * cast(ResultRep)Scale.numerator;
-    const ResultRep denominator = cast(ResultRep)Scale.denominator;
-
-    if (scaled % denominator != 0)
-        return Result.failed(ProductFailure.inexact);
-
-    return Result.exact(
-        ResultQuantity.fromCanonical(scaled / denominator));
+    return exactMulKernel!ResultSpec(lhs, rhs);
 }
 
 auto product(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
@@ -245,24 +253,7 @@ auto exactMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
 {
     alias ResultSpec =
         ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec);
-    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
-    alias ResultRep = ScaledMulRep!(
-        LhsRep, RhsRep, cast(ulong)Scale.numerator);
-    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
-    alias Result = ProductResultValue!ResultQuantity;
-
-    const ResultRep productValue =
-        cast(ResultRep)lhs.canonicalValue *
-        cast(ResultRep)rhs.canonicalValue;
-    const ResultRep scaled =
-        productValue * cast(ResultRep)Scale.numerator;
-    const ResultRep denominator = cast(ResultRep)Scale.denominator;
-
-    if (scaled % denominator != 0)
-        return Result.failed(ProductFailure.inexact);
-
-    return Result.exact(
-        ResultQuantity.fromCanonical(scaled / denominator));
+    return exactMulKernel!ResultSpec(lhs, rhs);
 }
 
 auto exactDiv(Spec, Rep, Scalar)(
