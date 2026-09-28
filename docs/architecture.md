@@ -90,14 +90,44 @@ API:
 
 - final public names/helpers for the accepted structural declaration and validation machinery;
 - mixed-unit arithmetic;
-- dimension/specification representation;
-- conversion syntax and rounding policy;
+- general cross-Spec arithmetic beyond explicitly declared semantic relations;
+- dimensionless Quantity result semantics;
+- floating-point arithmetic and promotion policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.
 
 Decisions with durable API/representation consequences should be recorded in
 `docs/adr/` before stabilization.
+
+## Promoted derived-dimension and product model
+
+M3 now provides an open canonical dimension algebra over nominal consumer-defined
+dimension tags and exact derived-unit scale algebra. Dimension multiplication,
+division, and integer powers are structural physical operations; they do not by
+themselves invent quantity semantics.
+
+Quantity product resolution therefore keeps four concerns separate:
+
+- Spec algebra selects an explicitly declared semantic result;
+- Dimension algebra validates the physical result dimension;
+- Unit/scale algebra determines the exact mathematical product scale relative
+  to the result Spec's CanonicalUnit;
+- Rep algebra determines whether the numeric operation is total for the
+  complete operand representation ranges.
+
+`Area` / `SquareMetre` is the first production derived-dimension case.
+Operand Specs may declare `ProductWith` / `ProductFromLeft` relations.
+Consumers that own neither operand may instead supply an explicit relation set
+to `product!Relations` or `exactMul!Relations`; an explicit relation set is
+authoritative and does not silently fall back to operand-owned hooks.
+
+For direct integral product operations, compilation itself is the total-safety
+gate: every value representable by the operand Reps must be computable without
+overflow or canonical-unit truncation. Nontrivial exact canonical rescaling is
+handled by the named `exactMul` path when its compile-time range proof admits
+the operation.
+
 
 
 ## Promoted declaration and validation mechanism
