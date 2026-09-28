@@ -1,9 +1,13 @@
 module quantities.length;
 
+import quantities.dimension : BaseDimension;
 import quantities.ratio : ExactRatio;
 
+/// Nominal independent axis used by the canonical length dimension.
+struct LengthDimensionTag {}
+
 /// Linear length dimension.
-struct LengthDimension {}
+alias LengthDimension = BaseDimension!LengthDimensionTag;
 
 /// Metre, the canonical unit of Length.
 struct Metre
