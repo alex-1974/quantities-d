@@ -36,3 +36,46 @@ This is a research-local trait, not production API.
 
 A later probe will compare optimized Class-W wrapper codegen with explicitly
 widened raw arithmetic.
+
+
+## Observed baseline result
+
+The static Class-W wrapper probe passed unchanged on:
+
+- DMD 2.111 x86_64 debug;
+- DMD 2.111 x86_64 release;
+- LDC 1.41 x86_64 debug;
+- LDC 1.41 x86_64 release.
+
+All compile-time gates passed, including:
+
+- int/uint addition -> Quantity!(Length,long);
+- uint/uint multiplication -> Quantity!(Length,ulong);
+- symmetric scalar multiplication;
+- rejection of tested 64-bit Class-O expressions;
+- CTFE;
+- @safe pure nothrow @nogc.
+
+This confirms that Class-W admission can be expressed entirely at compile time
+without BigInt or runtime checking.
+
+## Remaining trait-validation gate
+
+The current bit-width formulation is a candidate implementation, not yet the
+final trait.
+
+It must still be compared against the exact mathematical ranges from R04.2.3
+for every relevant <=32-bit pair and operation.
+
+The final production trait must be:
+
+- safe for all operand values;
+- symmetric where the operation is symmetric;
+- no wider than necessary unless a deliberate canonical widening policy says
+  otherwise;
+- correct for unsigned subtraction, whose mathematical range can become signed;
+- correct for mixed signed/unsigned multiplication;
+- independent of D's native promotion quirks.
+
+Only after this exhaustive type-matrix comparison should the trait be promoted
+toward production and code-generation testing.
