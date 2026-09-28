@@ -256,18 +256,22 @@ auto exactDiv(Spec, Rep, Scalar)(
         enum inexactProduct =
             3.quantity!(LengthKm2Product, Metre)
             .exactMul(4.quantity!(LengthKm2Product, Metre));
-        ProductFailure failure;
         static assert(!inexactProduct.hasValue);
-        static assert(inexactProduct.tryFailure(failure));
-        static assert(failure == ProductFailure.inexact);
+        static assert(({
+            ProductFailure failure;
+            return inexactProduct.tryFailure(failure)
+                && failure == ProductFailure.inexact;
+        }()));
 
         enum exactProduct =
             1000.quantity!(LengthKm2Product, Metre)
             .exactMul(1000.quantity!(LengthKm2Product, Metre));
         static assert(exactProduct.hasValue);
-        Quantity!(AreaKm2, long) area;
-        static assert(exactProduct.tryValue(area));
-        static assert(area.canonicalValue == 1);
+        static assert(({
+            Quantity!(AreaKm2, long) area;
+            return exactProduct.tryValue(area)
+                && area.canonicalValue == 1;
+        }()));
 
         return true;
     }()));
