@@ -104,3 +104,40 @@ version (M2WrongDimensionConstruction)
 {
     enum x = 1L.checkedQuantity!(production.Length, Second);
 }
+
+
+version (M3NonAdditiveSameSpecAddition)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 1.quantity!(Radius, production.Metre)
+        + 2.quantity!(Radius, production.Metre);
+}
+
+version (M3CrossSpecAddition)
+{
+    struct OtherLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+        enum closedAdditiveValue = true;
+    }
+
+    enum x = 1.quantity!(production.Length, production.Metre)
+        + 2.quantity!(OtherLength, production.Metre);
+}
+
+version (M3ClassOAddition)
+{
+    enum x = long.max.quantity!(production.Length, production.Metre)
+        + long.max.quantity!(production.Length, production.Metre);
+}
+
+version (M3RawIntegralDivision)
+{
+    enum x = 5.quantity!(production.Length, production.Metre) / 2;
+}
