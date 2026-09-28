@@ -262,3 +262,52 @@ version (M3ProductWrongResultDimension)
 
     alias X = production.ProductResult!(Left, Right);
 }
+
+
+version (M3QuantityProductMissingRelation)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x =
+        2.quantity!(Radius, production.Metre)
+        * 3.quantity!(Radius, production.Metre);
+}
+
+version (M3QuantityProductClassO)
+{
+    enum x =
+        long.max.quantity!(production.Length, production.Metre)
+        * long.max.quantity!(production.Length, production.Metre);
+}
+
+version (M3QuantityProductCanonicalRescale)
+{
+    alias SquareKilometre = production.DerivedUnit!(
+        production.AreaDimension,
+        production.ExactRatio!(1_000_000, 1));
+
+    struct AreaKm2
+    {
+        alias Dimension = production.AreaDimension;
+        alias CanonicalUnit = SquareKilometre;
+    }
+
+    struct LengthToKm2
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = AreaKm2;
+        }
+    }
+
+    enum x =
+        1000.quantity!(LengthToKm2, production.Metre)
+        * 1000.quantity!(LengthToKm2, production.Metre);
+}
