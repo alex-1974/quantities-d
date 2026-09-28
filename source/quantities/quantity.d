@@ -69,7 +69,6 @@ public:
             cast(ResultRep)canonical_ -
             cast(ResultRep)rhs.canonicalValue);
     }
-}
 
     @safe pure nothrow @nogc
     auto opBinary(string op, Scalar)(Scalar scalar) const
