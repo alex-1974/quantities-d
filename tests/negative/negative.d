@@ -198,7 +198,7 @@ version (M3ProductMissingRelation)
         alias CanonicalUnit = production.Metre;
     }
 
-    alias X = production.ProductResult!(Radius, Radius);
+    alias X = production.ProductResultSpec!(Radius, Radius);
     static assert(!is(X == void), "probe must fail: missing product relation");
 }
 
@@ -232,7 +232,7 @@ version (M3ProductConflictingRelations)
         }
     }
 
-    alias X = production.ProductResult!(Left, Right);
+    alias X = production.ProductResultSpec!(Left, Right);
 }
 
 version (M3ProductWrongResultDimension)
@@ -260,7 +260,7 @@ version (M3ProductWrongResultDimension)
         alias CanonicalUnit = production.Metre;
     }
 
-    alias X = production.ProductResult!(Left, Right);
+    alias X = production.ProductResultSpec!(Left, Right);
 }
 
 
