@@ -5,6 +5,8 @@ import std.traits : isIntegral;
 import quantities.arithmetic_rep : AddRep, MulRep, SubRep;
 import quantities.arithmetic_traits :
     AddResult,
+    ProductCanonicalRescale,
+    ProductResultSpec,
     SubResult,
     isScalableValue;
 import quantities.traits : isQuantitySpec, isUnit;
@@ -67,6 +69,31 @@ public:
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ -
+            cast(ResultRep)rhs.canonicalValue);
+    }
+
+    @safe pure nothrow @nogc
+    auto opBinary(string op, OtherSpec, OtherRep)(
+        Quantity!(OtherSpec, OtherRep) rhs) const
+        if (op == "*" &&
+            isIntegral!Rep &&
+            isIntegral!OtherRep &&
+            !is(ProductResultSpec!(Spec, OtherSpec) == void) &&
+            !is(MulRep!(Rep, OtherRep) == void) &&
+            ProductCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                ProductResultSpec!(Spec, OtherSpec)).numerator == 1 &&
+            ProductCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                ProductResultSpec!(Spec, OtherSpec)).denominator == 1)
+    {
+        alias ResultSpec = ProductResultSpec!(Spec, OtherSpec);
+        alias ResultRep = MulRep!(Rep, OtherRep);
+
+        return Quantity!(ResultSpec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ *
             cast(ResultRep)rhs.canonicalValue);
     }
 
@@ -173,6 +200,15 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         1.quantity!(Radius, Metre) + 2.quantity!(Radius, Metre)));
     static assert(!__traits(compiles,
         1.quantity!(Length, Metre) + 2.quantity!(Radius, Metre)));
+
+    enum area =
+        3.quantity!(Length, Metre)
+        * 4.quantity!(Length, Metre);
+    static assert(({
+        import quantities.area : Area;
+        static assert(is(typeof(area) == Quantity!(Area, long)));
+        return area.canonicalValue == 12;
+    }()));
 
     enum product =
         uint.max.quantity!(Length, Metre) * uint.max;

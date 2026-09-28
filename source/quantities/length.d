@@ -1,9 +1,13 @@
 module quantities.length;
 
+import quantities.dimension : BaseDimension;
 import quantities.ratio : ExactRatio;
 
+/// Nominal independent axis used by the canonical length dimension.
+struct LengthDimensionTag {}
+
 /// Linear length dimension.
-struct LengthDimension {}
+alias LengthDimension = BaseDimension!LengthDimensionTag;
 
 /// Metre, the canonical unit of Length.
 struct Metre
@@ -25,6 +29,17 @@ struct Length
     // and dimensionless scalar scaling preserve its semantic meaning.
     enum closedAdditiveValue = true;
     enum scalableValue = true;
+
+    template ProductWith(Rhs)
+    {
+        static if (is(Rhs == Length))
+        {
+            import quantities.area : Area;
+            alias ProductWith = Area;
+        }
+        else
+            alias ProductWith = void;
+    }
 }
 
 /// Kilometre: exactly 1000 metres.
