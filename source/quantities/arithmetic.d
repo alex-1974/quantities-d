@@ -434,6 +434,55 @@ auto exactDiv(Spec, Rep, Scalar)(
         return true;
     }()));
 
+    static assert(({
+        import quantities.area : Area;
+        import quantities.arithmetic_traits : ExternalProductResultSpec;
+        import quantities.length : LengthDimension;
+
+        struct ForeignLeft
+        {
+            alias Dimension = LengthDimension;
+            alias CanonicalUnit = Metre;
+        }
+
+        struct ForeignRight
+        {
+            alias Dimension = LengthDimension;
+            alias CanonicalUnit = Metre;
+        }
+
+        struct ConsumerRelations
+        {
+            template Product(Lhs, Rhs)
+            {
+                static if (is(Lhs == ForeignLeft) && is(Rhs == ForeignRight))
+                    alias Product = Area;
+                else
+                    alias Product = void;
+            }
+        }
+
+        static assert(is(ExternalProductResultSpec!(
+            ConsumerRelations, ForeignLeft, ForeignRight) == Area));
+
+        enum total =
+            3.quantity!(ForeignLeft, Metre)
+            .product!ConsumerRelations(4.quantity!(ForeignRight, Metre));
+        static assert(is(typeof(total) == Quantity!(Area, long)));
+        static assert(total.canonicalValue == 12);
+
+        enum exact =
+            3.quantity!(ForeignLeft, Metre)
+            .exactMul!ConsumerRelations(4.quantity!(ForeignRight, Metre));
+        static assert(exact.hasValue);
+        static assert(({
+            Quantity!(Area, long) area;
+            return exact.tryValue(area) && area.canonicalValue == 12;
+        }()));
+
+        return true;
+    }()));
+
     static assert(!__traits(compiles,
         long(5).quantity!(Length, Metre).exactDiv(long(2))));
 }
