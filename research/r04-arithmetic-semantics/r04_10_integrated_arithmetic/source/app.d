@@ -75,29 +75,76 @@ enum productMaxBits(size_t a, size_t b) = a + b;
 
 template AddShape(A, B)
 {
-    enum aNeg = negPow!A;
-    enum bNeg = negPow!B;
-    enum minPow = maxSize!(aNeg, bNeg) + ((aNeg != 0 && bNeg != 0 && aNeg == bNeg) ? 1 : 0);
-    enum maxBits = sumMaxBits!(posBits!A, posBits!B);
-    enum AddShape = Shape(minPow, maxBits);
+    static if (isSigned!A && isSigned!B)
+        enum AddShape = Shape(
+            negPow!A == negPow!B
+                ? negPow!A + 1
+                : (negPow!A > negPow!B ? negPow!A + 1 : negPow!B + 1),
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else static if (!isSigned!A && !isSigned!B)
+        enum AddShape = Shape(
+            0,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else static if (isSigned!A)
+        enum AddShape = Shape(
+            negPow!A,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else
+        enum AddShape = Shape(
+            negPow!B,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
 }
 
 template SubShape(A, B)
 {
-    enum minPow = sumMaxBits!(negPow!A, posBits!B);
-    enum maxBits = sumMaxBits!(posBits!A, negPow!B);
-    enum SubShape = Shape(minPow, maxBits);
+    static if (isSigned!A && isSigned!B)
+        enum SubShape = Shape(
+            negPow!A >= posBits!B ? negPow!A + 1 : posBits!B + 1,
+            posBits!A >= negPow!B ? posBits!A + 1 : negPow!B + 1
+        );
+    else static if (!isSigned!A && !isSigned!B)
+        enum SubShape = Shape(
+            posBits!B,
+            posBits!A
+        );
+    else static if (isSigned!A)
+        enum SubShape = Shape(
+            negPow!A >= posBits!B ? negPow!A + 1 : posBits!B + 1,
+            posBits!A
+        );
+    else
+        enum SubShape = Shape(
+            posBits!B,
+            posBits!A >= negPow!B ? posBits!A + 1 : negPow!B + 1
+        );
 }
 
 template MulShape(A, B)
 {
-    enum positiveBits = maxSize!(
-        productMaxBits!(posBits!A, posBits!B),
-        productMaxBits!(negPow!A, negPow!B));
-    enum negativePow = maxSize!(
-        productMaxBits!(negPow!A, posBits!B),
-        productMaxBits!(posBits!A, negPow!B));
-    enum MulShape = Shape(negativePow, positiveBits);
+    static if (!isSigned!A && !isSigned!B)
+        enum MulShape = Shape(
+            0,
+            productMaxBits!(posBits!A, posBits!B)
+        );
+    else static if (isSigned!A && isSigned!B)
+        enum MulShape = Shape(
+            negPow!A + posBits!B,
+            negPow!A + negPow!B + 1
+        );
+    else static if (isSigned!A)
+        enum MulShape = Shape(
+            negPow!A + posBits!B,
+            posBits!A + posBits!B
+        );
+    else
+        enum MulShape = Shape(
+            posBits!A + negPow!B,
+            posBits!A + posBits!B
+        );
 }
 
 template FitsShape(T, alias S)
