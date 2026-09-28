@@ -2,9 +2,66 @@ module quantities.arithmetic;
 
 import std.traits : isIntegral;
 
-import quantities.arithmetic_rep : QuotientRep;
-import quantities.arithmetic_traits : isScalableValue;
+import quantities.arithmetic_rep : QuotientRep, ScaledMulRep;
+import quantities.arithmetic_traits :
+    ProductCanonicalRescale,
+    ProductResult,
+    isScalableValue;
 import quantities.quantity : Quantity;
+
+enum ProductFailure : ubyte
+{
+    inexact,
+    overflow
+}
+
+struct ProductResultValue(T)
+{
+private:
+    T payload_;
+    ProductFailure failure_ = ProductFailure.inexact;
+    bool hasValue_;
+
+public:
+    @property bool hasValue() const @safe pure nothrow @nogc
+    {
+        return hasValue_;
+    }
+
+    package(quantities) static ProductResultValue exact(T value)
+        @safe pure nothrow @nogc
+    {
+        ProductResultValue result;
+        result.payload_ = value;
+        result.hasValue_ = true;
+        return result;
+    }
+
+    package(quantities) static ProductResultValue failed(ProductFailure failure)
+        @safe pure nothrow @nogc
+    {
+        ProductResultValue result;
+        result.failure_ = failure;
+        return result;
+    }
+
+    bool tryValue(out T value) const @safe pure nothrow @nogc
+    {
+        if (!hasValue_)
+            return false;
+        value = payload_;
+        return true;
+    }
+
+    bool tryFailure(out ProductFailure failure) const
+        @safe pure nothrow @nogc
+    {
+        if (hasValue_)
+            return false;
+        failure = failure_;
+        return true;
+    }
+}
 
 enum DivisionStatus : ubyte
 {
@@ -65,6 +122,46 @@ public:
         value = payload_;
         return true;
     }
+}
+
+auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(ProductResult!(LhsSpec, RhsSpec) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ProductResult!(LhsSpec, RhsSpec)).numerator > 0 &&
+        !is(ScaledMulRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)ProductCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ProductResult!(LhsSpec, RhsSpec)).numerator) == void))
+{
+    alias ResultSpec = ProductResult!(LhsSpec, RhsSpec);
+    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = ScaledMulRep!(
+        LhsRep, RhsRep, cast(ulong)Scale.numerator);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = ProductResultValue!ResultQuantity;
+
+    const ResultRep product =
+        cast(ResultRep)lhs.canonicalValue *
+        cast(ResultRep)rhs.canonicalValue;
+    const ResultRep scaled =
+        product * cast(ResultRep)Scale.numerator;
+    const ResultRep denominator = cast(ResultRep)Scale.denominator;
+
+    if (scaled % denominator != 0)
+        return Result.failed(ProductFailure.inexact);
+
+    return Result.exact(
+        ResultQuantity.fromCanonical(scaled / denominator));
 }
 
 auto exactDiv(Spec, Rep, Scalar)(
