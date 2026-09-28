@@ -88,6 +88,9 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3ClassOMultiplication
     run_reject "$compiler" "$flag" M3NonScalableExactDivision
     run_reject "$compiler" "$flag" M3ClassOExactDivision
+    run_reject "$compiler" "$flag" M3ProductMissingRelation
+    run_case "$compiler" "$flag" M3ProductConflictingRelations "conflicting Quantity product semantic relations"
+    run_case "$compiler" "$flag" M3ProductWrongResultDimension "Quantity product ResultSpec has the wrong physical Dimension."
 }
 
 if [[ $# -gt 0 ]]; then
