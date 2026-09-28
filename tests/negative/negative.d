@@ -311,3 +311,106 @@ version (M3QuantityProductCanonicalRescale)
         1000.quantity!(LengthToKm2, production.Metre)
         * 1000.quantity!(LengthToKm2, production.Metre);
 }
+
+
+version (M3ExternalProductMissingRelation)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct EmptyRelations
+    {
+        template Product(Lhs, Rhs)
+        {
+            alias Product = void;
+        }
+    }
+
+    enum x =
+        2.quantity!(ForeignLength, production.Metre)
+        .product!EmptyRelations(
+            3.quantity!(ForeignLength, production.Metre));
+}
+
+version (M3ExternalProductWrongResultDimension)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct WrongResult
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct Relations
+    {
+        template Product(Lhs, Rhs)
+        {
+            alias Product = WrongResult;
+        }
+    }
+
+    alias X = production.ExternalProductResultSpec!(
+        Relations, ForeignLength, ForeignLength);
+}
+
+version (M3ExternalProductClassO)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct Relations
+    {
+        template Product(Lhs, Rhs)
+        {
+            alias Product = production.Area;
+        }
+    }
+
+    enum x =
+        long.max.quantity!(ForeignLength, production.Metre)
+        .product!Relations(
+            long.max.quantity!(ForeignLength, production.Metre));
+}
+
+version (M3ExternalProductCanonicalRescale)
+{
+    alias SquareKilometre = production.DerivedUnit!(
+        production.AreaDimension,
+        production.ExactRatio!(1_000_000, 1));
+
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct AreaKm2
+    {
+        alias Dimension = production.AreaDimension;
+        alias CanonicalUnit = SquareKilometre;
+    }
+
+    struct Relations
+    {
+        template Product(Lhs, Rhs)
+        {
+            alias Product = AreaKm2;
+        }
+    }
+
+    enum x =
+        1000.quantity!(ForeignLength, production.Metre)
+        .product!Relations(
+            1000.quantity!(ForeignLength, production.Metre));
+}
