@@ -11,8 +11,7 @@ import quantities.quantity : Quantity;
 
 enum ProductFailure : ubyte
 {
-    inexact,
-    overflow
+    inexact
 }
 
 struct ProductResultValue(T)
@@ -141,7 +140,18 @@ auto exactMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
             cast(ulong)ProductCanonicalRescale!(
                 LhsSpec,
                 RhsSpec,
-                ProductResultSpec!(LhsSpec, RhsSpec)).numerator) == void))
+                ProductResultSpec!(LhsSpec, RhsSpec)).numerator) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ProductResultSpec!(LhsSpec, RhsSpec)).denominator <=
+            ScaledMulRep!(
+                LhsRep,
+                RhsRep,
+                cast(ulong)ProductCanonicalRescale!(
+                    LhsSpec,
+                    RhsSpec,
+                    ProductResultSpec!(LhsSpec, RhsSpec)).numerator).max)
 {
     alias ResultSpec = ProductResultSpec!(LhsSpec, RhsSpec);
     alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
