@@ -97,3 +97,84 @@ Integral arithmetic enters production only when each exposed operation has:
 - DMD/LDC agreement;
 - compile-negative cases;
 - a consumer-backed reason to exist.
+
+
+## Policy decomposition after R04.4/R04.5
+
+Floating arithmetic now has separate semantic and code-generation evidence.
+Integral arithmetic must not inherit that policy mechanically.
+
+Treat the integral problem as four independent decisions.
+
+### I1 — same-Spec addition and subtraction
+
+Questions:
+
+1. Which Rep combinations are admitted?
+2. What is the result Rep?
+3. How is mathematical overflow represented?
+4. Does subtraction always preserve Spec, or must future affine-like Specs be
+   excluded by an explicit capability?
+
+The native D result type alone is insufficient because signed/unsigned mixing
+can reinterpret negative mathematical results as large unsigned values.
+
+### I2 — Quantity multiplied by an integral scalar
+
+This is semantically distinct from Quantity x Quantity.
+
+Questions:
+
+1. Which scalar signedness combinations are admitted?
+2. What is ResultRep?
+3. What happens when the exact mathematical product is outside ResultRep?
+4. Is scalar x Quantity exactly symmetric with Quantity x scalar?
+
+No rounding policy is needed when the mathematical result is integral, but
+overflow policy is still required.
+
+### I3 — Quantity divided by an integral scalar
+
+This operation introduces a new problem: representability loss without
+overflow.
+
+For example, an integral Quantity value 5 divided by scalar 2 has exact
+mathematical result 2.5, which cannot be represented by an integral Rep.
+
+Therefore raw D truncation must not silently define quantities-d semantics.
+
+Candidate public policies:
+
+A. no direct integral Quantity/scalar division;
+B. direct division only when exact, with a checked/exact result;
+C. explicit rounded division with a rounding mode;
+D. explicit promotion to a floating Rep.
+
+These policies may coexist as named APIs, but an operator must not silently
+choose among them.
+
+### I4 — Quantity x Quantity and Quantity / Quantity
+
+Deferred from the minimum integral policy.
+
+These operations require derived-dimension/result-Spec decisions first. Their
+integer overflow/loss policy should reuse the decisions established for I1-I3
+rather than inventing a second arithmetic system.
+
+## Minimum research order
+
+1. determine a safe ResultRep rule for I1 and I2;
+2. determine overflow behavior independently of ResultRep selection;
+3. test signed/unsigned and width boundaries;
+4. decide whether any direct integral operator remains simple enough to justify;
+5. treat I3 loss/rounding as a separate explicit API decision;
+6. only then connect the result to production Quantity operators.
+
+## Design constraint
+
+Do not solve R04.2 by building a general checked-integer arithmetic library
+inside quantities-d.
+
+If the minimum correct operator policy becomes substantially more complex than
+the user-facing value of the operators, withholding the integral operator is a
+valid M3 outcome.
