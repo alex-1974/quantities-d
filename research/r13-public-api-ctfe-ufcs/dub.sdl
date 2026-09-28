@@ -1,5 +1,0 @@
-name "quantities-r13-public-api-ctfe-ufcs"
-description "Research probe for quantities-d public CTFE and UFCS API"
-license "MIT"
-targetType "executable"
-sourcePaths "source"

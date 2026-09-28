@@ -1,5 +1,0 @@
-name "quantities-r05-type-relationships"
-description "Research probe for quantities-d static type relationships"
-license "MIT"
-targetType "executable"
-sourcePaths "source"
