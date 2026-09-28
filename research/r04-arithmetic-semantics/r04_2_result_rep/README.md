@@ -82,3 +82,67 @@ Record D native result types and compare them with operand-safe/common-width
 expectations for signed/unsigned and narrow/wide combinations.
 
 No production policy is selected by this probe.
+
+
+## Observed native matrix — DMD 2.111 / LDC 1.41, x86_64
+
+Both baseline compilers produced the same native ResultRep matrix:
+
+| A | B | + / - / * native ResultRep |
+|---|---|---|
+| byte | byte | int |
+| ubyte | ubyte | int |
+| byte | ubyte | int |
+| short | short | int |
+| ushort | ushort | int |
+| short | ushort | int |
+| int | int | int |
+| uint | uint | uint |
+| int | uint | uint |
+| long | long | long |
+| ulong | ulong | ulong |
+| long | ulong | ulong |
+| int | long | long |
+| uint | long | long |
+| int | ulong | ulong |
+| uint | ulong | ulong |
+
+The result confirms the earlier boundary observations.
+
+### Useful native cases
+
+D's integral promotions provide a comfortably wider signed result for the
+narrow integer families:
+
+- byte/byte -> int;
+- ubyte/ubyte -> int;
+- byte/ubyte -> int;
+- short/short -> int;
+- ushort/ushort -> int;
+- short/ushort -> int.
+
+These native results are operand-safe and, for addition/subtraction of the
+listed narrow types, also provide substantial result headroom.
+
+### Problem boundary
+
+At 32 bits and above, native promotion is not a sufficient quantities-d policy:
+
+- int + uint -> uint;
+- long + ulong -> ulong;
+- int + ulong -> ulong.
+
+Negative values from the signed operand are not representable in those result
+types.
+
+The compilers agree here, so this is language promotion behavior rather than a
+DMD/LDC disagreement.
+
+## Consequence
+
+R04 should not use `typeof(a op b)` as the general integral ResultRep rule.
+
+The next candidate to evaluate is an operand-safe common built-in type selected
+from value ranges rather than D's arithmetic conversion rules.
+
+That trait must be tested independently from overflow policy.
