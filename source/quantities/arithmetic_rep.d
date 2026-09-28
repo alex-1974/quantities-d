@@ -130,6 +130,53 @@ template MulRep(A, B)
     alias MulRep = SelectRep!(MulShape!(A, B));
 }
 
+
+private template ScaleShape(alias S, ulong Factor)
+{
+    static if (Factor == 0)
+        enum ScaleShape = Shape(0, 0);
+    else
+    {
+        // ceil(log2(Factor + 1)): number of value bits required by Factor.
+        private enum factorBits = (){
+            size_t bitsRequired;
+            ulong value = Factor;
+            while (value != 0)
+            {
+                ++bitsRequired;
+                value >>= 1;
+            }
+            return bitsRequired;
+        }();
+
+        // Multiplying a range endpoint by Factor can require at most
+        // factorBits additional magnitude bits. This is deliberately a
+        // range-safe upper bound; SelectRep may therefore be conservative
+        // for some non-power-of-two factors, never unsafe.
+        enum ScaleShape = Shape(
+            S.minPow == 0 ? 0 : S.minPow + factorBits,
+            S.maxBits + factorBits);
+    }
+}
+
+/// Smallest built-in integral Rep that safely contains every value of
+/// A * B * Factor. Returns void when no built-in Rep can satisfy that
+/// total-range contract.
+///
+/// Factor is a non-negative compile-time integer scale multiplier.
+template ScaledMulRep(A, B, ulong Factor)
+{
+    static assert(isIntegral!A && isIntegral!B);
+
+    static if (Factor == 0)
+        alias ScaledMulRep = ubyte;
+    else static if (Factor == 1)
+        alias ScaledMulRep = MulRep!(A, B);
+    else
+        alias ScaledMulRep = SelectRep!(
+            ScaleShape!(MulShape!(A, B), Factor));
+}
+
 template QuotientRep(A, B)
 {
     static assert(isIntegral!A && isIntegral!B);
@@ -154,6 +201,16 @@ static assert(is(SubRep!(uint, uint) == long));
 static assert(is(MulRep!(uint, uint) == ulong));
 static assert(is(AddRep!(long, long) == void));
 static assert(is(MulRep!(ulong, ulong) == void));
+
+static assert(is(ScaledMulRep!(byte, byte, 1) == short));
+static assert(is(ScaledMulRep!(ubyte, ubyte, 1) == ushort));
+static assert(is(ScaledMulRep!(int, int, 1) == long));
+static assert(is(ScaledMulRep!(uint, uint, 1) == ulong));
+static assert(is(ScaledMulRep!(long, long, 1) == void));
+static assert(is(ScaledMulRep!(long, long, 0) == ubyte));
+
+// Scaling may require a wider result than the unscaled product.
+static assert(is(ScaledMulRep!(byte, byte, 1000) == int));
 
 static assert(is(QuotientRep!(int, uint) == int));
 static assert(is(QuotientRep!(int, int) == long));
