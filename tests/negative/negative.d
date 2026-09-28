@@ -104,3 +104,87 @@ version (M2WrongDimensionConstruction)
 {
     enum x = 1L.checkedQuantity!(production.Length, Second);
 }
+
+
+version (M3NonAdditiveSameSpecAddition)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 1.quantity!(Radius, production.Metre)
+        + 2.quantity!(Radius, production.Metre);
+}
+
+version (M3CrossSpecAddition)
+{
+    struct OtherLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+        enum closedAdditiveValue = true;
+    }
+
+    enum x = 1.quantity!(production.Length, production.Metre)
+        + 2.quantity!(OtherLength, production.Metre);
+}
+
+version (M3ClassOAddition)
+{
+    enum x = long.max.quantity!(production.Length, production.Metre)
+        + long.max.quantity!(production.Length, production.Metre);
+}
+
+version (M3RawIntegralDivision)
+{
+    enum x = 5.quantity!(production.Length, production.Metre) / 2;
+}
+
+
+version (M3NonScalableMultiplication)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 2.quantity!(Radius, production.Metre) * 3;
+}
+
+version (M3NonScalableRightMultiplication)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 3 * 2.quantity!(Radius, production.Metre);
+}
+
+version (M3ClassOMultiplication)
+{
+    enum x = ulong.max.quantity!(production.Length, production.Metre)
+        * ulong.max;
+}
+
+
+version (M3NonScalableExactDivision)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x = 6.quantity!(Radius, production.Metre).exactDiv(3);
+}
+
+version (M3ClassOExactDivision)
+{
+    enum x = long(6).quantity!(production.Length, production.Metre)
+        .exactDiv(long(3));
+}
