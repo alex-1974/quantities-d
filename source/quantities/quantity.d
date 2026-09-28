@@ -213,7 +213,7 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         * 4.quantity!(Length, Metre);
     static assert(({
         import quantities.area : Area;
-        static assert(is(typeof(area) == Quantity!(Area, int)));
+        static assert(is(typeof(area) == Quantity!(Area, long)));
         return area.canonicalValue == 12;
     }()));
 
