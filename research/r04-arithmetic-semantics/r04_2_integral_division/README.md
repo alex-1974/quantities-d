@@ -94,3 +94,42 @@ made universally overflow-free for selected Rep combinations.
 
 Division is a different semantic category. It must not be forced into the same
 operator policy merely for syntactic symmetry.
+
+
+## Observed raw-D baseline
+
+DMD 2.111 and LDC 1.41 produced identical debug results.
+
+Exact cases:
+
+- 6 / 3 -> 2;
+- -6 / 3 -> -2;
+- 6 / -3 -> -2.
+
+Inexact cases silently truncate toward zero:
+
+- 5 / 2 -> 2;
+- -5 / 2 -> -2;
+- 5 / -2 -> -2;
+- unsigned 5 / 2 -> 2;
+- tested mixed signedness 5 / 2 -> 2.
+
+Both compiler runs exited successfully.
+
+## Decision from baseline
+
+Raw integral `/` is rejected as the Quantity semantic contract.
+
+The rejection is semantic rather than compiler-specific: both baseline
+compilers consistently discard the fractional part. In particular,
+`-5 / 2 -> -2` demonstrates truncation toward zero rather than floor
+rounding.
+
+Therefore widening alone cannot create a lossless direct integral division
+operator. R04.2 keeps integral Quantity/scalar `/` unavailable unless a later
+contract can make loss explicit.
+
+The next research step is to reuse, where possible, the existing M1
+exact/inexact result vocabulary rather than invent an unrelated division error
+model. Division by zero still requires an explicit additional state or a
+separate precondition/result design.
