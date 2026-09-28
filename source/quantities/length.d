@@ -29,6 +29,17 @@ struct Length
     // and dimensionless scalar scaling preserve its semantic meaning.
     enum closedAdditiveValue = true;
     enum scalableValue = true;
+
+    template ProductWith(Rhs)
+    {
+        static if (is(Rhs == Length))
+        {
+            import quantities.area : Area;
+            alias ProductWith = Area;
+        }
+        else
+            alias ProductWith = void;
+    }
 }
 
 /// Kilometre: exactly 1000 metres.
