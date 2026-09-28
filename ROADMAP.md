@@ -80,8 +80,25 @@ Evaluate from real consumers:
 - CTFE, UFCS, `@safe`, `pure`, `nothrow`, and `@nogc` viability;
 - code-generation and compile-time cost before any zero-overhead claim.
 
-Production implementation begins only after the relevant R04/R05 questions
-have evidence-backed decisions.
+R04 has now produced enough evidence-backed decisions for the first production
+slice. PR #15 promotes:
+
+- operation-safe integral result-Rep selection for addition, subtraction,
+  multiplication, and exact division;
+- explicit Spec capabilities separating semantic validity from representation
+  safety;
+- same-Spec integral `Length + Length` and `Length - Length`;
+- symmetric integral scalar multiplication for scalable Specs;
+- explicit integral `exactDiv` with exact, inexact, and division-by-zero
+  outcomes;
+- constructive `DivisionResult` states and positive/negative external API
+  gates.
+
+This is a partial M3 implementation, not M3 completion. Floating-point
+arithmetic, cross-Spec relationships, `Quantity * Quantity`, derived
+dimensions such as Area, dimensionless Quantity results, Class-O named checked
+arithmetic, broader promotion policy, and consumer-driven mathematical
+functions remain open research-first work.
 
 ## Deferred until justified
 
