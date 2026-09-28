@@ -171,7 +171,7 @@ Integral division is explicit through `exactDiv` rather than raw `/`.
 `DivisionResult` distinguishes exact results, inexact division, and division
 by zero without permitting contradictory public result states.
 
-The current M3 branch extends that first slice with an open canonical dimension
+PR #17 extends that first slice on `develop` with an open canonical dimension
 algebra, exact derived-unit scale algebra, `Area` / `SquareMetre`, and integral
 `Quantity * Quantity` products. Product semantics remain explicit: Specs may
 own a `ProductWith` / `ProductFromLeft` relation, while consumers that cannot
