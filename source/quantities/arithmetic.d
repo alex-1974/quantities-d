@@ -41,11 +41,19 @@ public:
         return result;
     }
 
-    package(quantities) static DivisionResult failure(DivisionStatus status)
+    package(quantities) static DivisionResult inexact()
         @safe pure nothrow @nogc
     {
         DivisionResult result;
-        result.status_ = status;
+        result.status_ = DivisionStatus.inexact;
+        return result;
+    }
+
+    package(quantities) static DivisionResult divisionByZero()
+        @safe pure nothrow @nogc
+    {
+        DivisionResult result;
+        result.status_ = DivisionStatus.divisionByZero;
         return result;
     }
 
@@ -73,13 +81,13 @@ auto exactDiv(Spec, Rep, Scalar)(
     alias Result = DivisionResult!ResultQuantity;
 
     if (divisor == 0)
-        return Result.failure(DivisionStatus.divisionByZero);
+        return Result.divisionByZero();
 
     const ResultRep lhs = cast(ResultRep)quantity.canonicalValue;
     const ResultRep rhs = cast(ResultRep)divisor;
 
     if (lhs % rhs != 0)
-        return Result.failure(DivisionStatus.inexact);
+        return Result.inexact();
 
     return Result.exact(
         ResultQuantity.fromCanonical(lhs / rhs));
