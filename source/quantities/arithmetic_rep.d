@@ -131,50 +131,205 @@ template MulRep(A, B)
 }
 
 
-private template ScaleShape(alias S, ulong Factor)
+private struct U128
 {
-    static if (Factor == 0)
-        enum ScaleShape = Shape(0, 0);
+    ulong hi;
+    ulong lo;
+}
+
+private struct S128
+{
+    bool negative;
+    U128 magnitude;
+}
+
+private int compare(U128 a, U128 b) @safe pure nothrow @nogc
+{
+    if (a.hi < b.hi) return -1;
+    if (a.hi > b.hi) return 1;
+    if (a.lo < b.lo) return -1;
+    if (a.lo > b.lo) return 1;
+    return 0;
+}
+
+private int compare(S128 a, S128 b) @safe pure nothrow @nogc
+{
+    if (a.negative != b.negative)
+        return a.negative ? -1 : 1;
+
+    const c = compare(a.magnitude, b.magnitude);
+    return a.negative ? -c : c;
+}
+
+private U128 multiply64(ulong a, ulong b) @safe pure nothrow @nogc
+{
+    enum ulong mask = 0xffff_ffffUL;
+    const a0 = a & mask;
+    const a1 = a >> 32;
+    const b0 = b & mask;
+    const b1 = b >> 32;
+
+    const p00 = a0 * b0;
+    const p01 = a0 * b1;
+    const p10 = a1 * b0;
+    const p11 = a1 * b1;
+
+    const middle = (p00 >> 32) + (p01 & mask) + (p10 & mask);
+    return U128(
+        p11 + (p01 >> 32) + (p10 >> 32) + (middle >> 32),
+        (p00 & mask) | (middle << 32));
+}
+
+private ulong magnitude(long value) @safe pure nothrow @nogc
+{
+    return value < 0
+        ? cast(ulong)(-(value + 1)) + 1
+        : cast(ulong)value;
+}
+
+private S128 signed128(long value) @safe pure nothrow @nogc
+{
+    return S128(value < 0, U128(0, magnitude(value)));
+}
+
+private S128 unsigned128(ulong value) @safe pure nothrow @nogc
+{
+    return S128(false, U128(0, value));
+}
+
+private struct Endpoint
+{
+    bool negative;
+    ulong magnitude;
+}
+
+private Endpoint minEndpoint(T)() @safe pure nothrow @nogc
+{
+    static if (isSigned!T)
+        return Endpoint(true, magnitude(cast(long)T.min));
+    else
+        return Endpoint(false, 0);
+}
+
+private Endpoint maxEndpoint(T)() @safe pure nothrow @nogc
+{
+    return Endpoint(false, cast(ulong)T.max);
+}
+
+private S128 multiplyEndpoints(Endpoint a, Endpoint b)
+    @safe pure nothrow @nogc
+{
+    const mag = multiply64(a.magnitude, b.magnitude);
+    bool negative = a.negative != b.negative;
+    if (mag.hi == 0 && mag.lo == 0)
+        negative = false;
+    return S128(negative, mag);
+}
+
+private S128 min4(S128 a, S128 b, S128 c, S128 d)
+    @safe pure nothrow @nogc
+{
+    auto result = compare(a, b) <= 0 ? a : b;
+    result = compare(result, c) <= 0 ? result : c;
+    return compare(result, d) <= 0 ? result : d;
+}
+
+private S128 max4(S128 a, S128 b, S128 c, S128 d)
+    @safe pure nothrow @nogc
+{
+    auto result = compare(a, b) >= 0 ? a : b;
+    result = compare(result, c) >= 0 ? result : c;
+    return compare(result, d) >= 0 ? result : d;
+}
+
+private struct ExactRange
+{
+    S128 min;
+    S128 max;
+}
+
+private ExactRange productRange(A, B)() @safe pure nothrow @nogc
+{
+    enum amin = minEndpoint!A;
+    enum amax = maxEndpoint!A;
+    enum bmin = minEndpoint!B;
+    enum bmax = maxEndpoint!B;
+
+    enum p1 = multiplyEndpoints(amin, bmin);
+    enum p2 = multiplyEndpoints(amin, bmax);
+    enum p3 = multiplyEndpoints(amax, bmin);
+    enum p4 = multiplyEndpoints(amax, bmax);
+    return ExactRange(min4(p1, p2, p3, p4), max4(p1, p2, p3, p4));
+}
+
+private ExactRange scaledProductRange(A, B, ulong factor)()
+    @safe pure nothrow @nogc
+{
+    enum range = productRange!(A, B);
+
+    static if (factor == 0)
+        return ExactRange(signed128(0), signed128(0));
+    else static if (factor == 1)
+        return range;
     else
     {
-        // ceil(log2(Factor + 1)): number of value bits required by Factor.
-        private enum factorBits = (){
-            size_t bitsRequired;
-            ulong value = Factor;
-            while (value != 0)
-            {
-                ++bitsRequired;
-                value >>= 1;
-            }
-            return bitsRequired;
-        }();
+        static assert(
+            range.min.magnitude.hi == 0 &&
+            range.max.magnitude.hi == 0,
+            "ScaledMulRep factor > 1 requires a wider exact range oracle for this operand pair");
 
-        // Multiplying a range endpoint by Factor can require at most
-        // factorBits additional magnitude bits. This is deliberately a
-        // range-safe upper bound; SelectRep may therefore be conservative
-        // for some non-power-of-two factors, never unsafe.
-        enum ScaleShape = Shape(
-            S.minPow == 0 ? 0 : S.minPow + factorBits,
-            S.maxBits + factorBits);
+        return ExactRange(
+            S128(range.min.negative,
+                multiply64(range.min.magnitude.lo, factor)),
+            S128(range.max.negative,
+                multiply64(range.max.magnitude.lo, factor)));
     }
 }
 
-/// Smallest built-in integral Rep that safely contains every value of
-/// A * B * Factor. Returns void when no built-in Rep can satisfy that
-/// total-range contract.
+private bool contains(T)(ExactRange range) @safe pure nothrow @nogc
+{
+    static if (isSigned!T)
+    {
+        enum lo = signed128(cast(long)T.min);
+        enum hi = signed128(cast(long)T.max);
+        return compare(range.min, lo) >= 0 && compare(range.max, hi) <= 0;
+    }
+    else
+    {
+        enum lo = unsigned128(0);
+        enum hi = unsigned128(cast(ulong)T.max);
+        return compare(range.min, lo) >= 0 && compare(range.max, hi) <= 0;
+    }
+}
+
+/// Smallest built-in integral Rep containing the complete mathematical range
+/// of A * B * Factor.
 ///
-/// Factor is a non-negative compile-time integer scale multiplier.
+/// Factor 0 and 1 are supported for every built-in integral operand pair.
+/// Factor > 1 is currently admitted only when the proven exact 64x64->128
+/// oracle can scale both unscaled range endpoints without requiring 128x64
+/// multiplication.
 template ScaledMulRep(A, B, ulong Factor)
 {
     static assert(isIntegral!A && isIntegral!B);
+    enum range = scaledProductRange!(A, B, Factor);
 
-    static if (Factor == 0)
-        alias ScaledMulRep = ubyte;
-    else static if (Factor == 1)
-        alias ScaledMulRep = MulRep!(A, B);
+    static if (!range.min.negative)
+    {
+        static if (contains!ubyte(range)) alias ScaledMulRep = ubyte;
+        else static if (contains!ushort(range)) alias ScaledMulRep = ushort;
+        else static if (contains!uint(range)) alias ScaledMulRep = uint;
+        else static if (contains!ulong(range)) alias ScaledMulRep = ulong;
+        else alias ScaledMulRep = void;
+    }
     else
-        alias ScaledMulRep = SelectRep!(
-            ScaleShape!(MulShape!(A, B), Factor));
+    {
+        static if (contains!byte(range)) alias ScaledMulRep = byte;
+        else static if (contains!short(range)) alias ScaledMulRep = short;
+        else static if (contains!int(range)) alias ScaledMulRep = int;
+        else static if (contains!long(range)) alias ScaledMulRep = long;
+        else alias ScaledMulRep = void;
+    }
 }
 
 template QuotientRep(A, B)
@@ -201,6 +356,10 @@ static assert(is(SubRep!(uint, uint) == long));
 static assert(is(MulRep!(uint, uint) == ulong));
 static assert(is(AddRep!(long, long) == void));
 static assert(is(MulRep!(ulong, ulong) == void));
+
+enum max64Square = multiply64(ulong.max, ulong.max);
+static assert(max64Square.hi == ulong.max - 1);
+static assert(max64Square.lo == 1);
 
 static assert(is(ScaledMulRep!(byte, byte, 1) == short));
 static assert(is(ScaledMulRep!(ubyte, ubyte, 1) == ushort));
