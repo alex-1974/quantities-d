@@ -2,6 +2,7 @@ module quantities.arithmetic_traits;
 
 import quantities.dimension : MultiplyDimension;
 import quantities.traits : isQuantitySpec;
+import quantities.unit : DivideUnit, MultiplyUnit;
 
 package(quantities):
 
@@ -42,6 +43,22 @@ template SubResult(Lhs, Rhs)
 }
 
 
+
+
+/// Exact scale from the mathematical product unit to ResultSpec's canonical
+/// storage unit.
+///
+/// A value in Lhs.CanonicalUnit * Rhs.CanonicalUnit is multiplied by this
+/// ratio before it can be stored as a Quantity!ResultSpec.
+template ProductCanonicalRescale(Lhs, Rhs, ResultSpec)
+{
+    alias MathematicalUnit =
+        MultiplyUnit!(Lhs.CanonicalUnit, Rhs.CanonicalUnit);
+    alias StorageRatioUnit = DivideUnit!(
+        MathematicalUnit,
+        ResultSpec.CanonicalUnit);
+    alias ProductCanonicalRescale = StorageRatioUnit.Scale;
+}
 
 private template ForwardProductResult(Lhs, Rhs)
 {
