@@ -24,13 +24,16 @@ Current production coverage includes:
 - explicit checked / exact-required / rounded non-canonical conversion for
   signed `long`;
 - checked / exact-required non-canonical conversion for binary64 `double`;
-- first M3 integral-arithmetic slice: safe same-Spec `+` / `-`, symmetric integral scalar multiplication, and explicit `exactDiv`;
+- M3 integral arithmetic: safe same-Spec `+` / `-`, symmetric integral scalar multiplication, explicit `exactDiv`, and semantic `Quantity * Quantity` products;
+- open canonical dimension algebra and exact derived-unit algebra, with `Area` / `SquareMetre` as the first production derived-dimension case;
+- consumer-owned product relations through explicit `product!Relations` and `exactMul!Relations` APIs;
 - compile-negative API-boundary tests;
 - external-consumer tests on DMD 2.111 and LDC 1.41.
 
-`float`, `real`, mixed-Rep conversion, floating-point arithmetic, cross-Spec
-arithmetic, derived-dimension arithmetic, affine quantity points, and
-runtime-parsed unit metadata are not yet production-complete.
+`float`, `real`, mixed-Rep conversion, floating-point arithmetic, general
+cross-Spec arithmetic beyond explicit product relations, dimensionless Quantity
+results, affine quantity points, and runtime-parsed unit metadata are not yet
+production-complete.
 
 M1 and M2 are complete. PR #15 promoted the first evidence-backed R04
 arithmetic slice after DMD/LDC debug and release tests, external-consumer
@@ -168,7 +171,19 @@ Integral division is explicit through `exactDiv` rather than raw `/`.
 `DivisionResult` distinguishes exact results, inexact division, and division
 by zero without permitting contradictory public result states.
 
-This is not the completion of M3. Floating-point arithmetic, cross-Spec
-relationships, `Quantity * Quantity`, derived dimensions such as Area,
-dimensionless Quantity results, and broader checked arithmetic remain
-research-first work.
+The current M3 branch extends that first slice with an open canonical dimension
+algebra, exact derived-unit scale algebra, `Area` / `SquareMetre`, and integral
+`Quantity * Quantity` products. Product semantics remain explicit: Specs may
+own a `ProductWith` / `ProductFromLeft` relation, while consumers that cannot
+modify either operand Spec may provide an explicit compile-time relation set to
+`product!Relations` or `exactMul!Relations`.
+
+Direct integral product operations are exposed only when their complete operand
+type ranges are representable and canonical storage requires no lossy rescale.
+`exactMul` provides the value-dependent exact path for nontrivial canonical
+rescaling and reports an inexact result rather than truncating.
+
+This is not the completion of M3. Floating-point arithmetic, general cross-Spec
+addition/subtraction, dimensionless Quantity results, broader Class-O checked
+arithmetic, and consumer-driven mathematical functions remain research-first
+work.
