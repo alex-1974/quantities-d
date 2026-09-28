@@ -118,6 +118,38 @@ void main()
     static assert(zeroDivision.status == DivisionStatus.divisionByZero);
     static assert(!zeroDivision.hasValue);
 
+    // Root-level semantic product resolvers are part of the external API.
+    static assert(is(ProductResultSpec!(Length, Length) == Area));
+
+    struct ForeignLeft
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    struct ForeignRight
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    struct ConsumerRelations
+    {
+        template Product(Lhs, Rhs)
+        {
+            static if (is(Lhs == ForeignLeft) && is(Rhs == ForeignRight))
+                alias Product = Area;
+            else
+                alias Product = void;
+        }
+    }
+
+    static assert(is(
+        ExternalProductResultSpec!(
+            ConsumerRelations,
+            ForeignLeft,
+            ForeignRight) == Area));
+
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
     static assert(Quantity!(Length, long).sizeof == long.sizeof);
 }
