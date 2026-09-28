@@ -21,7 +21,6 @@ public import quantities.unit :
 public import quantities.arithmetic :
     DivisionResult,
     ProductFailure,
-    ProductResultValue,
     exactMul,
     product,
     DivisionStatus,
