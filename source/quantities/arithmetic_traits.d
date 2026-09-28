@@ -106,6 +106,13 @@ private struct Plain {}
 
 static assert(hasClosedAdditiveValue!Additive);
 static assert(!hasClosedAdditiveValue!Plain);
+static assert(({
+    import quantities.area : Area;
+    import quantities.length : Length;
+    static assert(is(ProductResult!(Length, Length) == Area));
+    return true;
+}()));
+
 static assert(is(AddResult!(Additive, Additive) == Additive));
 static assert(is(SubResult!(Additive, Additive) == Additive));
 static assert(is(AddResult!(Plain, Plain) == void));
