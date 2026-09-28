@@ -188,3 +188,77 @@ version (M3ClassOExactDivision)
     enum x = long(6).quantity!(production.Length, production.Metre)
         .exactDiv(long(3));
 }
+
+
+version (M3ProductMissingRelation)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    alias X = production.ProductResult!(Radius, Radius);
+    static assert(!is(X == void), "probe must fail: missing product relation");
+}
+
+version (M3ProductConflictingRelations)
+{
+    struct Left
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = production.Area;
+        }
+    }
+
+    struct OtherArea
+    {
+        alias Dimension = production.AreaDimension;
+        alias CanonicalUnit = production.SquareMetre;
+    }
+
+    struct Right
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductFromLeft(Lhs)
+        {
+            alias ProductFromLeft = OtherArea;
+        }
+    }
+
+    alias X = production.ProductResult!(Left, Right);
+}
+
+version (M3ProductWrongResultDimension)
+{
+    struct WrongResult
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct Left
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = WrongResult;
+        }
+    }
+
+    struct Right
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    alias X = production.ProductResult!(Left, Right);
+}
