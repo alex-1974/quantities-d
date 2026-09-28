@@ -224,6 +224,54 @@ auto exactDiv(Spec, Rep, Scalar)(
     static assert(zero.status == DivisionStatus.divisionByZero);
     static assert(!zero.hasValue);
 
+    static assert(({
+        import quantities.area : Area, AreaDimension;
+        import quantities.ratio : ExactRatio;
+        import quantities.unit : DerivedUnit;
+
+        alias SquareKilometre = DerivedUnit!(
+            AreaDimension,
+            ExactRatio!(1_000_000, 1));
+
+        struct AreaKm2
+        {
+            alias Dimension = AreaDimension;
+            alias CanonicalUnit = SquareKilometre;
+        }
+
+        struct LengthKm2Product
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+
+            template ProductWith(Rhs)
+            {
+                static if (is(Rhs == LengthKm2Product))
+                    alias ProductWith = AreaKm2;
+                else
+                    alias ProductWith = void;
+            }
+        }
+
+        enum inexactProduct =
+            3.quantity!(LengthKm2Product, Metre)
+            .exactMul(4.quantity!(LengthKm2Product, Metre));
+        ProductFailure failure;
+        static assert(!inexactProduct.hasValue);
+        static assert(inexactProduct.tryFailure(failure));
+        static assert(failure == ProductFailure.inexact);
+
+        enum exactProduct =
+            1000.quantity!(LengthKm2Product, Metre)
+            .exactMul(1000.quantity!(LengthKm2Product, Metre));
+        static assert(exactProduct.hasValue);
+        Quantity!(AreaKm2, long) area;
+        static assert(exactProduct.tryValue(area));
+        static assert(area.canonicalValue == 1);
+
+        return true;
+    }()));
+
     static assert(!__traits(compiles,
         long(5).quantity!(Length, Metre).exactDiv(long(2))));
 }
