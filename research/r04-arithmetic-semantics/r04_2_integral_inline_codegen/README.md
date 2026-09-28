@@ -45,3 +45,56 @@ cost of optimized Quantity arithmetic.
 
 Any zero-overhead statement must remain scoped to the compiler/version,
 optimization mode and target actually measured.
+
+
+## Observed result — x86_64 baseline
+
+### DMD 2.111, -O -release -inline
+
+All five raw/Quantity caller pairs are instruction-identical:
+
+- int + uint -> long;
+- uint - uint -> long;
+- uint * uint -> ulong;
+- int Quantity * uint scalar -> long;
+- uint scalar * int Quantity -> long.
+
+No Quantity construction, field spill/reload, wrapper helper call, allocation or
+metadata operation survives in the measured caller bodies.
+
+**DMD inlined-caller code-generation gate: PASS.**
+
+### LDC 1.41, -O3 -release
+
+All five raw/Quantity caller pairs are likewise instruction-identical.
+
+**LDC inlined-caller code-generation gate: PASS.**
+
+## Interpretation
+
+Together with R04.2.9 this isolates the DMD 2.111 discrepancy:
+
+- passing the one-field Quantity struct itself through a forced noinline
+  extern(C) boundary caused additional stack traffic in DMD;
+- when the public ABI remains scalar and Quantity construction/arithmetic is
+  inlineable inside the optimized caller, DMD removes the wrapper completely;
+- LDC removed the wrapper in both probes.
+
+Therefore the measured Class-W arithmetic itself has no surviving runtime
+abstraction cost in optimized inlined use on both baseline compilers.
+
+The stronger ABI-boundary claim is compiler-specific:
+
+- LDC 1.41: zero additional wrapper cost in the measured noinline struct ABI
+  probe;
+- DMD 2.111: extra stack traffic at that forced struct ABI boundary.
+
+## R04.2 code-generation conclusion
+
+For x86_64 optimized release builds on the current baseline:
+
+> Class-W Quantity arithmetic can compile to the same instructions as explicit
+> raw widened integer arithmetic when the operations are inlineable.
+
+This statement is intentionally scoped. It does not claim identical code at
+every ABI boundary, optimization level, compiler version or architecture.
