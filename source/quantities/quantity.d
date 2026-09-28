@@ -6,7 +6,7 @@ import quantities.arithmetic_rep : AddRep, MulRep, SubRep;
 import quantities.arithmetic_traits :
     AddResult,
     ProductCanonicalRescale,
-    ProductResult,
+    ProductResultSpec,
     SubResult,
     isScalableValue;
 import quantities.traits : isQuantitySpec, isUnit;
@@ -78,18 +78,18 @@ public:
         if (op == "*" &&
             isIntegral!Rep &&
             isIntegral!OtherRep &&
-            !is(ProductResult!(Spec, OtherSpec) == void) &&
+            !is(ProductResultSpec!(Spec, OtherSpec) == void) &&
             !is(MulRep!(Rep, OtherRep) == void) &&
             ProductCanonicalRescale!(
                 Spec,
                 OtherSpec,
-                ProductResult!(Spec, OtherSpec)).numerator == 1 &&
+                ProductResultSpec!(Spec, OtherSpec)).numerator == 1 &&
             ProductCanonicalRescale!(
                 Spec,
                 OtherSpec,
-                ProductResult!(Spec, OtherSpec)).denominator == 1)
+                ProductResultSpec!(Spec, OtherSpec)).denominator == 1)
     {
-        alias ResultSpec = ProductResult!(Spec, OtherSpec);
+        alias ResultSpec = ProductResultSpec!(Spec, OtherSpec);
         alias ResultRep = MulRep!(Rep, OtherRep);
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
