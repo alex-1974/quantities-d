@@ -24,34 +24,75 @@ enum sumMaxBits(size_t a, size_t b) =
 // except 1-bit edge cases are still safely handled by selection below.
 enum productMaxBits(size_t a, size_t b) = a + b;
 
-template AddShape(A,B)
+template AddShape(A, B)
 {
-    enum AddShape = Shape(
-        isSigned!A && isSigned!B
-            ? (negPow!A == negPow!B ? negPow!A + 1
-               : (negPow!A > negPow!B ? negPow!A : negPow!B))
-            : (isSigned!A ? negPow!A : (isSigned!B ? negPow!B : 0)),
-        sumMaxBits!(posBits!A, posBits!B)
-    );
+    // Exact range-shape rules without materializing endpoints.
+    //
+    // S(a)+S(b):
+    //   negative magnitude = 2^(a-1)+2^(b-1)
+    //   positive maximum   = (2^(a-1)-1)+(2^(b-1)-1)
+    //
+    // S(s)+U(u):
+    //   negative magnitude = 2^(s-1)
+    //   positive maximum   = (2^(s-1)-1)+(2^u-1)
+    //
+    // U(a)+U(b):
+    //   non-negative only.
+    static if (isSigned!A && isSigned!B)
+        enum AddShape = Shape(
+            negPow!A == negPow!B
+                ? negPow!A + 1
+                : (negPow!A > negPow!B ? negPow!A + 1 : negPow!B + 1),
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else static if (!isSigned!A && !isSigned!B)
+        enum AddShape = Shape(
+            0,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else static if (isSigned!A)
+        enum AddShape = Shape(
+            negPow!A,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
+    else
+        enum AddShape = Shape(
+            negPow!B,
+            sumMaxBits!(posBits!A, posBits!B)
+        );
 }
 
-template SubShape(A,B)
+template SubShape(A, B)
 {
     // min = Amin - Bmax
     // max = Amax - Bmin
-    enum minP =
-        isSigned!A
-            ? (posBits!A == posBits!B
-                ? posBits!A + 1
-                : (posBits!A > posBits!B ? posBits!A : posBits!B))
-            : (posBits!B);
-    enum maxB =
-        isSigned!B
-            ? (posBits!A == negPow!B
-                ? posBits!A + 1
-                : (posBits!A > negPow!B ? posBits!A : negPow!B))
-            : posBits!A;
-    enum SubShape = Shape(minP, maxB);
+    //
+    // Keep the four signedness cases explicit because subtraction is
+    // asymmetric.
+    static if (isSigned!A && isSigned!B)
+        enum SubShape = Shape(
+            // 2^(a-1) + (2^(b-1)-1): needs max exponent + 1
+            negPow!A >= posBits!B ? negPow!A + 1 : posBits!B + 1,
+            // (2^(a-1)-1) + 2^(b-1)
+            posBits!A >= negPow!B ? posBits!A + 1 : negPow!B + 1
+        );
+    else static if (!isSigned!A && !isSigned!B)
+        enum SubShape = Shape(
+            posBits!B,
+            posBits!A
+        );
+    else static if (isSigned!A) // S - U
+        enum SubShape = Shape(
+            // 2^(a-1) + (2^u-1)
+            negPow!A >= posBits!B ? negPow!A + 1 : posBits!B + 1,
+            posBits!A
+        );
+    else // U - S
+        enum SubShape = Shape(
+            posBits!B,
+            // (2^u-1) + 2^(b-1)
+            posBits!A >= negPow!B ? posBits!A + 1 : negPow!B + 1
+        );
 }
 
 template MulShape(A,B)
