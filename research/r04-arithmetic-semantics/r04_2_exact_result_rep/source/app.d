@@ -131,17 +131,41 @@ void check(A,B)()
     if(cm!=em) writeln("MUL ",A.stringof,"/",B.stringof," candidate=",cm," exact=",em);
 }
 
+size_t mismatchCount(A, B)()
+{
+    size_t mismatches;
+    auto ca = select(AddShape!(A, B)), ea = exactAdd!(A, B)();
+    auto cs = select(SubShape!(A, B)), es = exactSub!(A, B)();
+    auto cm = select(MulShape!(A, B)), em = exactMul!(A, B)();
+
+    if (ca != ea) {
+        writeln("ADD ", A.stringof, "/", B.stringof,
+                " candidate=", ca, " exact=", ea);
+        ++mismatches;
+    }
+    if (cs != es) {
+        writeln("SUB ", A.stringof, "/", B.stringof,
+                " candidate=", cs, " exact=", es);
+        ++mismatches;
+    }
+    if (cm != em) {
+        writeln("MUL ", A.stringof, "/", B.stringof,
+                " candidate=", cm, " exact=", em);
+        ++mismatches;
+    }
+    return mismatches;
+}
+
 void main()
 {
     size_t pairs, mismatches;
-    static foreach(A;Types) static foreach(B;Types) {
-        auto ca=select(AddShape!(A,B)), ea=exactAdd!(A,B)();
-        auto cs=select(SubShape!(A,B)), es=exactSub!(A,B)();
-        auto cm=select(MulShape!(A,B)), em=exactMul!(A,B)();
-        if(ca!=ea){writeln("ADD ",A.stringof,"/",B.stringof," candidate=",ca," exact=",ea);++mismatches;}
-        if(cs!=es){writeln("SUB ",A.stringof,"/",B.stringof," candidate=",cs," exact=",es);++mismatches;}
-        if(cm!=em){writeln("MUL ",A.stringof,"/",B.stringof," candidate=",cm," exact=",em);++mismatches;}
-        ++pairs;
-    }
-    writeln("checked pairs=",pairs," operations=",pairs*3," mismatches=",mismatches);
+    static foreach (A; Types)
+        static foreach (B; Types) {
+            mismatches += mismatchCount!(A, B)();
+            ++pairs;
+        }
+
+    writeln("checked pairs=", pairs,
+            " operations=", pairs * 3,
+            " mismatches=", mismatches);
 }
