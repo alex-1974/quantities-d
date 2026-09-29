@@ -110,9 +110,16 @@ Subsequent R04 work extends the partial M3 implementation with:
   relations, exact canonical rescaling, factorized evaluation, and static
   endpoint-based ResultRep selection.
 
+R04.14 has additionally promoted the integral arithmetic availability contract:
+Class W remains the total direct-operator domain, Class O64 is the
+value-dependent checked domain with a meaningful built-in 64-bit result, and
+Class OM remains unavailable pending a deliberate wider public integer
+representation. The production checked-operation names and concrete
+implementation slice remain to be reviewed before root-package export.
+
 This is still a partial M3 implementation, not M3 completion. Floating-point
 arithmetic, general cross-Spec addition/subtraction, automatic/generic
-Dimensionless semantic results, broader Class-O named checked arithmetic,
+Dimensionless semantic results, the concrete Class-O64 checked API,
 broader promotion policy, and consumer-driven mathematical functions remain
 open research-first work.
 

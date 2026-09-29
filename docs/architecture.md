@@ -130,6 +130,32 @@ the operation.
 
 
 
+## Promoted integral arithmetic range classes
+
+ADR 0008 classifies semantically valid integral arithmetic by representation
+availability.
+
+Class W operations have a built-in ResultRep that contains the complete
+mathematical result range for all representable operand values. Direct
+operators remain restricted to this total domain.
+
+Class O64 operations have no built-in Rep covering the complete operand-domain
+range but do have a meaningful built-in 64-bit result domain for individual
+values. They may be exposed through named checked operations that distinguish
+value from overflow without weakening direct-operator safety.
+
+Class OM operations have no semantically neutral built-in 64-bit result domain
+and remain unavailable until quantities-d deliberately adopts a wider public
+integer representation.
+
+Checked arithmetic does not bypass semantic Spec/Dimension/Unit validation.
+Exact canonical rescaling classifies the final mathematical result: denominator
+factors are cancelled before multiplication, zero multiplicative factors are
+handled before unnecessary arithmetic, and compile-time ratio identities are
+expressed structurally rather than left for the optimizer to rediscover.
+
+The public names for the Class-O64 operations are intentionally not yet frozen.
+
 ## Promoted exact integral quotient model
 
 Integral Quantity/Quantity division follows the same separation of concerns as
