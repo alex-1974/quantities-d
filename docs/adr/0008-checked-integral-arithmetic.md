@@ -57,10 +57,17 @@ trapping, assertions, or implicit allocation.
 ### 3. Checked Class-O results have a narrow failure space
 
 A Class-O64 operation reports only states that the operation can actually
-produce. For checked addition, subtraction, or multiplication whose only
-value-dependent representation failure is range overflow, the semantic result is:
+produce. For checked addition and subtraction, whose only value-dependent
+representation failure is range overflow, the semantic result is:
 
 - value;
+- overflow.
+
+Checked multiplication additionally performs exact canonical rescaling, so its
+narrow result space is:
+
+- value;
+- inexact;
 - overflow.
 
 The default-constructed result carrier must be a failure state rather than
