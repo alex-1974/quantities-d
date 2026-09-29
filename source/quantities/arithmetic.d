@@ -2,11 +2,17 @@ module quantities.arithmetic;
 
 import std.traits : isIntegral;
 
-import quantities.arithmetic_rep : QuotientRep, ScaledMulRep;
+import quantities.arithmetic_rep :
+    ExactQuotientResultRep,
+    QuotientRep,
+    ScaledMulRep;
 import quantities.arithmetic_traits :
     ExternalProductResultSpec,
+    ExternalQuotientResultSpec,
     ProductCanonicalRescale,
     ProductResultSpec,
+    QuotientCanonicalRescale,
+    QuotientResultSpec,
     isScalableValue;
 import quantities.quantity : Quantity;
 
@@ -277,6 +283,193 @@ auto exactMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
     alias ResultSpec =
         ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec);
     return exactMulKernel!ResultSpec(lhs, rhs);
+}
+
+
+private ulong quotientMagnitude(T)(T value) @safe pure nothrow @nogc
+    if (isIntegral!T)
+{
+    static if (is(T == ulong))
+        return value;
+    else static if (__traits(compiles, value < 0))
+    {
+        if (value < 0)
+        {
+            static if (T.sizeof == long.sizeof)
+                return cast(ulong)(-(cast(long)value + 1)) + 1UL;
+            else
+                return cast(ulong)(-cast(long)value);
+        }
+        return cast(ulong)value;
+    }
+    else
+        return cast(ulong)value;
+}
+
+private ulong quotientGcd(ulong a, ulong b) @safe pure nothrow @nogc
+{
+    while (b != 0)
+    {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+private void quotientCancel(ref ulong numerator, ref ulong denominator)
+    @safe pure nothrow @nogc
+{
+    const g = quotientGcd(numerator, denominator);
+    numerator /= g;
+    denominator /= g;
+}
+
+private ResultRep quotientSignedValue(ResultRep)(
+    bool negative,
+    ulong magnitudeValue) @safe pure nothrow @nogc
+    if (isIntegral!ResultRep)
+{
+    if (!negative)
+        return cast(ResultRep)magnitudeValue;
+
+    static if (__traits(compiles, ResultRep.min))
+    {
+        static if (ResultRep.min < 0)
+        {
+            const minMagnitude =
+                ResultRep.sizeof == long.sizeof
+                    ? cast(ulong)long.max + 1UL
+                    : cast(ulong)(-cast(long)ResultRep.min);
+            if (magnitudeValue == minMagnitude)
+                return ResultRep.min;
+            return -cast(ResultRep)magnitudeValue;
+        }
+        else
+            assert(false);
+    }
+    else
+        assert(false);
+}
+
+private auto exactQuotientKernel(
+    ResultSpec, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+{
+    alias Scale = QuotientCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = ExactQuotientResultRep!(
+        LhsRep,
+        RhsRep,
+        cast(ulong)Scale.numerator,
+        cast(ulong)Scale.denominator);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = DivisionResult!ResultQuantity;
+
+    if (rhs.canonicalValue == 0)
+        return Result.divisionByZero();
+
+    if (lhs.canonicalValue == 0)
+        return Result.exact(ResultQuantity.fromCanonical(0));
+
+    const negative =
+        (lhs.canonicalValue < 0) != (rhs.canonicalValue < 0);
+
+    ulong a = quotientMagnitude(lhs.canonicalValue);
+    ulong b = quotientMagnitude(rhs.canonicalValue);
+    ulong n = cast(ulong)Scale.numerator;
+    ulong d = cast(ulong)Scale.denominator;
+
+    quotientCancel(a, b);
+    quotientCancel(a, d);
+    quotientCancel(n, b);
+    quotientCancel(n, d);
+
+    if (b != 1 || d != 1)
+        return Result.inexact();
+
+    // ExactQuotientResultRep proves that every exact admitted result fits.
+    const magnitudeValue = a * n;
+    const value = quotientSignedValue!ResultRep(negative, magnitudeValue);
+    return Result.exact(ResultQuantity.fromCanonical(value));
+}
+
+/// Divides two integral Quantities using operand-owned quotient semantics.
+///
+/// Semantic resolution, physical Dimension, canonical-unit rescale, and the
+/// complete exact-result range are compile-time gates. Runtime outcomes are
+/// exact, inexact, or divisionByZero.
+auto exactDiv(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(QuotientResultSpec!(LhsSpec, RhsSpec) == void) &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            QuotientResultSpec!(LhsSpec, RhsSpec)).numerator > 0 &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            QuotientResultSpec!(LhsSpec, RhsSpec)).denominator > 0 &&
+        !is(ExactQuotientResultRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                QuotientResultSpec!(LhsSpec, RhsSpec)).numerator,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                QuotientResultSpec!(LhsSpec, RhsSpec)).denominator) == void))
+{
+    alias ResultSpec = QuotientResultSpec!(LhsSpec, RhsSpec);
+    return exactQuotientKernel!ResultSpec(lhs, rhs);
+}
+
+/// Divides two integral Quantities using an explicit consumer relation set.
+///
+/// Relations.Quotient!(LhsSpec, RhsSpec) is ordered and authoritative; no
+/// fallback to operand-owned quotient hooks occurs.
+auto exactDiv(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(ExternalQuotientResultSpec!(
+            Relations, LhsSpec, RhsSpec) == void) &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalQuotientResultSpec!(
+                Relations, LhsSpec, RhsSpec)).numerator > 0 &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalQuotientResultSpec!(
+                Relations, LhsSpec, RhsSpec)).denominator > 0 &&
+        !is(ExactQuotientResultRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ExternalQuotientResultSpec!(
+                    Relations, LhsSpec, RhsSpec)).numerator,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ExternalQuotientResultSpec!(
+                    Relations, LhsSpec, RhsSpec)).denominator) == void))
+{
+    alias ResultSpec =
+        ExternalQuotientResultSpec!(Relations, LhsSpec, RhsSpec);
+    return exactQuotientKernel!ResultSpec(lhs, rhs);
 }
 
 auto exactDiv(Spec, Rep, Scalar)(
