@@ -195,6 +195,47 @@ void main()
     static assert(zeroDivision.status == DivisionStatus.divisionByZero);
     static assert(!zeroDivision.hasValue);
 
+    enum checkedProduct =
+        long(3).quantity!(Length, Metre)
+        .checkedMul(long(4).quantity!(Length, Metre));
+    static assert(checkedProduct.hasValue);
+    static assert({
+        Quantity!(Area, long) value;
+        return checkedProduct.tryValue(value)
+            && value.canonicalValue == 12;
+    }());
+
+    enum checkedProductOverflow =
+        long.max.quantity!(Length, Metre)
+        .checkedMul(long(2).quantity!(Length, Metre));
+    static assert(!checkedProductOverflow.hasValue);
+    static assert({
+        CheckedMulFailure failure;
+        return checkedProductOverflow.tryFailure(failure)
+            && failure == CheckedMulFailure.overflow;
+    }());
+
+    enum checkedProductMin =
+        long.min.quantity!(Length, Metre)
+        .checkedMul(long(1).quantity!(Length, Metre));
+    static assert(checkedProductMin.hasValue);
+    static assert({
+        Quantity!(Area, long) value;
+        return checkedProductMin.tryValue(value)
+            && value.canonicalValue == long.min;
+    }());
+
+    enum checkedUnsignedProductOverflow =
+        ulong.max.quantity!(Length, Metre)
+        .checkedMul(2UL.quantity!(Length, Metre));
+    static assert(!checkedUnsignedProductOverflow.hasValue);
+
+    CheckedMulResult!(Quantity!(Area, long)) defaultCheckedMul;
+    assert(!defaultCheckedMul.hasValue);
+    CheckedMulFailure defaultMulFailure;
+    assert(defaultCheckedMul.tryFailure(defaultMulFailure));
+    assert(defaultMulFailure == CheckedMulFailure.overflow);
+
     // Root-level semantic product resolvers are part of the external API.
     static assert(is(ProductResultSpec!(Length, Length) == Area));
 
