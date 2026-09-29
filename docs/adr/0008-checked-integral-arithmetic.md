@@ -119,16 +119,17 @@ appropriate for demonstrated version-bounded defects.
 Compiler code-generation quirks must not determine the public result carrier or
 API shape.
 
-### 7. Public operation names are not frozen by this ADR
+### 7. Public operation names are promoted incrementally
 
-R04.14 used `checkedAdd`, `checkedSub`, and `checkedMul` as candidate
-vocabulary. Those names are plausible but remain an implementation-slice API
-decision.
+The first production Class-O64 slice promotes `checkedAdd` for homogeneous
+`long` and homogeneous `ulong` Quantity addition. The name composes with the
+existing `checkedQuantity` conversion vocabulary and remains natural under
+UFCS, while the ordinary `+` operator continues to mean compile-time-proven
+total arithmetic.
 
-Before export from the root package, the production implementation must verify
-that the names compose naturally with the existing direct operators,
-`exactMul`, `exactDiv`, conversion vocabulary, UFCS, and external relation
-forms.
+This decision does not yet freeze `checkedSub` or `checkedMul`. Those names
+remain implementation-slice decisions because multiplication additionally
+interacts with product relations and exact canonical rescaling.
 
 ## Alternatives considered
 

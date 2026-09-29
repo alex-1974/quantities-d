@@ -9,6 +9,7 @@ import quantities.arithmetic_rep :
 import quantities.arithmetic_traits :
     ExternalProductResultSpec,
     ExternalQuotientResultSpec,
+    AddResult,
     ProductCanonicalRescale,
     ProductResultSpec,
     QuotientCanonicalRescale,
@@ -75,6 +76,67 @@ public:
 }
 
 alias ProductResultValue(T) = ExactArithmeticResult!(T, ProductFailure);
+
+/// Failure classification for checked Class-O64 Quantity addition.
+enum CheckedAddFailure : ubyte
+{
+    overflow
+}
+
+/// Result of checked Class-O64 Quantity addition.
+///
+/// The default state is failure (overflow). A value is exposed only after a
+/// successful checked addition.
+alias CheckedAddResult(T) = ExactArithmeticResult!(T, CheckedAddFailure);
+
+private bool checkedAddOverflow(T)(T lhs, T rhs, out T value)
+    @safe pure nothrow @nogc
+    if (is(T == long) || is(T == ulong))
+{
+    static if (is(T == ulong))
+    {
+        if (lhs > T.max - rhs)
+            return true;
+    }
+    else
+    {
+        if (rhs > 0 && lhs > T.max - rhs)
+            return true;
+        if (rhs < 0 && lhs < T.min - rhs)
+            return true;
+    }
+
+    value = lhs + rhs;
+    return false;
+}
+
+/// Adds two semantically compatible integral Quantities in the Class-O64
+/// domain.
+///
+/// This overload is intentionally limited to the two homogeneous built-in
+/// 64-bit domains whose individual results have an unambiguous result Rep.
+/// Class-W arithmetic remains available through the direct + operator;
+/// mixed signed/unsigned 64-bit domains remain Class OM.
+auto checkedAdd(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (!is(AddResult!(LhsSpec, RhsSpec) == void) &&
+        ((is(LhsRep == long) && is(RhsRep == long)) ||
+         (is(LhsRep == ulong) && is(RhsRep == ulong))))
+{
+    alias ResultSpec = AddResult!(LhsSpec, RhsSpec);
+    alias ResultRep = LhsRep;
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = CheckedAddResult!ResultQuantity;
+
+    ResultRep sum;
+    if (checkedAddOverflow!(
+            ResultRep)(lhs.canonicalValue, rhs.canonicalValue, sum))
+        return Result.failed(CheckedAddFailure.overflow);
+
+    return Result.exact(ResultQuantity.fromCanonical(sum));
+}
 
 enum DivisionStatus : ubyte
 {

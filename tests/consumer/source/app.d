@@ -82,6 +82,42 @@ void main()
     static assert(arithmeticSum.canonicalValue
         == cast(long)int.max + cast(long)uint.max);
 
+    enum checkedLongAdd =
+        long.max.quantity!(Length, Metre)
+        .checkedAdd((-1L).quantity!(Length, Metre));
+    static assert(checkedLongAdd.hasValue);
+    static assert({
+        Quantity!(Length, long) value;
+        return checkedLongAdd.tryValue(value)
+            && value.canonicalValue == long.max - 1;
+    }());
+
+    enum checkedLongOverflow =
+        long.max.quantity!(Length, Metre)
+        .checkedAdd(1L.quantity!(Length, Metre));
+    static assert(!checkedLongOverflow.hasValue);
+    static assert({
+        CheckedAddFailure failure;
+        return checkedLongOverflow.tryFailure(failure)
+            && failure == CheckedAddFailure.overflow;
+    }());
+
+    enum checkedLongMin =
+        long.min.quantity!(Length, Metre)
+        .checkedAdd(1L.quantity!(Length, Metre));
+    static assert(checkedLongMin.hasValue);
+
+    enum checkedUlongOverflow =
+        ulong.max.quantity!(Length, Metre)
+        .checkedAdd(1UL.quantity!(Length, Metre));
+    static assert(!checkedUlongOverflow.hasValue);
+
+    CheckedAddResult!(Quantity!(Length, long)) defaultCheckedAdd;
+    assert(!defaultCheckedAdd.hasValue);
+    CheckedAddFailure defaultFailure;
+    assert(defaultCheckedAdd.tryFailure(defaultFailure));
+    assert(defaultFailure == CheckedAddFailure.overflow);
+
     enum arithmeticDifference =
         0u.quantity!(Length, Metre)
         - uint.max.quantity!(Length, Metre);
