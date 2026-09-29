@@ -190,7 +190,7 @@ void main()
         .exactDiv(3.quantity!(QuotientRight, Metre));
     static assert(consumerQuotient.status == DivisionStatus.exact);
     static assert({
-        Quantity!(ConsumerRatio, short) value;
+        Quantity!(ConsumerRatio, long) value;
         return consumerQuotient.tryValue(value)
             && value.canonicalValue == 2;
     }());
