@@ -130,6 +130,37 @@ the operation.
 
 
 
+## Promoted exact integral quotient model
+
+Integral Quantity/Quantity division follows the same separation of concerns as
+the promoted product model, but it is exposed as named `exactDiv` rather than
+unchecked direct `/` because ordinary integral divisor representations include
+zero and exactness depends on runtime values.
+
+Operand Specs may declare `QuotientWith` / `QuotientFromLeft` semantic
+relations. Consumers that own neither operand may supply an explicit ordered
+`Relations.Quotient!(Lhs, Rhs)` relation to `exactDiv!Relations`; the
+explicit provider is authoritative and does not fall back to operand-owned
+hooks.
+
+The physical quotient Dimension is validated independently from semantic Spec
+selection. Exact Unit algebra determines the mathematical quotient unit and its
+canonical-storage rescale. Positive and negative exact-result endpoints are
+then proven against built-in integral representation ranges at compile time.
+Unsupported Rep/scale combinations are not admitted.
+
+Runtime evaluation detects a zero divisor, fully cross-cancels the rational
+factors, and distinguishes only `exact`, `inexact`, and
+`divisionByZero`. No runtime range-failure state is required for admitted
+calls.
+
+`Dimensionless` remains a physical Dimension rather than an automatically
+selected semantic Spec. A dimensionless quotient is representable when an
+explicit semantic ResultSpec declares that Dimension; no generic ratio Spec or
+raw-scalar conversion is implied.
+
+
+
 ## Promoted declaration and validation mechanism
 
 ADR 0003 selects ordinary user-defined D types with structural compile-time
