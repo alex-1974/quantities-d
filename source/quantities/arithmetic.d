@@ -13,6 +13,7 @@ import quantities.arithmetic_traits :
     ProductCanonicalRescale,
     ProductResultSpec,
     QuotientCanonicalRescale,
+    SubResult,
     QuotientResultSpec,
     isScalableValue;
 import quantities.quantity : Quantity;
@@ -136,6 +137,65 @@ auto checkedAdd(LhsSpec, LhsRep, RhsSpec, RhsRep)(
         return Result.failed(CheckedAddFailure.overflow);
 
     return Result.exact(ResultQuantity.fromCanonical(sum));
+}
+
+/// Failure classification for checked Class-O64 Quantity subtraction.
+enum CheckedSubFailure : ubyte
+{
+    overflow
+}
+
+/// Result of checked Class-O64 Quantity subtraction.
+///
+/// The default state is failure (overflow).
+alias CheckedSubResult(T) = ExactArithmeticResult!(T, CheckedSubFailure);
+
+private bool checkedSubOverflow(T)(T lhs, T rhs, out T value)
+    @safe pure nothrow @nogc
+    if (is(T == long) || is(T == ulong))
+{
+    static if (is(T == ulong))
+    {
+        if (lhs < rhs)
+            return true;
+    }
+    else
+    {
+        if (rhs > 0 && lhs < T.min + rhs)
+            return true;
+        if (rhs < 0 && lhs > T.max + rhs)
+            return true;
+    }
+
+    value = lhs - rhs;
+    return false;
+}
+
+/// Subtracts two semantically compatible integral Quantities in the Class-O64
+/// domain.
+///
+/// This overload is intentionally limited to homogeneous long and homogeneous
+/// ulong domains. Class-W subtraction remains available through the direct
+/// minus operator; mixed signed/unsigned 64-bit domains remain Class OM.
+auto checkedSub(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (!is(SubResult!(LhsSpec, RhsSpec) == void) &&
+        ((is(LhsRep == long) && is(RhsRep == long)) ||
+         (is(LhsRep == ulong) && is(RhsRep == ulong))))
+{
+    alias ResultSpec = SubResult!(LhsSpec, RhsSpec);
+    alias ResultRep = LhsRep;
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = CheckedSubResult!ResultQuantity;
+
+    ResultRep difference;
+    if (checkedSubOverflow!(
+            ResultRep)(lhs.canonicalValue, rhs.canonicalValue, difference))
+        return Result.failed(CheckedSubFailure.overflow);
+
+    return Result.exact(ResultQuantity.fromCanonical(difference));
 }
 
 enum DivisionStatus : ubyte

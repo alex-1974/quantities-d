@@ -161,6 +161,30 @@ version (M3CheckedAddInvalidSemantics)
 }
 
 
+version (M3CheckedSubMixed64ClassOM)
+{
+    enum x =
+        long(1).quantity!(production.Length, production.Metre)
+        .checkedSub(
+            ulong(1).quantity!(production.Length, production.Metre));
+}
+
+version (M3CheckedSubInvalidSemantics)
+{
+    struct OtherLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+        enum closedAdditiveValue = true;
+    }
+
+    enum x =
+        long(1).quantity!(production.Length, production.Metre)
+        .checkedSub(
+            long(1).quantity!(OtherLength, production.Metre));
+}
+
+
 version (M3RawIntegralDivision)
 {
     enum x = 5.quantity!(production.Length, production.Metre) / 2;

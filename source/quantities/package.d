@@ -23,9 +23,12 @@ public import quantities.unit :
 public import quantities.arithmetic :
     CheckedAddFailure,
     CheckedAddResult,
+    CheckedSubFailure,
+    CheckedSubResult,
     DivisionResult,
     ProductFailure,
     checkedAdd,
+    checkedSub,
     exactMul,
     product,
     DivisionStatus,

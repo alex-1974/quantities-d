@@ -121,15 +121,15 @@ API shape.
 
 ### 7. Public operation names are promoted incrementally
 
-The first production Class-O64 slice promotes `checkedAdd` for homogeneous
-`long` and homogeneous `ulong` Quantity addition. The name composes with the
+The first production Class-O64 slices promote `checkedAdd` and `checkedSub` for
+homogeneous `long` and homogeneous `ulong` Quantity arithmetic. The name composes with the
 existing `checkedQuantity` conversion vocabulary and remains natural under
 UFCS, while the ordinary `+` operator continues to mean compile-time-proven
 total arithmetic.
 
-This decision does not yet freeze `checkedSub` or `checkedMul`. Those names
-remain implementation-slice decisions because multiplication additionally
-interacts with product relations and exact canonical rescaling.
+This decision does not yet freeze `checkedMul`. Multiplication remains a
+separate implementation-slice decision because it additionally interacts with
+product relations and exact canonical rescaling.
 
 ## Alternatives considered
 
