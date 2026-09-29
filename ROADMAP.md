@@ -114,13 +114,13 @@ R04.14 has additionally promoted the integral arithmetic availability contract:
 Class W remains the total direct-operator domain, Class O64 is the
 value-dependent checked domain with a meaningful built-in 64-bit result, and
 Class OM remains unavailable pending a deliberate wider public integer
-representation. The first production O64 slice exports `checkedAdd` for homogeneous
-`long` and `ulong` Quantity addition. Subtraction and multiplication remain
-separate implementation/API slices.
+representation. The first production O64 slices export `checkedAdd` and `checkedSub` for
+homogeneous `long` and `ulong` Quantity arithmetic. Multiplication remains a
+separate implementation/API slice.
 
 This is still a partial M3 implementation, not M3 completion. Floating-point
 arithmetic, general cross-Spec addition/subtraction, automatic/generic
-Dimensionless semantic results, the remaining Class-O64 checked subtraction/multiplication API,
+Dimensionless semantic results, the remaining Class-O64 checked multiplication API,
 broader promotion policy, and consumer-driven mathematical functions remain
 open research-first work.
 
