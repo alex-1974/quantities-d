@@ -118,6 +118,47 @@ void main()
     assert(defaultCheckedAdd.tryFailure(defaultFailure));
     assert(defaultFailure == CheckedAddFailure.overflow);
 
+    enum checkedLongSub =
+        long.min.quantity!(Length, Metre)
+        .checkedSub((-1L).quantity!(Length, Metre));
+    static assert(checkedLongSub.hasValue);
+    static assert({
+        Quantity!(Length, long) value;
+        return checkedLongSub.tryValue(value)
+            && value.canonicalValue == long.min + 1;
+    }());
+
+    enum checkedLongSubOverflow =
+        long.min.quantity!(Length, Metre)
+        .checkedSub(1L.quantity!(Length, Metre));
+    static assert(!checkedLongSubOverflow.hasValue);
+    static assert({
+        CheckedSubFailure failure;
+        return checkedLongSubOverflow.tryFailure(failure)
+            && failure == CheckedSubFailure.overflow;
+    }());
+
+    enum checkedLongSubUpperOverflow =
+        long.max.quantity!(Length, Metre)
+        .checkedSub((-1L).quantity!(Length, Metre));
+    static assert(!checkedLongSubUpperOverflow.hasValue);
+
+    enum checkedUlongSub =
+        ulong.max.quantity!(Length, Metre)
+        .checkedSub(1UL.quantity!(Length, Metre));
+    static assert(checkedUlongSub.hasValue);
+
+    enum checkedUlongSubOverflow =
+        0UL.quantity!(Length, Metre)
+        .checkedSub(1UL.quantity!(Length, Metre));
+    static assert(!checkedUlongSubOverflow.hasValue);
+
+    CheckedSubResult!(Quantity!(Length, long)) defaultCheckedSub;
+    assert(!defaultCheckedSub.hasValue);
+    CheckedSubFailure defaultSubFailure;
+    assert(defaultCheckedSub.tryFailure(defaultSubFailure));
+    assert(defaultSubFailure == CheckedSubFailure.overflow);
+
     enum arithmeticDifference =
         0u.quantity!(Length, Metre)
         - uint.max.quantity!(Length, Metre);
