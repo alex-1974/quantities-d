@@ -733,4 +733,120 @@ auto exactDiv(Spec, Rep, Scalar)(
 
     static assert(!__traits(compiles,
         long(5).quantity!(Length, Metre).exactDiv(long(2))));
+
+
+    static assert(({
+        import quantities.dimension : Dimensionless;
+        import quantities.ratio : ExactRatio;
+        import quantities.unit : DerivedUnit;
+
+        alias Unitless = DerivedUnit!(Dimensionless, ExactRatio!(1, 1));
+
+        struct RatioSpec
+        {
+            alias Dimension = Dimensionless;
+            alias CanonicalUnit = Unitless;
+        }
+
+        struct QuotientLength
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+
+            template QuotientWith(Rhs)
+            {
+                static if (is(Rhs == QuotientLength))
+                    alias QuotientWith = RatioSpec;
+                else
+                    alias QuotientWith = void;
+            }
+        }
+
+        enum exactQQ =
+            6.quantity!(QuotientLength, Metre)
+            .exactDiv(3.quantity!(QuotientLength, Metre));
+        static assert(exactQQ.status == DivisionStatus.exact);
+        static assert(exactQQ.hasValue);
+        static assert(({
+            Quantity!(RatioSpec, long) value;
+            return exactQQ.tryValue(value)
+                && value.canonicalValue == 2;
+        }()));
+
+        enum inexactQQ =
+            5.quantity!(QuotientLength, Metre)
+            .exactDiv(2.quantity!(QuotientLength, Metre));
+        static assert(inexactQQ.status == DivisionStatus.inexact);
+        static assert(!inexactQQ.hasValue);
+
+        enum zeroQQ =
+            5.quantity!(QuotientLength, Metre)
+            .exactDiv(0.quantity!(QuotientLength, Metre));
+        static assert(zeroQQ.status == DivisionStatus.divisionByZero);
+        static assert(!zeroQQ.hasValue);
+
+        enum widenedQQ =
+            int.min.quantity!(QuotientLength, Metre)
+            .exactDiv((-1).quantity!(QuotientLength, Metre));
+        static assert(widenedQQ.status == DivisionStatus.exact);
+        static assert(({
+            Quantity!(RatioSpec, long) value;
+            return widenedQQ.tryValue(value)
+                && value.canonicalValue == -(cast(long)int.min);
+        }()));
+
+        // Mathematical quotient unit is km/m = 1000. Canonical storage is
+        // unitless, so the exact canonical rescale is 1000.
+        import quantities.length : Kilometre;
+
+        struct KilometreNumerator
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Kilometre;
+
+            template QuotientWith(Rhs)
+            {
+                static if (is(Rhs == MetreDenominator))
+                    alias QuotientWith = RatioSpec;
+                else
+                    alias QuotientWith = void;
+            }
+        }
+
+        struct MetreDenominator
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+        }
+
+        enum rescaledQQ =
+            (cast(byte)2).quantity!(KilometreNumerator, Kilometre)
+            .exactDiv((cast(byte)4).quantity!(MetreDenominator, Metre));
+        static assert(rescaledQQ.status == DivisionStatus.exact);
+        static assert(({
+            Quantity!(RatioSpec, int) value;
+            return rescaledQQ.tryValue(value)
+                && value.canonicalValue == 500;
+        }()));
+
+        struct ConsumerRelations
+        {
+            template Quotient(Lhs, Rhs)
+            {
+                static if (is(Lhs == MetreDenominator) &&
+                    is(Rhs == MetreDenominator))
+                    alias Quotient = RatioSpec;
+                else
+                    alias Quotient = void;
+            }
+        }
+
+        enum externalQQ =
+            8.quantity!(MetreDenominator, Metre)
+            .exactDiv!ConsumerRelations(
+                4.quantity!(MetreDenominator, Metre));
+        static assert(externalQQ.status == DivisionStatus.exact);
+
+        return true;
+    }()));
 }
