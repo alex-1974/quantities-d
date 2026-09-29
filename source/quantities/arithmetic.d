@@ -198,6 +198,180 @@ auto checkedSub(LhsSpec, LhsRep, RhsSpec, RhsRep)(
     return Result.exact(ResultQuantity.fromCanonical(difference));
 }
 
+/// Failure classification for checked Class-O64 Quantity products.
+///
+/// `inexact` means canonical rescaling has no integral result. `overflow`
+/// means the exact mathematical result lies outside the selected 64-bit Rep.
+enum CheckedMulFailure : ubyte
+{
+    overflow,
+    inexact
+}
+
+alias CheckedMulResult(T) = ExactArithmeticResult!(T, CheckedMulFailure);
+
+private ulong checkedMulMagnitude(T)(T value) @safe pure nothrow @nogc
+    if (is(T == long) || is(T == ulong))
+{
+    static if (is(T == ulong))
+        return value;
+    else
+        return value < 0
+            ? cast(ulong)(-(value + 1)) + 1UL
+            : cast(ulong)value;
+}
+
+private ulong checkedMulGcd(ulong a, ulong b) @safe pure nothrow @nogc
+{
+    while (b != 0)
+    {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+private void checkedMulCancel(ref ulong value, ref ulong denominator)
+    @safe pure nothrow @nogc
+{
+    const g = checkedMulGcd(value, denominator);
+    value /= g;
+    denominator /= g;
+}
+
+private bool checkedMulUnsigned(
+    ulong lhs, ulong rhs, out ulong value) @safe pure nothrow @nogc
+{
+    if (lhs != 0 && rhs > ulong.max / lhs)
+        return true;
+    value = lhs * rhs;
+    return false;
+}
+
+private auto checkedMulKernel(
+    ResultSpec, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+{
+    alias Scale = ProductCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = LhsRep;
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = CheckedMulResult!ResultQuantity;
+
+    static if (Scale.numerator == 0)
+        return Result.exact(ResultQuantity.fromCanonical(0));
+    else
+    {
+        static if (is(ResultRep == long))
+            const negative =
+                (lhs.canonicalValue < 0) != (rhs.canonicalValue < 0);
+        else
+            enum negative = false;
+
+        ulong a = checkedMulMagnitude(lhs.canonicalValue);
+        ulong b = checkedMulMagnitude(rhs.canonicalValue);
+        ulong d = cast(ulong)Scale.denominator;
+
+        static if (Scale.denominator != 1)
+        {
+            checkedMulCancel(a, d);
+            checkedMulCancel(b, d);
+            if (d != 1)
+                return Result.failed(CheckedMulFailure.inexact);
+        }
+
+        ulong magnitudeValue;
+        if (checkedMulUnsigned(a, b, magnitudeValue))
+            return Result.failed(CheckedMulFailure.overflow);
+
+        static if (Scale.numerator != 1)
+        {
+            if (checkedMulUnsigned(
+                    magnitudeValue,
+                    cast(ulong)Scale.numerator,
+                    magnitudeValue))
+                return Result.failed(CheckedMulFailure.overflow);
+        }
+
+        static if (is(ResultRep == ulong))
+            return Result.exact(
+                ResultQuantity.fromCanonical(magnitudeValue));
+        else
+        {
+            const minMagnitude = cast(ulong)long.max + 1UL;
+            const limit = negative ? minMagnitude : cast(ulong)long.max;
+            if (magnitudeValue > limit)
+                return Result.failed(CheckedMulFailure.overflow);
+
+            if (negative)
+            {
+                const value = magnitudeValue == minMagnitude
+                    ? long.min
+                    : -cast(long)magnitudeValue;
+                return Result.exact(ResultQuantity.fromCanonical(value));
+            }
+
+            return Result.exact(
+                ResultQuantity.fromCanonical(cast(long)magnitudeValue));
+        }
+    }
+}
+
+/// Multiplies two integral Quantities using operand-owned Class-O64 product
+/// semantics.
+///
+/// The semantic ResultSpec and canonical rescale are established at compile
+/// time. Runtime outcomes are an exact 64-bit value, inexact canonical
+/// rescaling, or overflow. Homogeneous long and ulong domains are admitted;
+/// mixed 64-bit domains remain Class OM.
+auto checkedMul(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (!is(ProductResultSpec!(LhsSpec, RhsSpec) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ProductResultSpec!(LhsSpec, RhsSpec)).numerator >= 0 &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ProductResultSpec!(LhsSpec, RhsSpec)).denominator > 0 &&
+        ((is(LhsRep == long) && is(RhsRep == long)) ||
+         (is(LhsRep == ulong) && is(RhsRep == ulong))))
+{
+    alias ResultSpec = ProductResultSpec!(LhsSpec, RhsSpec);
+    return checkedMulKernel!ResultSpec(lhs, rhs);
+}
+
+/// Multiplies two integral Quantities using an explicit consumer relation set
+/// and Class-O64 checked representation semantics.
+auto checkedMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (!is(ExternalProductResultSpec!(
+            Relations, LhsSpec, RhsSpec) == void) &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).numerator >= 0 &&
+        ProductCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalProductResultSpec!(
+                Relations, LhsSpec, RhsSpec)).denominator > 0 &&
+        ((is(LhsRep == long) && is(RhsRep == long)) ||
+         (is(LhsRep == ulong) && is(RhsRep == ulong))))
+{
+    alias ResultSpec =
+        ExternalProductResultSpec!(Relations, LhsSpec, RhsSpec);
+    return checkedMulKernel!ResultSpec(lhs, rhs);
+}
+
 enum DivisionStatus : ubyte
 {
     exact,
