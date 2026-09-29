@@ -21,8 +21,11 @@ public import quantities.unit :
     PowerUnit;
 
 public import quantities.arithmetic :
+    CheckedAddFailure,
+    CheckedAddResult,
     DivisionResult,
     ProductFailure,
+    checkedAdd,
     exactMul,
     product,
     DivisionStatus,
