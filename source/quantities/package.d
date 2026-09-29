@@ -2,7 +2,9 @@ module quantities;
 
 public import quantities.arithmetic_traits :
     ExternalProductResultSpec,
-    ProductResultSpec;
+    ExternalQuotientResultSpec,
+    ProductResultSpec,
+    QuotientResultSpec;
 public import quantities.area : Area, AreaDimension, SquareMetre;
 public import quantities.dimension :
     BaseDimension,
