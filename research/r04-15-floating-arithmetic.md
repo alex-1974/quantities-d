@@ -144,3 +144,64 @@ representation layer without changing semantic result resolution. Its first
 scope is same-Spec addition/subtraction and scalable scalar
 multiplication/division. Quantity-by-Quantity floating product rescaling is
 deliberately deferred to a separate probe.
+
+
+## Probe 6 — representation dispatcher composition
+
+Source SHA-256:
+
+`c96d6fc2254463e4d267365a1c6bb74d2ad09d6feb2987fd4e5f75172212b766`
+
+DMD 2.111 and LDC 1.41 both built and ran the dispatcher prototype
+successfully.
+
+Observed on both compilers:
+
+- `float.mant_dig == 24`, `double.mant_dig == 53`,
+  `real.mant_dig == 64`;
+- `short -> float` full-domain operand conversion was admitted;
+- `int -> float` was rejected;
+- `int -> double` was admitted;
+- `long -> double` was rejected;
+- admitted Quantity-shaped `int + double`, `short + float`,
+  `int * double`, and `int / double` produced the expected floating
+  ResultRep;
+- rejected mixed combinations failed through the dispatcher constraint;
+- `bool` was deliberately excluded;
+- CTFE and `@safe pure nothrow @nogc` survived the prototype;
+- after exact operand admission, ordinary floating result rounding remained
+  native: `2^53 + 1` rounded to `2^53` in binary64.
+
+Representative runtime observations were identical on both compilers:
+
+```text
+Q!int + Q!double -> 2147483647.5
+Q!short + Q!float -> 32767.5
+Q!int * double -> 1073741823.5
+Q!int / double -> 1.5
+exact int conversion, rounded result: 9007199254740992 + 1 -> 9007199254740992
+```
+
+Both compiler summaries were `build=0 run=0`.
+
+### Probe 6 conclusion
+
+A representation dispatcher can compose the established integral machinery
+with floating rules without redefining the integral contracts themselves.
+
+The prototype supports this separation:
+
+- integral/integral: delegate to the established integral ResultRep machinery;
+- floating/floating: use native D floating promotion;
+- mixed integral/floating: use the native floating result only when the full
+  integral operand domain is exactly representable in that floating ResultRep;
+- otherwise: no direct representation result.
+
+This remains research evidence rather than a production API decision. In
+particular, scalar division is new relative to the current direct Quantity
+operators and must not be promoted merely because the prototype succeeds.
+
+The next probe should compose this policy with the actual
+`arithmetic_rep.d`, `arithmetic_traits.d`, and `quantity.d` contracts
+while preserving existing integral behavior. Floating Quantity-by-Quantity
+product rescaling remains out of scope for that step.
