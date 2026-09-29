@@ -2,6 +2,9 @@ module quantities.arithmetic;
 
 import std.traits : isIntegral;
 
+version (LDC)
+    import core.checkedint : mulu;
+
 import quantities.arithmetic_rep :
     ExactQuotientResultRep,
     QuotientRep,
@@ -243,10 +246,23 @@ private void checkedMulCancel(ref ulong value, ref ulong denominator)
 private bool checkedMulUnsigned(
     ulong lhs, ulong rhs, out ulong value) @safe pure nothrow @nogc
 {
-    if (lhs != 0 && rhs > ulong.max / lhs)
-        return true;
-    value = lhs * rhs;
-    return false;
+    version (LDC)
+    {
+        // LDC lowers core.checkedint.mulu to the backend overflow intrinsic at
+        // runtime while retaining a CTFE-capable portable implementation.
+        bool overflow;
+        value = mulu(lhs, rhs, overflow);
+        return overflow;
+    }
+    else
+    {
+        // DMD's checked-multiply lowering is currently more expensive than
+        // this division-bound form on the supported baseline.
+        if (lhs != 0 && rhs > ulong.max / lhs)
+            return true;
+        value = lhs * rhs;
+        return false;
+    }
 }
 
 private auto checkedMulKernel(

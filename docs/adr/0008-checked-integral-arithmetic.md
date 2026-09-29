@@ -121,15 +121,16 @@ API shape.
 
 ### 7. Public operation names are promoted incrementally
 
-The first production Class-O64 slices promote `checkedAdd` and `checkedSub` for
-homogeneous `long` and homogeneous `ulong` Quantity arithmetic. The name composes with the
-existing `checkedQuantity` conversion vocabulary and remains natural under
-UFCS, while the ordinary `+` operator continues to mean compile-time-proven
-total arithmetic.
+The production Class-O64 arithmetic family promotes `checkedAdd`, `checkedSub`,
+and `checkedMul` for homogeneous `long` and homogeneous `ulong` Quantity
+arithmetic. The names compose with the existing `checkedQuantity` conversion
+vocabulary and remain natural under UFCS, while ordinary direct operators
+continue to mean compile-time-proven total arithmetic.
 
-This decision does not yet freeze `checkedMul`. Multiplication remains a
-separate implementation-slice decision because it additionally interacts with
-product relations and exact canonical rescaling.
+`checkedMul` additionally owns product-relation resolution and exact canonical
+rescaling. Its internal checked-magnitude primitive uses `core.checkedint.mulu`
+on LDC and the portable division-bound implementation on DMD; both paths retain
+the same public result classification and CTFE contract.
 
 ## Alternatives considered
 
