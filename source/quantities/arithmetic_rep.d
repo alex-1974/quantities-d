@@ -332,6 +332,135 @@ template ScaledMulRep(A, B, ulong Factor)
     }
 }
 
+
+private ulong positiveMax(T)() @safe pure nothrow @nogc
+    if (isIntegral!T)
+{
+    return cast(ulong)T.max;
+}
+
+private ulong negativeMagnitudeMax(T)() @safe pure nothrow @nogc
+    if (isIntegral!T)
+{
+    static if (isSigned!T)
+        return magnitude(cast(long)T.min);
+    else
+        return 0;
+}
+
+private bool scaledMagnitudeFits(
+    ulong sourceMagnitude,
+    ulong numerator,
+    ulong denominator,
+    ulong resultMagnitudeLimit) @safe pure nothrow @nogc
+{
+    assert(numerator > 0);
+    assert(denominator > 0);
+    return compare(
+        multiply64(sourceMagnitude, numerator),
+        multiply64(resultMagnitudeLimit, denominator)) <= 0;
+}
+
+private template ExactQuotientEnvelope(
+    Lhs, Rhs, ulong Numerator, ulong Denominator)
+{
+    static assert(isIntegral!Lhs && isIntegral!Rhs);
+    static assert(Numerator > 0 && Denominator > 0);
+
+    enum lhsPositive = positiveMax!Lhs;
+    enum lhsNegative = negativeMagnitudeMax!Lhs;
+
+    static if (isSigned!Lhs && isSigned!Rhs)
+        enum positiveSourceMagnitude =
+            lhsNegative > lhsPositive ? lhsNegative : lhsPositive;
+    else
+        enum positiveSourceMagnitude = lhsPositive;
+
+    static if (isSigned!Lhs)
+        enum negativeFromLhs = lhsNegative;
+    else
+        enum negativeFromLhs = 0UL;
+
+    static if (isSigned!Rhs)
+        enum negativeFromRhs = lhsPositive;
+    else
+        enum negativeFromRhs = 0UL;
+
+    enum negativeSourceMagnitude =
+        negativeFromLhs > negativeFromRhs
+            ? negativeFromLhs
+            : negativeFromRhs;
+    enum hasNegative = negativeSourceMagnitude != 0;
+}
+
+private template ExactQuotientEnvelopeFits(
+    Lhs, Rhs, ulong Numerator, ulong Denominator, Candidate)
+{
+    alias Env = ExactQuotientEnvelope!(
+        Lhs, Rhs, Numerator, Denominator);
+
+    enum positiveFits = scaledMagnitudeFits(
+        Env.positiveSourceMagnitude,
+        Numerator,
+        Denominator,
+        positiveMax!Candidate);
+
+    static if (Env.hasNegative)
+    {
+        static if (isSigned!Candidate)
+            enum negativeFits = scaledMagnitudeFits(
+                Env.negativeSourceMagnitude,
+                Numerator,
+                Denominator,
+                negativeMagnitudeMax!Candidate);
+        else
+            enum negativeFits = false;
+    }
+    else
+        enum negativeFits = true;
+
+    enum ExactQuotientEnvelopeFits = positiveFits && negativeFits;
+}
+
+/// Smallest built-in integral Rep that contains every exact mathematical
+/// result of (Lhs * Numerator) / (Rhs * Denominator) for nonzero Rhs.
+///
+/// Division by zero and integral exactness remain runtime semantic checks.
+/// Result-range safety is a compile-time gate.
+template ExactQuotientResultRep(
+    Lhs, Rhs, ulong Numerator, ulong Denominator)
+{
+    static assert(isIntegral!Lhs && isIntegral!Rhs);
+    static assert(Numerator > 0 && Denominator > 0);
+
+    static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, ubyte))
+        alias ExactQuotientResultRep = ubyte;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, byte))
+        alias ExactQuotientResultRep = byte;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, ushort))
+        alias ExactQuotientResultRep = ushort;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, short))
+        alias ExactQuotientResultRep = short;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, uint))
+        alias ExactQuotientResultRep = uint;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, int))
+        alias ExactQuotientResultRep = int;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, ulong))
+        alias ExactQuotientResultRep = ulong;
+    else static if (ExactQuotientEnvelopeFits!(
+        Lhs, Rhs, Numerator, Denominator, long))
+        alias ExactQuotientResultRep = long;
+    else
+        alias ExactQuotientResultRep = void;
+}
+
 template QuotientRep(A, B)
 {
     static assert(isIntegral!A && isIntegral!B);
@@ -370,6 +499,17 @@ static assert(is(ScaledMulRep!(long, long, 0) == ubyte));
 
 // Scaling may require a wider result than the unscaled product.
 static assert(is(ScaledMulRep!(byte, byte, 1000) == int));
+
+
+static assert(is(ExactQuotientResultRep!(byte, byte, 1, 1) == short));
+static assert(is(ExactQuotientResultRep!(short, short, 1, 1) == int));
+static assert(is(ExactQuotientResultRep!(int, int, 1, 1) == long));
+static assert(is(ExactQuotientResultRep!(long, long, 1, 1) == void));
+static assert(is(ExactQuotientResultRep!(ubyte, ubyte, 1, 1) == ubyte));
+static assert(is(ExactQuotientResultRep!(uint, int, 1, 1) == long));
+static assert(is(ExactQuotientResultRep!(int, uint, 1, 1) == int));
+static assert(is(ExactQuotientResultRep!(int, int, 5, 18) == int));
+static assert(is(ExactQuotientResultRep!(byte, byte, 1000, 1) == int));
 
 static assert(is(QuotientRep!(int, uint) == int));
 static assert(is(QuotientRep!(int, int) == long));
