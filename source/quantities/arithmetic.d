@@ -2,11 +2,17 @@ module quantities.arithmetic;
 
 import std.traits : isIntegral;
 
-import quantities.arithmetic_rep : QuotientRep, ScaledMulRep;
+import quantities.arithmetic_rep :
+    ExactQuotientResultRep,
+    QuotientRep,
+    ScaledMulRep;
 import quantities.arithmetic_traits :
     ExternalProductResultSpec,
+    ExternalQuotientResultSpec,
     ProductCanonicalRescale,
     ProductResultSpec,
+    QuotientCanonicalRescale,
+    QuotientResultSpec,
     isScalableValue;
 import quantities.quantity : Quantity;
 
@@ -279,6 +285,193 @@ auto exactMul(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
     return exactMulKernel!ResultSpec(lhs, rhs);
 }
 
+
+private ulong quotientMagnitude(T)(T value) @safe pure nothrow @nogc
+    if (isIntegral!T)
+{
+    static if (is(T == ulong))
+        return value;
+    else static if (__traits(compiles, value < 0))
+    {
+        if (value < 0)
+        {
+            static if (T.sizeof == long.sizeof)
+                return cast(ulong)(-(cast(long)value + 1)) + 1UL;
+            else
+                return cast(ulong)(-cast(long)value);
+        }
+        return cast(ulong)value;
+    }
+    else
+        return cast(ulong)value;
+}
+
+private ulong quotientGcd(ulong a, ulong b) @safe pure nothrow @nogc
+{
+    while (b != 0)
+    {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+private void quotientCancel(ref ulong numerator, ref ulong denominator)
+    @safe pure nothrow @nogc
+{
+    const g = quotientGcd(numerator, denominator);
+    numerator /= g;
+    denominator /= g;
+}
+
+private ResultRep quotientSignedValue(ResultRep)(
+    bool negative,
+    ulong magnitudeValue) @safe pure nothrow @nogc
+    if (isIntegral!ResultRep)
+{
+    if (!negative)
+        return cast(ResultRep)magnitudeValue;
+
+    static if (__traits(compiles, ResultRep.min))
+    {
+        static if (ResultRep.min < 0)
+        {
+            const minMagnitude =
+                ResultRep.sizeof == long.sizeof
+                    ? cast(ulong)long.max + 1UL
+                    : cast(ulong)(-cast(long)ResultRep.min);
+            if (magnitudeValue == minMagnitude)
+                return ResultRep.min;
+            return -cast(ResultRep)magnitudeValue;
+        }
+        else
+            assert(false);
+    }
+    else
+        assert(false);
+}
+
+private auto exactQuotientKernel(
+    ResultSpec, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+{
+    alias Scale = QuotientCanonicalRescale!(LhsSpec, RhsSpec, ResultSpec);
+    alias ResultRep = ExactQuotientResultRep!(
+        LhsRep,
+        RhsRep,
+        cast(ulong)Scale.numerator,
+        cast(ulong)Scale.denominator);
+    alias ResultQuantity = Quantity!(ResultSpec, ResultRep);
+    alias Result = DivisionResult!ResultQuantity;
+
+    if (rhs.canonicalValue == 0)
+        return Result.divisionByZero();
+
+    if (lhs.canonicalValue == 0)
+        return Result.exact(ResultQuantity.fromCanonical(0));
+
+    const negative =
+        (lhs.canonicalValue < 0) != (rhs.canonicalValue < 0);
+
+    ulong a = quotientMagnitude(lhs.canonicalValue);
+    ulong b = quotientMagnitude(rhs.canonicalValue);
+    ulong n = cast(ulong)Scale.numerator;
+    ulong d = cast(ulong)Scale.denominator;
+
+    quotientCancel(a, b);
+    quotientCancel(a, d);
+    quotientCancel(n, b);
+    quotientCancel(n, d);
+
+    if (b != 1 || d != 1)
+        return Result.inexact();
+
+    // ExactQuotientResultRep proves that every exact admitted result fits.
+    const magnitudeValue = a * n;
+    const value = quotientSignedValue!ResultRep(negative, magnitudeValue);
+    return Result.exact(ResultQuantity.fromCanonical(value));
+}
+
+/// Divides two integral Quantities using operand-owned quotient semantics.
+///
+/// Semantic resolution, physical Dimension, canonical-unit rescale, and the
+/// complete exact-result range are compile-time gates. Runtime outcomes are
+/// exact, inexact, or divisionByZero.
+auto exactDiv(LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(QuotientResultSpec!(LhsSpec, RhsSpec) == void) &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            QuotientResultSpec!(LhsSpec, RhsSpec)).numerator > 0 &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            QuotientResultSpec!(LhsSpec, RhsSpec)).denominator > 0 &&
+        !is(ExactQuotientResultRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                QuotientResultSpec!(LhsSpec, RhsSpec)).numerator,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                QuotientResultSpec!(LhsSpec, RhsSpec)).denominator) == void))
+{
+    alias ResultSpec = QuotientResultSpec!(LhsSpec, RhsSpec);
+    return exactQuotientKernel!ResultSpec(lhs, rhs);
+}
+
+/// Divides two integral Quantities using an explicit consumer relation set.
+///
+/// Relations.Quotient!(LhsSpec, RhsSpec) is ordered and authoritative; no
+/// fallback to operand-owned quotient hooks occurs.
+auto exactDiv(alias Relations, LhsSpec, LhsRep, RhsSpec, RhsRep)(
+    Quantity!(LhsSpec, LhsRep) lhs,
+    Quantity!(RhsSpec, RhsRep) rhs)
+    @safe pure nothrow @nogc
+    if (isIntegral!LhsRep &&
+        isIntegral!RhsRep &&
+        !is(ExternalQuotientResultSpec!(
+            Relations, LhsSpec, RhsSpec) == void) &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalQuotientResultSpec!(
+                Relations, LhsSpec, RhsSpec)).numerator > 0 &&
+        QuotientCanonicalRescale!(
+            LhsSpec,
+            RhsSpec,
+            ExternalQuotientResultSpec!(
+                Relations, LhsSpec, RhsSpec)).denominator > 0 &&
+        !is(ExactQuotientResultRep!(
+            LhsRep,
+            RhsRep,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ExternalQuotientResultSpec!(
+                    Relations, LhsSpec, RhsSpec)).numerator,
+            cast(ulong)QuotientCanonicalRescale!(
+                LhsSpec,
+                RhsSpec,
+                ExternalQuotientResultSpec!(
+                    Relations, LhsSpec, RhsSpec)).denominator) == void))
+{
+    alias ResultSpec =
+        ExternalQuotientResultSpec!(Relations, LhsSpec, RhsSpec);
+    return exactQuotientKernel!ResultSpec(lhs, rhs);
+}
+
 auto exactDiv(Spec, Rep, Scalar)(
     Quantity!(Spec, Rep) quantity,
     Scalar divisor)
@@ -540,4 +733,120 @@ auto exactDiv(Spec, Rep, Scalar)(
 
     static assert(!__traits(compiles,
         long(5).quantity!(Length, Metre).exactDiv(long(2))));
+
+
+    static assert(({
+        import quantities.dimension : Dimensionless;
+        import quantities.ratio : ExactRatio;
+        import quantities.unit : DerivedUnit;
+
+        alias Unitless = DerivedUnit!(Dimensionless, ExactRatio!(1, 1));
+
+        struct RatioSpec
+        {
+            alias Dimension = Dimensionless;
+            alias CanonicalUnit = Unitless;
+        }
+
+        struct QuotientLength
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+
+            template QuotientWith(Rhs)
+            {
+                static if (is(Rhs == QuotientLength))
+                    alias QuotientWith = RatioSpec;
+                else
+                    alias QuotientWith = void;
+            }
+        }
+
+        enum exactQQ =
+            6.quantity!(QuotientLength, Metre)
+            .exactDiv(3.quantity!(QuotientLength, Metre));
+        static assert(exactQQ.status == DivisionStatus.exact);
+        static assert(exactQQ.hasValue);
+        static assert(({
+            Quantity!(RatioSpec, long) value;
+            return exactQQ.tryValue(value)
+                && value.canonicalValue == 2;
+        }()));
+
+        enum inexactQQ =
+            5.quantity!(QuotientLength, Metre)
+            .exactDiv(2.quantity!(QuotientLength, Metre));
+        static assert(inexactQQ.status == DivisionStatus.inexact);
+        static assert(!inexactQQ.hasValue);
+
+        enum zeroQQ =
+            5.quantity!(QuotientLength, Metre)
+            .exactDiv(0.quantity!(QuotientLength, Metre));
+        static assert(zeroQQ.status == DivisionStatus.divisionByZero);
+        static assert(!zeroQQ.hasValue);
+
+        enum widenedQQ =
+            int.min.quantity!(QuotientLength, Metre)
+            .exactDiv((-1).quantity!(QuotientLength, Metre));
+        static assert(widenedQQ.status == DivisionStatus.exact);
+        static assert(({
+            Quantity!(RatioSpec, long) value;
+            return widenedQQ.tryValue(value)
+                && value.canonicalValue == -(cast(long)int.min);
+        }()));
+
+        // Mathematical quotient unit is km/m = 1000. Canonical storage is
+        // unitless, so the exact canonical rescale is 1000.
+        import quantities.length : Kilometre;
+
+        struct KilometreNumerator
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Kilometre;
+
+            template QuotientWith(Rhs)
+            {
+                static if (is(Rhs == MetreDenominator))
+                    alias QuotientWith = RatioSpec;
+                else
+                    alias QuotientWith = void;
+            }
+        }
+
+        struct MetreDenominator
+        {
+            alias Dimension = Length.Dimension;
+            alias CanonicalUnit = Metre;
+        }
+
+        enum rescaledQQ =
+            (cast(byte)2).quantity!(KilometreNumerator, Kilometre)
+            .exactDiv((cast(byte)4).quantity!(MetreDenominator, Metre));
+        static assert(rescaledQQ.status == DivisionStatus.exact);
+        static assert(({
+            Quantity!(RatioSpec, int) value;
+            return rescaledQQ.tryValue(value)
+                && value.canonicalValue == 500;
+        }()));
+
+        struct ConsumerRelations
+        {
+            template Quotient(Lhs, Rhs)
+            {
+                static if (is(Lhs == MetreDenominator) &&
+                    is(Rhs == MetreDenominator))
+                    alias Quotient = RatioSpec;
+                else
+                    alias Quotient = void;
+            }
+        }
+
+        enum externalQQ =
+            8.quantity!(MetreDenominator, Metre)
+            .exactDiv!ConsumerRelations(
+                4.quantity!(MetreDenominator, Metre));
+        static assert(externalQQ.status == DivisionStatus.exact);
+
+        return true;
+    }()));
 }

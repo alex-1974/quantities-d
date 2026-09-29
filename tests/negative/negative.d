@@ -414,3 +414,241 @@ version (M3ExternalProductCanonicalRescale)
         .product!Relations(
             1000.quantity!(ForeignLength, production.Metre));
 }
+
+
+version (M3QuotientMissingRelation)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    alias X = production.QuotientResultSpec!(Radius, Radius);
+    static assert(!is(X == void), "probe must fail: missing quotient relation");
+}
+
+version (M3QuotientConflictingRelations)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioA
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct RatioB
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct Left
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioA;
+        }
+    }
+
+    struct Right
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientFromLeft(Lhs)
+        {
+            alias QuotientFromLeft = RatioB;
+        }
+    }
+
+    alias X = production.QuotientResultSpec!(Left, Right);
+}
+
+version (M3QuotientWrongResultDimension)
+{
+    struct WrongResult
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct Left
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = WrongResult;
+        }
+    }
+
+    struct Right
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    alias X = production.QuotientResultSpec!(Left, Right);
+}
+
+version (M3QuantityQuotientMissingRelation)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x =
+        6.quantity!(Radius, production.Metre)
+        .exactDiv(3.quantity!(Radius, production.Metre));
+}
+
+version (M3QuantityQuotientClassO)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        long(6).quantity!(LengthRatio, production.Metre)
+        .exactDiv(long(3).quantity!(LengthRatio, production.Metre));
+}
+
+version (M3QuantityRawIntegralQuotient)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        6.quantity!(LengthRatio, production.Metre)
+        / 3.quantity!(LengthRatio, production.Metre);
+}
+
+version (M3ExternalQuotientMissingRelation)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct EmptyRelations
+    {
+        template Quotient(Lhs, Rhs)
+        {
+            alias Quotient = void;
+        }
+    }
+
+    enum x =
+        6.quantity!(ForeignLength, production.Metre)
+        .exactDiv!EmptyRelations(
+            3.quantity!(ForeignLength, production.Metre));
+}
+
+version (M3ExternalQuotientWrongResultDimension)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct WrongResult
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct Relations
+    {
+        template Quotient(Lhs, Rhs)
+        {
+            alias Quotient = WrongResult;
+        }
+    }
+
+    alias X = production.ExternalQuotientResultSpec!(
+        Relations, ForeignLength, ForeignLength);
+}
+
+version (M3ExternalQuotientNoFallback)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct IntrinsicLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    struct EmptyRelations
+    {
+        template Quotient(Lhs, Rhs)
+        {
+            alias Quotient = void;
+        }
+    }
+
+    enum x =
+        6.quantity!(IntrinsicLength, production.Metre)
+        .exactDiv!EmptyRelations(
+            3.quantity!(IntrinsicLength, production.Metre));
+}

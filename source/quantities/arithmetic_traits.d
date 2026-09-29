@@ -1,6 +1,6 @@
 module quantities.arithmetic_traits;
 
-import quantities.dimension : MultiplyDimension;
+import quantities.dimension : DivideDimension, MultiplyDimension;
 import quantities.traits : isQuantitySpec;
 import quantities.unit : DivideUnit, MultiplyUnit;
 
@@ -138,6 +138,98 @@ template ExternalProductResultSpec(alias Relations, Lhs, Rhs)
             MultiplyDimension!(Lhs.Dimension, Rhs.Dimension)),
             "external Quantity product ResultSpec has the wrong physical Dimension.");
         alias ExternalProductResultSpec = Candidate;
+    }
+}
+
+
+/// Exact scale from the mathematical quotient unit to ResultSpec's canonical
+/// storage unit.
+template QuotientCanonicalRescale(Lhs, Rhs, ResultSpec)
+{
+    alias MathematicalUnit =
+        DivideUnit!(Lhs.CanonicalUnit, Rhs.CanonicalUnit);
+    alias StorageRatioUnit = DivideUnit!(
+        MathematicalUnit,
+        ResultSpec.CanonicalUnit);
+    alias QuotientCanonicalRescale = StorageRatioUnit.Scale;
+}
+
+private template ForwardQuotientResultSpec(Lhs, Rhs)
+{
+    static if (__traits(hasMember, Lhs, "QuotientWith"))
+        alias ForwardQuotientResultSpec = Lhs.QuotientWith!Rhs;
+    else
+        alias ForwardQuotientResultSpec = void;
+}
+
+private template ReverseQuotientResultSpec(Lhs, Rhs)
+{
+    static if (__traits(hasMember, Rhs, "QuotientFromLeft"))
+        alias ReverseQuotientResultSpec = Rhs.QuotientFromLeft!Lhs;
+    else
+        alias ReverseQuotientResultSpec = void;
+}
+
+/// Semantic result Spec for Quantity division.
+///
+/// A relation may be owned by the left operand through QuotientWith!Rhs or by
+/// the right operand through QuotientFromLeft!Lhs. If both hooks exist they
+/// must agree. Dimensionless mathematical results still require an explicit
+/// semantic ResultSpec.
+template QuotientResultSpec(Lhs, Rhs)
+{
+    alias Forward = ForwardQuotientResultSpec!(Lhs, Rhs);
+    alias Reverse = ReverseQuotientResultSpec!(Lhs, Rhs);
+
+    static if (!is(Forward == void) && !is(Reverse == void))
+    {
+        static assert(is(Forward == Reverse),
+            "conflicting Quantity quotient semantic relations");
+        alias Candidate = Forward;
+    }
+    else static if (!is(Forward == void))
+        alias Candidate = Forward;
+    else static if (!is(Reverse == void))
+        alias Candidate = Reverse;
+    else
+        alias Candidate = void;
+
+    static if (is(Candidate == void))
+        alias QuotientResultSpec = void;
+    else
+    {
+        static assert(isQuantitySpec!Candidate,
+            "Quantity quotient relation must resolve to a valid Quantity Spec.");
+        static assert(is(
+            Candidate.Dimension ==
+            DivideDimension!(Lhs.Dimension, Rhs.Dimension)),
+            "Quantity quotient ResultSpec has the wrong physical Dimension.");
+        alias QuotientResultSpec = Candidate;
+    }
+}
+
+/// Semantic quotient ResultSpec supplied by a consumer-owned relation set.
+///
+/// Relations.Quotient!(Lhs, Rhs) is ordered and authoritative. This resolver
+/// never falls back to operand-owned quotient hooks.
+template ExternalQuotientResultSpec(alias Relations, Lhs, Rhs)
+{
+    static if (__traits(hasMember, Relations, "Quotient"))
+        alias Candidate = Relations.Quotient!(Lhs, Rhs);
+    else
+        alias Candidate = void;
+
+    static if (is(Candidate == void))
+        alias ExternalQuotientResultSpec = void;
+    else
+    {
+        static assert(isQuantitySpec!Candidate,
+            "external Quantity quotient relation must resolve to a valid Quantity Spec.");
+        static assert(is(
+            Candidate.Dimension ==
+            DivideDimension!(Lhs.Dimension, Rhs.Dimension)),
+            "external Quantity quotient ResultSpec has the wrong physical Dimension.");
+        alias ExternalQuotientResultSpec = Candidate;
     }
 }
 

@@ -150,6 +150,74 @@ void main()
             ForeignLeft,
             ForeignRight) == Area));
 
+
+    alias ConsumerUnitless = DerivedUnit!(
+        Dimensionless,
+        ExactRatio!(1, 1));
+
+    struct ConsumerRatio
+    {
+        alias Dimension = Dimensionless;
+        alias CanonicalUnit = ConsumerUnitless;
+    }
+
+    struct QuotientLeft
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+
+        template QuotientWith(Rhs)
+        {
+            static if (is(Rhs == QuotientRight))
+                alias QuotientWith = ConsumerRatio;
+            else
+                alias QuotientWith = void;
+        }
+    }
+
+    struct QuotientRight
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    static assert(is(
+        QuotientResultSpec!(QuotientLeft, QuotientRight) ==
+        ConsumerRatio));
+
+    enum consumerQuotient =
+        6.quantity!(QuotientLeft, Metre)
+        .exactDiv(3.quantity!(QuotientRight, Metre));
+    static assert(consumerQuotient.status == DivisionStatus.exact);
+    static assert({
+        Quantity!(ConsumerRatio, long) value;
+        return consumerQuotient.tryValue(value)
+            && value.canonicalValue == 2;
+    }());
+
+    struct QuotientRelations
+    {
+        template Quotient(Lhs, Rhs)
+        {
+            static if (is(Lhs == ForeignLeft) && is(Rhs == ForeignRight))
+                alias Quotient = ConsumerRatio;
+            else
+                alias Quotient = void;
+        }
+    }
+
+    static assert(is(
+        ExternalQuotientResultSpec!(
+            QuotientRelations,
+            ForeignLeft,
+            ForeignRight) == ConsumerRatio));
+
+    enum externalConsumerQuotient =
+        8.quantity!(ForeignLeft, Metre)
+        .exactDiv!QuotientRelations(
+            4.quantity!(ForeignRight, Metre));
+    static assert(externalConsumerQuotient.status == DivisionStatus.exact);
+
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
     static assert(Quantity!(Length, long).sizeof == long.sizeof);
 }

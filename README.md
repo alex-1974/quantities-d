@@ -27,13 +27,14 @@ Current production coverage includes:
 - M3 integral arithmetic: safe same-Spec `+` / `-`, symmetric integral scalar multiplication, explicit `exactDiv`, and semantic `Quantity * Quantity` products;
 - open canonical dimension algebra and exact derived-unit algebra, with `Area` / `SquareMetre` as the first production derived-dimension case;
 - consumer-owned product relations through explicit `product!Relations` and `exactMul!Relations` APIs;
+- exact integral `Quantity / Quantity` semantics through named `exactDiv`, with explicit operand-owned or consumer-owned quotient relations and compile-time result-range proof;
 - compile-negative API-boundary tests;
 - external-consumer tests on DMD 2.111 and LDC 1.41.
 
 `float`, `real`, mixed-Rep conversion, floating-point arithmetic, general
-cross-Spec arithmetic beyond explicit product relations, dimensionless Quantity
-results, affine quantity points, and runtime-parsed unit metadata are not yet
-production-complete.
+cross-Spec arithmetic beyond explicit product/quotient relations, automatic or
+generic dimensionless-result semantics, affine quantity points, and
+runtime-parsed unit metadata are not yet production-complete.
 
 M1 and M2 are complete. PR #15 promoted the first evidence-backed R04
 arithmetic slice after DMD/LDC debug and release tests, external-consumer
@@ -187,3 +188,23 @@ This is not the completion of M3. Floating-point arithmetic, general cross-Spec
 addition/subtraction, dimensionless Quantity results, broader Class-O checked
 arithmetic, and consumer-driven mathematical functions remain research-first
 work.
+
+
+### M3 exact Quantity quotient slice
+
+Integral Quantity/Quantity division is exposed through the named `exactDiv`
+operation rather than unchecked `/`. Quotient semantics are explicit:
+operand Specs may declare `QuotientWith` / `QuotientFromLeft`, while a
+consumer that owns neither operand may provide an ordered
+`Relations.Quotient!(Lhs, Rhs)` relation to `exactDiv!Relations`.
+
+Physical quotient Dimension, exact Unit/canonical rescale, semantic ResultSpec,
+and numeric ResultRep remain separate compile-time concerns. The ResultRep is
+selected only when its complete positive and negative exact-result envelope is
+representable by a built-in integral type. Runtime outcomes therefore remain
+`exact`, `inexact`, or `divisionByZero`; representational range failure is
+a compile-time gate.
+
+A dimensionless physical quotient does not automatically become a raw scalar
+or select a generic ratio Spec. It is supported only when an explicit semantic
+ResultSpec with `Dimensionless` Dimension is supplied.
