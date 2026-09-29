@@ -82,6 +82,8 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3NonAdditiveSameSpecAddition
     run_reject "$compiler" "$flag" M3CrossSpecAddition
     run_reject "$compiler" "$flag" M3ClassOAddition
+    run_reject "$compiler" "$flag" M3CheckedAddMixed64ClassOM
+    run_reject "$compiler" "$flag" M3CheckedAddInvalidSemantics
     run_reject "$compiler" "$flag" M3RawIntegralDivision
     run_reject "$compiler" "$flag" M3NonScalableMultiplication
     run_reject "$compiler" "$flag" M3NonScalableRightMultiplication
