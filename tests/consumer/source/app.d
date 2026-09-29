@@ -236,6 +236,50 @@ void main()
     assert(defaultCheckedMul.tryFailure(defaultMulFailure));
     assert(defaultMulFailure == CheckedMulFailure.overflow);
 
+    alias CheckedSquareKilometre = DerivedUnit!(
+        AreaDimension,
+        ExactRatio!(1_000_000, 1));
+
+    struct CheckedAreaKm2
+    {
+        alias Dimension = AreaDimension;
+        alias CanonicalUnit = CheckedSquareKilometre;
+    }
+
+    struct CheckedLengthToKm2
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = CheckedAreaKm2;
+        }
+    }
+
+    // The raw product overflows long, but cancellation by the canonical
+    // denominator proves the final mathematical result fits.
+    enum checkedRescaledProduct =
+        1_000_000_000_000L.quantity!(CheckedLengthToKm2, Metre)
+        .checkedMul(
+            1_000_000_000_000L.quantity!(CheckedLengthToKm2, Metre));
+    static assert(checkedRescaledProduct.hasValue);
+    static assert({
+        Quantity!(CheckedAreaKm2, long) value;
+        return checkedRescaledProduct.tryValue(value)
+            && value.canonicalValue == 1_000_000_000_000_000_000L;
+    }());
+
+    enum checkedInexactProduct =
+        1L.quantity!(CheckedLengthToKm2, Metre)
+        .checkedMul(1L.quantity!(CheckedLengthToKm2, Metre));
+    static assert(!checkedInexactProduct.hasValue);
+    static assert({
+        CheckedMulFailure failure;
+        return checkedInexactProduct.tryFailure(failure)
+            && failure == CheckedMulFailure.inexact;
+    }());
+
     // Root-level semantic product resolvers are part of the external API.
     static assert(is(ProductResultSpec!(Length, Length) == Area));
 
