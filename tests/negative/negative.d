@@ -464,6 +464,50 @@ version (M3ExternalProductCanonicalRescale)
 }
 
 
+version (M3CheckedMulMissingRelation)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x =
+        long(2).quantity!(Radius, production.Metre)
+        .checkedMul(long(3).quantity!(Radius, production.Metre));
+}
+
+version (M3CheckedMulMixed64ClassOM)
+{
+    enum x =
+        long(2).quantity!(production.Length, production.Metre)
+        .checkedMul(
+            ulong(3).quantity!(production.Length, production.Metre));
+}
+
+version (M3ExternalCheckedMulMissingRelation)
+{
+    struct ForeignLength
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    struct EmptyRelations
+    {
+        template Product(Lhs, Rhs)
+        {
+            alias Product = void;
+        }
+    }
+
+    enum x =
+        long(2).quantity!(ForeignLength, production.Metre)
+        .checkedMul!EmptyRelations(
+            long(3).quantity!(ForeignLength, production.Metre));
+}
+
+
 version (M3QuotientMissingRelation)
 {
     struct Radius
