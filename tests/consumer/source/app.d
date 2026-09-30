@@ -175,6 +175,28 @@ void main()
     static assert(arithmeticProduct.canonicalValue
         == arithmeticProductRight.canonicalValue);
 
+    enum floatingScalarProduct =
+        1.5f.quantity!(Length, Metre) * 2.0;
+    enum floatingScalarProductRight =
+        2.0 * 1.5f.quantity!(Length, Metre);
+    static assert(is(
+        typeof(floatingScalarProduct)
+        == Quantity!(Length, double)));
+    static assert(is(
+        typeof(floatingScalarProductRight)
+        == Quantity!(Length, double)));
+    static assert(floatingScalarProduct.canonicalValue == 3.0);
+    static assert(floatingScalarProductRight.canonicalValue == 3.0);
+
+    enum mixedScalarProduct =
+        int.max.quantity!(Length, Metre) * 0.5;
+    static assert(is(
+        typeof(mixedScalarProduct)
+        == Quantity!(Length, double)));
+    static assert(
+        mixedScalarProduct.canonicalValue
+        == 1_073_741_823.5);
+
     enum exactDivision =
         int.min.quantity!(Length, Metre).exactDiv(-1);
     static assert(exactDivision.status == DivisionStatus.exact);

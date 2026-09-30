@@ -144,10 +144,10 @@ template MulRep(A, B)
 private enum integralValueBits(T) =
     bits!T - (isSigned!T ? 1 : 0);
 
-private template FloatingBinaryRep(A, B)
+private template FloatingArithmeticRep(A, B)
 {
     static if (isFloatingPoint!A && isFloatingPoint!B)
-        alias FloatingBinaryRep = typeof(A.init + B.init);
+        alias FloatingArithmeticRep = typeof(A.init + B.init);
     else static if (
         isIntegral!A &&
         !is(A == bool) &&
@@ -155,9 +155,9 @@ private template FloatingBinaryRep(A, B)
     {
         alias Candidate = typeof(A.init + B.init);
         static if (integralValueBits!A <= Candidate.mant_dig)
-            alias FloatingBinaryRep = Candidate;
+            alias FloatingArithmeticRep = Candidate;
         else
-            alias FloatingBinaryRep = void;
+            alias FloatingArithmeticRep = void;
     }
     else static if (
         isFloatingPoint!A &&
@@ -166,12 +166,12 @@ private template FloatingBinaryRep(A, B)
     {
         alias Candidate = typeof(A.init + B.init);
         static if (integralValueBits!B <= Candidate.mant_dig)
-            alias FloatingBinaryRep = Candidate;
+            alias FloatingArithmeticRep = Candidate;
         else
-            alias FloatingBinaryRep = void;
+            alias FloatingArithmeticRep = void;
     }
     else
-        alias FloatingBinaryRep = void;
+        alias FloatingArithmeticRep = void;
 }
 
 template AddArithmeticRep(A, B)
@@ -179,7 +179,7 @@ template AddArithmeticRep(A, B)
     static if (isIntegral!A && isIntegral!B)
         alias AddArithmeticRep = AddRep!(A, B);
     else
-        alias AddArithmeticRep = FloatingBinaryRep!(A, B);
+        alias AddArithmeticRep = FloatingArithmeticRep!(A, B);
 }
 
 template SubArithmeticRep(A, B)
@@ -187,7 +187,15 @@ template SubArithmeticRep(A, B)
     static if (isIntegral!A && isIntegral!B)
         alias SubArithmeticRep = SubRep!(A, B);
     else
-        alias SubArithmeticRep = FloatingBinaryRep!(A, B);
+        alias SubArithmeticRep = FloatingArithmeticRep!(A, B);
+}
+
+template MulArithmeticRep(A, B)
+{
+    static if (isIntegral!A && isIntegral!B)
+        alias MulArithmeticRep = MulRep!(A, B);
+    else
+        alias MulArithmeticRep = FloatingArithmeticRep!(A, B);
 }
 
 
@@ -562,6 +570,20 @@ static assert(is(AddArithmeticRep!(long, double) == void));
 static assert(is(SubArithmeticRep!(double, long) == void));
 static assert(is(AddArithmeticRep!(bool, double) == void));
 static assert(is(SubArithmeticRep!(double, bool) == void));
+
+// Scalar multiplication uses the same native floating promotion/admission
+// policy while preserving the integral MulRep contract.
+static assert(is(MulArithmeticRep!(uint, uint) == ulong));
+static assert(is(MulArithmeticRep!(float, double) == double));
+static assert(is(MulArithmeticRep!(short, float) == float));
+static assert(is(MulArithmeticRep!(int, double) == double));
+static assert(is(MulArithmeticRep!(double, int) == double));
+static assert(is(MulArithmeticRep!(int, float) == void));
+static assert(is(MulArithmeticRep!(long, double) == void));
+static assert(is(MulArithmeticRep!(double, long) == void));
+static assert(is(MulArithmeticRep!(bool, double) == void));
+static assert(is(MulArithmeticRep!(double, bool) == void));
+
 static assert(is(AddRep!(long, long) == void));
 static assert(is(MulRep!(ulong, ulong) == void));
 

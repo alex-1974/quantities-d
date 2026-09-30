@@ -83,6 +83,29 @@ A Spec is invalid when its CanonicalUnit Dimension differs from its own
 Dimension. Dimension compatibility and quantity semantics therefore remain
 separate compile-time axes.
 
+## Promoted floating arithmetic slice
+
+M3 now admits the first ordinary floating arithmetic operations without
+weakening the existing semantic gates or integral range-safety contracts.
+
+Same-Spec addition/subtraction and scalable scalar multiplication use a
+floating-aware representation dispatcher:
+
+- integral/integral operations continue to use the established integral
+  ResultRep selectors unchanged;
+- floating/floating operations follow native D floating promotion;
+- mixed integral/floating operations are admitted only when the complete
+  integral operand Rep domain is exactly representable in the selected
+  floating ResultRep;
+- ordinary floating result rounding remains native floating semantics after
+  admission;
+- semantic capabilities such as closed addition and scalable values remain
+  authoritative.
+
+This promoted slice does not yet establish floating Quantity-by-Quantity
+product/quotient semantics, nontrivial canonical-rescale kernels, scalar
+division, or generalized exact-rescale support for float/real.
+
 ## Open design decisions
 
 The following remain research questions and must not be treated as established
@@ -92,7 +115,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- floating-point arithmetic and promotion policy;
+- remaining floating product/quotient, nontrivial-rescale, scalar-division, and float/real policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.
