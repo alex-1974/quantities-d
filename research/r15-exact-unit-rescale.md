@@ -2,7 +2,7 @@
 
 Issue: #42
 Base: develop@b59285885bb72e4dbc7250ea8b876017e87f3fd7
-Status: active research; Probe 10 validation pending
+Status: Probe 10 qualified for the scope below; further R15 research remains
 
 The production baseline includes the mathematical range repair from PR #47.
 The earlier research/r15-explicit-target-rep branch remains retained as evidence.
@@ -60,3 +60,32 @@ python3 research/r15-exact-unit-rescale/oracle.py /tmp/r15-probe-10
 
 The dedicated workflow runs both DMD 2.111.0 and LDC 1.41.0.
 No performance or production-readiness claim follows from this probe.
+
+## Probe 10 result
+
+Both baseline compilers pass at research commit
+`394c9b0935e4f6da8b84a34649211719af443b2a`:
+
+- DMD 2.111.0: 20,960 comparisons, zero mismatches.
+- LDC 1.41.0: 20,960 comparisons, zero mismatches.
+- Both report real traits (64, -16381, 16384); the qualified real source
+  tested in this run is real80-like, not an unqualified all-real guarantee.
+- The runtime attribute probe compiles and executes on both.
+
+Evidence: [workflow run 36773270562](https://github.com/alex-1974/quantities-d/actions/runs/36773270562).
+
+Conclusion: retain the 128-bit single-scale candidate as validated research
+evidence. Do not promote its provisional result carrier or public spelling.
+No runtime-performance, compile-time-cost, or CTFE claim has been established.
+
+The source-pair wrapper accepts exactly deduced source representations;
+the independent oracle compares represented source values, target range,
+exactness, and target bits. This is evidence for a conversion kernel, not a
+complete Unit construction/extraction API.
+
+Next: investigate exact FromUnit.Scale / ToUnit.Scale composition without
+assuming that the resulting numerator and denominator fit signed long.
+Two independent 63-bit scale factors can require 126-bit ratio components;
+an unreduced 64-bit represented source times that numerator may need 190 bits.
+Cross-cancellation and a conditional wider carrier need their own proof and
+oracle before this single-scale kernel can claim arbitrary unit-pair coverage.
