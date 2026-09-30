@@ -213,7 +213,7 @@ jobs:
         run: |
           mkdir -p /tmp/r04-17
           "$DC" \
-            -Isource \
+            -Isource -i \
             -Iresearch/r04-17-float-real-rescale \
             research/r04-17-float-real-rescale/probe_10_trait_double.d \
             research/r04-17-float-real-rescale/real80_kernel.d \
