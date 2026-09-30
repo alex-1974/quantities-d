@@ -207,3 +207,91 @@ floating -> integral:
 
 Probe 6 extends the same represented-source classification to the currently
 qualified real format without storage-layout assumptions.
+
+
+## Probe 6 — current qualified real identity-scale conversion
+
+The current real80-like baseline was added without reading raw `real` storage.
+Represented values are expressed through a layout-free
+`(significand, exponent2, sign)` model derived with `frexp` / `ldexp`.
+
+Probe 6 covers:
+
+- long -> real;
+- double -> real;
+- real -> double;
+- real -> long.
+
+The independent Fraction oracle validates exact represented values, target
+binary64 bits, integral range/fraction classification, and statuses.
+
+Final result on each baseline compiler:
+
+```text
+R15 Probe 6 PASS:
+    12,033 real identity-scale conversion comparisons
+    mismatches = 0
+```
+
+On the current real80-like target:
+
+- long -> real is total exact;
+- double -> real is total exact for finite values;
+- real -> double is value-dependent exact and may overflow;
+- real -> long follows the same exact/inexact/overflow/nonFinite split as the
+  narrower floating formats.
+
+This remains conditional on a qualified `real` format, consistent with ADR
+0011.
+
+## Probe 7 — direct TargetRep rounding is mandatory
+
+A nontrivial mixed-Rep conversion cannot be implemented as:
+
+```text
+source
+  -> exact scale rounded to an intermediate/source floating format
+  -> cast to TargetRep
+```
+
+R15 reuses the exact counterexample family from the binary32 arithmetic work.
+
+For represented source `1.0` and exact Unit factor:
+
+```text
+1 + 2^-24 + 2^-60
+```
+
+the exact mathematical result is just above a binary32 midpoint.
+
+- direct one-final-rounding to binary32 selects the upper neighbor;
+- exact binary64 scaling first rounds to the midpoint;
+- the subsequent binary32 tie-to-even cast selects the lower neighbor.
+
+Both baseline compilers pass the concrete counterexample.
+
+Therefore the requested TargetRep must determine the final quantizer from the
+start of a nontrivial conversion. Intermediate floating rounding is not part of
+the accepted semantic model.
+
+## Probe 8 hypothesis — one U128 conversion rational
+
+Conversion has only one represented source value, unlike Quantity product.
+
+For every currently relevant source representation:
+
+```text
+source integer/significand <= 64 bits
+ExactRatio numerator       <= 63 bits
+
+pre-cancellation exact numerator <= 127 bits
+exact denominator                <= 63 bits
+```
+
+Cross-cancellation can only reduce this.
+
+Therefore a single private two-limb 128-bit exact rational carrier should be
+sufficient for nontrivial conversion from long/binary32/binary64/qualified
+real80-like sources directly into binary32 or binary64 targets.
+
+Probe 8 validates this hypothesis against an independent exact-rational oracle.
