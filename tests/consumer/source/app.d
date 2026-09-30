@@ -247,6 +247,14 @@ void main()
     // Mathematical product is 3 and canonical rescale is 2/3.
     assert(rescaledConsumerProduct.canonicalValue == 2.0);
 
+    auto rescaledFloatConsumerProduct =
+        1.5f.quantity!(ScaledProductLength, Metre)
+        * 2.0f.quantity!(ScaledProductLength, Metre);
+    assert(is(
+        typeof(rescaledFloatConsumerProduct)
+        == Quantity!(ConsumerScaledArea, float)));
+    assert(rescaledFloatConsumerProduct.canonicalValue == 2.0f);
+
     enum scalarDivision =
         3.0.quantity!(Length, Metre) / 2.0;
     static assert(is(
@@ -503,6 +511,14 @@ void main()
         == Quantity!(ConsumerScaledRatio, double)));
     // Mathematical quotient is 3/2 and canonical rescale is 2/3.
     assert(rescaledConsumerQuotient.canonicalValue == 1.0);
+
+    auto rescaledFloatConsumerQuotient =
+        3.0f.quantity!(ScaledQuotientLeft, Metre)
+        / 2.0f.quantity!(ScaledQuotientRight, Metre);
+    assert(is(
+        typeof(rescaledFloatConsumerQuotient)
+        == Quantity!(ConsumerScaledRatio, float)));
+    assert(rescaledFloatConsumerQuotient.canonicalValue == 1.0f);
 
     struct QuotientRelations
     {

@@ -90,7 +90,10 @@ public:
                         ProductResultSpec!(Spec, OtherSpec)).denominator == 1
                 ) ||
                 (
-                    is(MulArithmeticRep!(Rep, OtherRep) == double) &&
+                    (
+                        is(MulArithmeticRep!(Rep, OtherRep) == float) ||
+                        is(MulArithmeticRep!(Rep, OtherRep) == double)
+                    ) &&
                     ProductCanonicalRescale!(
                         Spec,
                         OtherSpec,
@@ -115,17 +118,32 @@ public:
         }
         else
         {
-            static assert(is(ResultRep == double));
+            static if (is(ResultRep == float))
+            {
+                import quantities.binary32_scale :
+                    rescaleProductBinary32;
 
-            import quantities.binary64_scale :
-                rescaleProductBinary64;
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleProductBinary32(
+                        cast(float)canonical_,
+                        cast(float)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
+            else
+            {
+                static assert(is(ResultRep == double));
 
-            return Quantity!(ResultSpec, ResultRep).fromCanonical(
-                rescaleProductBinary64(
-                    cast(double)canonical_,
-                    cast(double)rhs.canonicalValue,
-                    Rescale.numerator,
-                    Rescale.denominator));
+                import quantities.binary64_scale :
+                    rescaleProductBinary64;
+
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleProductBinary64(
+                        cast(double)canonical_,
+                        cast(double)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
         }
     }
 
@@ -147,7 +165,10 @@ public:
                         QuotientResultSpec!(Spec, OtherSpec)).denominator == 1
                 ) ||
                 (
-                    is(QuotientArithmeticRep!(Rep, OtherRep) == double) &&
+                    (
+                        is(QuotientArithmeticRep!(Rep, OtherRep) == float) ||
+                        is(QuotientArithmeticRep!(Rep, OtherRep) == double)
+                    ) &&
                     QuotientCanonicalRescale!(
                         Spec,
                         OtherSpec,
@@ -172,17 +193,32 @@ public:
         }
         else
         {
-            static assert(is(ResultRep == double));
+            static if (is(ResultRep == float))
+            {
+                import quantities.binary32_scale :
+                    rescaleQuotientBinary32;
 
-            import quantities.binary64_scale :
-                rescaleQuotientBinary64;
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleQuotientBinary32(
+                        cast(float)canonical_,
+                        cast(float)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
+            else
+            {
+                static assert(is(ResultRep == double));
 
-            return Quantity!(ResultSpec, ResultRep).fromCanonical(
-                rescaleQuotientBinary64(
-                    cast(double)canonical_,
-                    cast(double)rhs.canonicalValue,
-                    Rescale.numerator,
-                    Rescale.denominator));
+                import quantities.binary64_scale :
+                    rescaleQuotientBinary64;
+
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleQuotientBinary64(
+                        cast(double)canonical_,
+                        cast(double)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
         }
     }
 
@@ -439,11 +475,24 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         == Quantity!(ScaledAreaSpec, double)));
     assert(rescaledProduct.canonicalValue == double.max);
 
+    auto rescaledFloatProduct =
+        float.max.quantity!(LengthToScaledArea, Metre)
+        * 2.0f.quantity!(LengthToScaledArea, Metre);
+    assert(is(
+        typeof(rescaledFloatProduct)
+        == Quantity!(ScaledAreaSpec, float)));
+    assert(rescaledFloatProduct.canonicalValue == float.max);
+
     // Nontrivial represented-source product rescale is runtime-only.
     static assert(!__traits(compiles, {
         enum ctfeRescaledProduct =
             1.5.quantity!(LengthToScaledArea, Metre)
             * 2.0.quantity!(LengthToScaledArea, Metre);
+    }));
+    static assert(!__traits(compiles, {
+        enum ctfeRescaledFloatProduct =
+            1.5f.quantity!(LengthToScaledArea, Metre)
+            * 2.0f.quantity!(LengthToScaledArea, Metre);
     }));
 
     // Floating direct quotient requires an explicit semantic quotient relation
@@ -526,11 +575,24 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         == Quantity!(ScaledRatioSpec, double)));
     assert(rescaledQuotient.canonicalValue == double.max);
 
+    auto rescaledFloatQuotient =
+        float.max.quantity!(ScaledQuotientLength, Metre)
+        / 0.5f.quantity!(ScaledQuotientLength, Metre);
+    assert(is(
+        typeof(rescaledFloatQuotient)
+        == Quantity!(ScaledRatioSpec, float)));
+    assert(rescaledFloatQuotient.canonicalValue == float.max);
+
     // Nontrivial represented-source rescale is deliberately runtime-only.
     static assert(!__traits(compiles, {
         enum ctfeRescaledQuotient =
             6.0.quantity!(ScaledQuotientLength, Metre)
             / 3.0.quantity!(ScaledQuotientLength, Metre);
+    }));
+    static assert(!__traits(compiles, {
+        enum ctfeRescaledFloatQuotient =
+            6.0f.quantity!(ScaledQuotientLength, Metre)
+            / 3.0f.quantity!(ScaledQuotientLength, Metre);
     }));
 
     enum product =
