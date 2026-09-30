@@ -1,5 +1,6 @@
 module r15_probe_2_implicit_source_loss;
 
+import core.stdc.string : memcpy;
 import std.stdio : writeln;
 import quantities;
 
@@ -77,7 +78,17 @@ void main()
     const double narrowedSource =
         cast(double)representedSource;
 
-    assert(cast(real)narrowedSource != representedSource);
+    ulong storedBits;
+    () @trusted {
+        memcpy(&storedBits, &narrowedSource, double.sizeof);
+    }();
+
+    double storedDouble;
+    () @trusted {
+        memcpy(&storedDouble, &storedBits, double.sizeof);
+    }();
+
+    assert(cast(real)storedDouble != representedSource);
 
     auto realConverted =
         representedSource.checkedQuantity!(Length, Metre);
@@ -89,23 +100,23 @@ void main()
     writeln("real.max is finite in source format: ",
         representedSource != real.infinity);
     writeln("narrowed double is finite: ",
-        narrowedSource == narrowedSource
-        && narrowedSource <= double.max
-        && narrowedSource >= -double.max);
+        storedDouble == storedDouble
+        && storedDouble <= double.max
+        && storedDouble >= -double.max);
     writeln("round-trip narrowed double differs from real source: ",
-        cast(real)narrowedSource != representedSource);
+        cast(real)storedDouble != representedSource);
     writeln("checkedQuantity status: ", realConverted.status);
 
-    if (narrowedSource == narrowedSource
-        && narrowedSource <= double.max
-        && narrowedSource >= -double.max)
+    if (storedDouble == storedDouble
+        && storedDouble <= double.max
+        && storedDouble >= -double.max)
     {
         assert(realConverted.hasValue);
         assert(realConverted.status == ConversionStatus.exact);
 
         Quantity!(Length, double) q;
         assert(realConverted.tryValue(q));
-        assert(q.canonicalValue == narrowedSource);
+        assert(q.canonicalValue == storedDouble);
     }
     else
     {
