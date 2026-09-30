@@ -1,0 +1,53 @@
+name: R15 Explicit Target Rep Research
+
+on:
+  push:
+    branches:
+      - research/r15-explicit-target-rep
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probes:
+    name: R15 explicit target / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Versions
+        shell: bash
+        run: |
+          "$DC" --version
+          dub --version
+
+      - name: Probe 3 explicit target/source capture
+        shell: bash
+        run: |
+          mkdir -p /tmp/r15
+          "$DC" -Isource -i \
+            research/r15-explicit-target-rep/probe_3_explicit_target_rep.d \
+            -of=/tmp/r15/probe_3
+          /tmp/r15/probe_3
+
+      - name: Probe 4 representation pair matrix
+        shell: bash
+        run: |
+          mkdir -p /tmp/r15
+          "$DC" \
+            research/r15-explicit-target-rep/probe_4_pair_matrix.d \
+            -of=/tmp/r15/probe_4
+          /tmp/r15/probe_4
