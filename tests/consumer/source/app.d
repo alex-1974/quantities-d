@@ -449,7 +449,7 @@ void main()
         alias CanonicalUnit = Metre;
     }
 
-    const rescaledConsumerQuotient =
+    auto rescaledConsumerQuotient =
         3.0.quantity!(ScaledQuotientLeft, Metre)
         / 2.0.quantity!(ScaledQuotientRight, Metre);
     assert(is(
