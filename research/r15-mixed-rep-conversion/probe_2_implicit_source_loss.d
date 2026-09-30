@@ -71,7 +71,13 @@ void main()
     const real representedSource = real.max;
     assert(representedSource == representedSource);
     assert(representedSource != real.infinity);
-    assert(cast(double)representedSource == double.infinity);
+
+    // Force the overload's effective argument representation into an actual
+    // binary64 object, then compare it back in real precision.
+    const double narrowedSource =
+        cast(double)representedSource;
+
+    assert(cast(real)narrowedSource != representedSource);
 
     auto realConverted =
         representedSource.checkedQuantity!(Length, Metre);
@@ -82,12 +88,30 @@ void main()
 
     writeln("real.max is finite in source format: ",
         representedSource != real.infinity);
-    writeln("pre-call cast(double) source is infinity: ",
-        cast(double)representedSource == double.infinity);
+    writeln("narrowed double is finite: ",
+        narrowedSource == narrowedSource
+        && narrowedSource <= double.max
+        && narrowedSource >= -double.max);
+    writeln("round-trip narrowed double differs from real source: ",
+        cast(real)narrowedSource != representedSource);
     writeln("checkedQuantity status: ", realConverted.status);
 
-    assert(!realConverted.hasValue);
-    assert(realConverted.status == ConversionStatus.nonFinite);
+    if (narrowedSource == narrowedSource
+        && narrowedSource <= double.max
+        && narrowedSource >= -double.max)
+    {
+        assert(realConverted.hasValue);
+        assert(realConverted.status == ConversionStatus.exact);
+
+        Quantity!(Length, double) q;
+        assert(realConverted.tryValue(q));
+        assert(q.canonicalValue == narrowedSource);
+    }
+    else
+    {
+        assert(!realConverted.hasValue);
+        assert(realConverted.status == ConversionStatus.nonFinite);
+    }
 
     writeln(
         "R15 Probe 2 PASS: current overloads can lose or misclassify "
