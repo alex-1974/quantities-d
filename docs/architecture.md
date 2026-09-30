@@ -88,7 +88,8 @@ separate compile-time axes.
 M3 now admits the first ordinary floating arithmetic operations without
 weakening the existing semantic gates or integral range-safety contracts.
 
-Same-Spec addition/subtraction and scalable scalar multiplication use a
+Same-Spec addition/subtraction, scalable scalar multiplication, and
+Quantity-by-Quantity product with an exact identity canonical rescale use a
 floating-aware representation dispatcher:
 
 - integral/integral operations continue to use the established integral
@@ -100,11 +101,15 @@ floating-aware representation dispatcher:
 - ordinary floating result rounding remains native floating semantics after
   admission;
 - semantic capabilities such as closed addition and scalable values remain
-  authoritative.
+  authoritative;
+- Quantity products still require an explicit semantic ProductResultSpec and
+  physical Dimension validation;
+- direct floating Quantity product is currently admitted only when
+  ProductCanonicalRescale is exactly 1/1.
 
-This promoted slice does not yet establish floating Quantity-by-Quantity
-product/quotient semantics, nontrivial canonical-rescale kernels, scalar
-division, or generalized exact-rescale support for float/real.
+This promoted slice does not yet establish floating Quantity quotient
+semantics, nontrivial canonical-rescale kernels, scalar division, or
+generalized exact-rescale support for float/real.
 
 ## Open design decisions
 
@@ -115,7 +120,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- remaining floating product/quotient, nontrivial-rescale, scalar-division, and float/real policy;
+- remaining floating quotient, nontrivial product/quotient rescale, scalar-division, and float/real policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.

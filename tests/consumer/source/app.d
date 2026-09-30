@@ -197,6 +197,26 @@ void main()
         mixedScalarProduct.canonicalValue
         == 1_073_741_823.5);
 
+    enum floatingQuantityProduct =
+        1.5f.quantity!(Length, Metre)
+        * 2.0.quantity!(Length, Metre);
+    static assert(is(
+        typeof(floatingQuantityProduct)
+        == Quantity!(Area, double)));
+    static assert(
+        floatingQuantityProduct.canonicalValue
+        == 3.0);
+
+    enum mixedQuantityProduct =
+        int.max.quantity!(Length, Metre)
+        * 0.5.quantity!(Length, Metre);
+    static assert(is(
+        typeof(mixedQuantityProduct)
+        == Quantity!(Area, double)));
+    static assert(
+        mixedQuantityProduct.canonicalValue
+        == 1_073_741_823.5);
+
     enum exactDivision =
         int.min.quantity!(Length, Metre).exactDiv(-1);
     static assert(exactDivision.status == DivisionStatus.exact);

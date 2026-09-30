@@ -1,11 +1,8 @@
 module quantities.quantity;
 
-import std.traits : isIntegral;
-
 import quantities.arithmetic_rep :
     AddArithmeticRep,
     MulArithmeticRep,
-    MulRep,
     SubArithmeticRep;
 import quantities.arithmetic_traits :
     AddResult,
@@ -76,10 +73,8 @@ public:
     auto opBinary(string op, OtherSpec, OtherRep)(
         Quantity!(OtherSpec, OtherRep) rhs) const
         if (op == "*" &&
-            isIntegral!Rep &&
-            isIntegral!OtherRep &&
             !is(ProductResultSpec!(Spec, OtherSpec) == void) &&
-            !is(MulRep!(Rep, OtherRep) == void) &&
+            !is(MulArithmeticRep!(Rep, OtherRep) == void) &&
             ProductCanonicalRescale!(
                 Spec,
                 OtherSpec,
@@ -90,7 +85,7 @@ public:
                 ProductResultSpec!(Spec, OtherSpec)).denominator == 1)
     {
         alias ResultSpec = ProductResultSpec!(Spec, OtherSpec);
-        alias ResultRep = MulRep!(Rep, OtherRep);
+        alias ResultRep = MulArithmeticRep!(Rep, OtherRep);
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ *
@@ -270,6 +265,38 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         static assert(is(typeof(area) == Quantity!(Area, long)));
         return area.canonicalValue == 12;
     }()));
+
+    // Floating Quantity products reuse the existing semantic ResultSpec
+    // relation when canonical rescaling is exactly 1/1.
+    enum floatingArea =
+        1.5f.quantity!(Length, Metre)
+        * 2.0.quantity!(Length, Metre);
+    static assert(({
+        import quantities.area : Area;
+        static assert(is(
+            typeof(floatingArea)
+            == Quantity!(Area, double)));
+        return floatingArea.canonicalValue == 3.0;
+    }()));
+
+    enum mixedArea =
+        int.max.quantity!(Length, Metre)
+        * 0.5.quantity!(Length, Metre);
+    static assert(({
+        import quantities.area : Area;
+        static assert(is(
+            typeof(mixedArea)
+            == Quantity!(Area, double)));
+        return mixedArea.canonicalValue
+            == 1_073_741_823.5;
+    }()));
+
+    static assert(!__traits(compiles,
+        1.quantity!(Length, Metre)
+            * 0.5f.quantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        long.max.quantity!(Length, Metre)
+            * 0.5.quantity!(Length, Metre)));
 
     enum product =
         uint.max.quantity!(Length, Metre) * uint.max;
