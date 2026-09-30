@@ -103,6 +103,7 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3UnsafeIntFloatQuantityProduct
     run_reject "$compiler" "$flag" M3UnsafeLongDoubleQuantityProduct
     run_reject "$compiler" "$flag" M3QuantityProductCanonicalRescale
+    run_case "$compiler" "$flag" M3FloatingQuantityProductCanonicalRescale "quantities-d: nontrivial binary64 product rescale requires runtime represented-source semantics"
     run_reject "$compiler" "$flag" M3ExternalProductMissingRelation
     run_case "$compiler" "$flag" M3ExternalProductWrongResultDimension "external Quantity product ResultSpec has the wrong physical Dimension."
     run_reject "$compiler" "$flag" M3ExternalProductClassO
