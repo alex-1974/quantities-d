@@ -18,37 +18,37 @@ void main()
 
         if (op == "LF")
         {
-            const source = f[1].to!long;
+            auto source = f[1].to!long;
             const r = longToFloating!float(source);
             writeln(r.status, " ", floatBits(r.value));
         }
         else if (op == "LD")
         {
-            const source = f[1].to!long;
+            auto source = f[1].to!long;
             const r = longToFloating!double(source);
             writeln(r.status, " ", doubleBits(r.value));
         }
         else if (op == "FD")
         {
-            const source = floatFromBits(f[1].to!uint);
+            auto source = floatFromBits(f[1].to!uint);
             const r = floatingToFloating!(float, double)(source);
             writeln(r.status, " ", doubleBits(r.value));
         }
         else if (op == "DF")
         {
-            const source = doubleFromBits(f[1].to!ulong);
+            auto source = doubleFromBits(f[1].to!ulong);
             const r = floatingToFloating!(double, float)(source);
             writeln(r.status, " ", floatBits(r.value));
         }
         else if (op == "FL")
         {
-            const source = floatFromBits(f[1].to!uint);
+            auto source = floatFromBits(f[1].to!uint);
             const r = floatingToLong(source);
             writeln(r.status, " ", r.value);
         }
         else if (op == "DL")
         {
-            const source = doubleFromBits(f[1].to!ulong);
+            auto source = doubleFromBits(f[1].to!ulong);
             const r = floatingToLong(source);
             writeln(r.status, " ", r.value);
         }
