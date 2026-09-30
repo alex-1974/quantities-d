@@ -198,6 +198,22 @@ template MulArithmeticRep(A, B)
         alias MulArithmeticRep = FloatingArithmeticRep!(A, B);
 }
 
+/*
+ * Direct Quantity quotient is deliberately not an integral/integral
+ * operation. Integral quotient keeps its named exactDiv contract because
+ * divisor zero and exactness are value-dependent.
+ *
+ * Floating/floating and safely admitted mixed integral/floating operands use
+ * native D floating promotion.
+ */
+template QuotientArithmeticRep(A, B)
+{
+    static if (isIntegral!A && isIntegral!B)
+        alias QuotientArithmeticRep = void;
+    else
+        alias QuotientArithmeticRep = FloatingArithmeticRep!(A, B);
+}
+
 
 private struct U128
 {
@@ -583,6 +599,21 @@ static assert(is(MulArithmeticRep!(long, double) == void));
 static assert(is(MulArithmeticRep!(double, long) == void));
 static assert(is(MulArithmeticRep!(bool, double) == void));
 static assert(is(MulArithmeticRep!(double, bool) == void));
+
+// Direct quotient keeps integral/integral on the named exactDiv path.
+static assert(is(QuotientArithmeticRep!(int, int) == void));
+static assert(is(QuotientArithmeticRep!(uint, long) == void));
+
+// Floating quotient follows the same promotion/admission gate.
+static assert(is(QuotientArithmeticRep!(float, double) == double));
+static assert(is(QuotientArithmeticRep!(short, float) == float));
+static assert(is(QuotientArithmeticRep!(int, double) == double));
+static assert(is(QuotientArithmeticRep!(double, int) == double));
+static assert(is(QuotientArithmeticRep!(int, float) == void));
+static assert(is(QuotientArithmeticRep!(long, double) == void));
+static assert(is(QuotientArithmeticRep!(double, long) == void));
+static assert(is(QuotientArithmeticRep!(bool, double) == void));
+static assert(is(QuotientArithmeticRep!(double, bool) == void));
 
 static assert(is(AddRep!(long, long) == void));
 static assert(is(MulRep!(ulong, ulong) == void));
