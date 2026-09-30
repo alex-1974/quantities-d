@@ -99,3 +99,111 @@ replace exact rational Unit-rescale analysis.
 Probe 5 will implement identity-scale mixed-Rep classification for representative
 pairs and compare status/results against an independent exact-value model before
 introducing nontrivial Unit scales.
+
+
+## Probe 3 result — explicit target preserves source identity
+
+Both baseline compilers confirm that an entry point with an explicitly requested
+TargetRep and a deduced SourceRep preserves the caller's actual representation.
+
+Representative research calls retain:
+
+```text
+ulong source  -> SourceRep == ulong
+real source   -> SourceRep == real
+double source -> SourceRep == double
+```
+
+Extraction likewise captures the Quantity's stored Rep separately from the
+requested TargetRep.
+
+This removes the structural failure that caused Issue #44.
+
+The public spelling remains undecided; the structural requirement is accepted
+as research evidence.
+
+## Probe 4 result — identity-scale representation classes
+
+On the current x86-64 baseline:
+
+```text
+long   -> float   valueDependentExact
+long   -> double  valueDependentExact
+long   -> real    totalExact
+
+ulong  -> float   valueDependentExact
+ulong  -> double  valueDependentExact
+ulong  -> real    totalExact
+
+float  -> double  totalExact
+float  -> real    totalExact
+double -> float   valueDependentExact
+double -> real    totalExact
+real   -> float   valueDependentExact
+real   -> double  valueDependentExact
+
+float  -> long    checkedRounded
+double -> long    checkedRounded
+real   -> long    checkedRounded
+```
+
+These classes describe representation inclusion only. Nontrivial Unit rescale
+remains a separate exact-rational problem.
+
+## Probe 5 — identity-scale long / binary32 / binary64 oracle
+
+A research kernel classifies and converts:
+
+- long -> float;
+- long -> double;
+- float -> double;
+- double -> float;
+- float -> long;
+- double -> long.
+
+The independent Python Fraction oracle works from exact represented source
+values and validates both status and target representation where a value is
+present.
+
+Boundary coverage includes:
+
+- signed zero;
+- minimum/maximum subnormals;
+- minimum normals;
+- values around 2^24 and 2^53 exact-integer boundaries;
+- signed-long extrema;
+- target-range overflow;
+- infinities;
+- NaNs;
+- randomized finite bit patterns and integer values.
+
+Final result on each baseline compiler:
+
+```text
+R15 Probe 5 PASS:
+    16,070 identity-scale conversion comparisons
+    mismatches = 0
+```
+
+The resulting status model is consistent with ADR 0005 / ADR 0007:
+
+```text
+integral -> floating:
+    exact if represented target equals mathematical source integer
+    otherwise inexact
+
+floating -> narrower floating:
+    nonFinite for NaN/Inf source
+    overflow if finite source rounds outside target finite range
+    exact if represented target equals represented source
+    otherwise inexact
+
+floating -> integral:
+    nonFinite for NaN/Inf
+    overflow outside target integer range
+    inexact for finite fractional values
+    exact only for an exactly integral represented source in range
+```
+
+Probe 6 extends the same represented-source classification to the currently
+qualified real format without storage-layout assumptions.
