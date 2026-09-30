@@ -110,6 +110,7 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3QuantityProductCanonicalRescale
     run_case "$compiler" "$flag" M3FloatingQuantityProductCanonicalRescale "quantities-d: nontrivial binary64 product rescale requires runtime represented-source semantics"
     run_case "$compiler" "$flag" R0417FloatingQuantityProductCanonicalRescale "quantities-d: nontrivial binary32 product rescale requires runtime represented-source semantics"
+    run_case "$compiler" "$flag" R0417RealQuantityProductCanonicalRescale "quantities-d: nontrivial real product rescale requires runtime represented-source semantics"
     run_reject "$compiler" "$flag" M3ExternalProductMissingRelation
     run_case "$compiler" "$flag" M3ExternalProductWrongResultDimension "external Quantity product ResultSpec has the wrong physical Dimension."
     run_reject "$compiler" "$flag" M3ExternalProductClassO
@@ -127,6 +128,7 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3UnsafeLongDoubleQuantityQuotient
     run_case "$compiler" "$flag" M3FloatingQuantityQuotientCanonicalRescale "quantities-d: nontrivial binary64 quotient rescale requires runtime represented-source semantics"
     run_case "$compiler" "$flag" R0417FloatingQuantityQuotientCanonicalRescale "quantities-d: nontrivial binary32 quotient rescale requires runtime represented-source semantics"
+    run_case "$compiler" "$flag" R0417RealQuantityQuotientCanonicalRescale "quantities-d: nontrivial real quotient rescale requires runtime represented-source semantics"
     run_reject "$compiler" "$flag" M3ExternalQuotientMissingRelation
     run_case "$compiler" "$flag" M3ExternalQuotientWrongResultDimension "external Quantity quotient ResultSpec has the wrong physical Dimension."
     run_reject "$compiler" "$flag" M3ExternalQuotientNoFallback
