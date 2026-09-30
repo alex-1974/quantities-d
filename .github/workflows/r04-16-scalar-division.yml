@@ -1,0 +1,73 @@
+name: R04.16 Scalar Division Research
+
+on:
+  push:
+    branches:
+      - research/r04-16-scalar-division
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    name: R04.16 / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Versions
+        shell: bash
+        run: |
+          echo "DC=$DC"
+          "$DC" --version
+          dub --version
+
+      - name: Unit tests
+        shell: bash
+        run: dub test --compiler="$DC" --force
+
+      - name: Compile-negative tests
+        shell: bash
+        run: ./tests/negative/run.sh "$DC"
+
+      - name: External consumer
+        shell: bash
+        run: ./tests/consumer/run.sh "$DC"
+
+      - name: Release build
+        shell: bash
+        run: dub build --compiler="$DC" --build=release --force
+
+      - name: Optimized scalar-division codegen
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-16
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off                 -Isource -i -c                 research/r04-16-scalar-division-codegen.d                 -of=/tmp/r04-16/codegen.o
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off                 -Isource -i -c                 research/r04-16-scalar-division-codegen.d                 -of=/tmp/r04-16/codegen.o
+              ;;
+          esac
+
+          objdump -d --no-show-raw-insn /tmp/r04-16/codegen.o |
+            sed -n '/<raw_scalar_div>:/,/^$/p'
+
+          objdump -d --no-show-raw-insn /tmp/r04-16/codegen.o |
+            sed -n '/<quantity_scalar_div>:/,/^$/p'
