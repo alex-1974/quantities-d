@@ -1,0 +1,46 @@
+name: R04.17 Float Real Rescale Research
+
+on:
+  push:
+    branches:
+      - research/r04-17-float-real-rescale
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probes:
+    name: R04.17 / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Versions
+        shell: bash
+        run: |
+          echo "DC=$DC"
+          "$DC" --version
+          dub --version
+          uname -a
+
+      - name: Probe 1-3
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC"             -Isource -i             research/r04-17-float-real-rescale/probe_1_3.d             -of=/tmp/r04-17/probe_1_3
+          /tmp/r04-17/probe_1_3
