@@ -419,6 +419,45 @@ void main()
         mixedConsumerQuotient.canonicalValue
         == 4_294_967_294.0);
 
+    alias ConsumerScaledUnitless = DerivedUnit!(
+        Dimensionless,
+        ExactRatio!(3, 2));
+
+    struct ConsumerScaledRatio
+    {
+        alias Dimension = Dimensionless;
+        alias CanonicalUnit = ConsumerScaledUnitless;
+    }
+
+    struct ScaledQuotientLeft
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+
+        template QuotientWith(Rhs)
+        {
+            static if (is(Rhs == ScaledQuotientRight))
+                alias QuotientWith = ConsumerScaledRatio;
+            else
+                alias QuotientWith = void;
+        }
+    }
+
+    struct ScaledQuotientRight
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    const rescaledConsumerQuotient =
+        3.0.quantity!(ScaledQuotientLeft, Metre)
+        / 2.0.quantity!(ScaledQuotientRight, Metre);
+    assert(is(
+        typeof(rescaledConsumerQuotient)
+        == Quantity!(ConsumerScaledRatio, double)));
+    // Mathematical quotient is 3/2 and canonical rescale is 2/3.
+    assert(rescaledConsumerQuotient.canonicalValue == 1.0);
+
     struct QuotientRelations
     {
         template Quotient(Lhs, Rhs)
