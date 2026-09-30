@@ -3,7 +3,8 @@ module r04_17_real80_kernel;
 import std.math : frexp, ldexp;
 
 static assert(real.mant_dig <= 64,
-    "R04.17 real80 probe requires real.mant_dig <= 64.");
+    "R04.17 current real probe requires real.mant_dig <= 64.");
+static assert(double.mant_dig <= 64);
 
 struct UInt192
 {
@@ -172,31 +173,40 @@ private void cancel(ref ulong a, ref ulong b)
     }
 }
 
-RealExact decomposeReal(real value)
+RealExact decomposeBinary(T)(T value)
     @safe pure nothrow @nogc
+    if (is(T == double) || is(T == real))
 {
-    assert(value != 0.0L);
+    static assert(T.mant_dig <= 64);
+
+    assert(value != cast(T)0.0);
     assert(value == value);
-    assert(value != real.infinity);
-    assert(value != -real.infinity);
+    assert(value != T.infinity);
+    assert(value != -T.infinity);
 
     int exponent;
-    real fraction = frexp(value, exponent);
+    T fraction = frexp(value, exponent);
 
-    const negative = fraction < 0.0L;
+    const negative = fraction < cast(T)0.0;
     if (negative)
         fraction = -fraction;
 
     const scaled =
-        ldexp(fraction, real.mant_dig);
+        ldexp(fraction, T.mant_dig);
     const significand = cast(ulong)scaled;
 
-    assert(cast(real)significand == scaled);
+    assert(cast(T)significand == scaled);
 
     return RealExact(
         significand,
-        exponent - real.mant_dig,
+        exponent - T.mant_dig,
         negative);
+}
+
+RealExact decomposeReal(real value)
+    @safe pure nothrow @nogc
+{
+    return decomposeBinary!real(value);
 }
 
 private struct NormalizedRatio
@@ -293,15 +303,19 @@ private RoundedSignificand roundedNormalizedSignificand(
     return RoundedSignificand(result + 1, false);
 }
 
-private real signedZero(bool negative)
+private T signedZero(T)(bool negative)
     @safe pure nothrow @nogc
+    if (is(T == double) || is(T == real))
 {
-    return negative ? -0.0L : 0.0L;
+    return negative ? -cast(T)0.0 : cast(T)0.0;
 }
 
-private real quantize(ExactRatio192 exact)
+private T quantize(T)(ExactRatio192 exact)
     @safe pure nothrow @nogc
+    if (is(T == double) || is(T == real))
 {
+    static assert(T.mant_dig <= 64);
+
     const normalized =
         normalize(exact.numerator, exact.denominator);
 
@@ -309,16 +323,16 @@ private real quantize(ExactRatio192 exact)
         exact.exponent2
         + normalized.exponent2;
 
-    enum int maxTopExponent = real.max_exp - 1;
-    enum int minNormalTopExponent = real.min_exp - 1;
+    enum int maxTopExponent = T.max_exp - 1;
+    enum int minNormalTopExponent = T.min_exp - 1;
     enum int minSubnormalExponent =
-        real.min_exp - real.mant_dig;
-    enum int fractionBits = real.mant_dig - 1;
+        T.min_exp - T.mant_dig;
+    enum int fractionBits = T.mant_dig - 1;
 
     if (topExponent > maxTopExponent)
         return exact.negative
-            ? -real.infinity
-            : real.infinity;
+            ? -T.infinity
+            : T.infinity;
 
     if (topExponent >= minNormalTopExponent)
     {
@@ -338,9 +352,9 @@ private real quantize(ExactRatio192 exact)
                     : real.infinity;
         }
 
-        real value =
+        T value =
             ldexp(
-                cast(real)rounded.value,
+                cast(T)rounded.value,
                 topExponent - fractionBits);
 
         return exact.negative ? -value : value;
@@ -379,17 +393,17 @@ private real quantize(ExactRatio192 exact)
     }
 
     if (quanta == 0)
-        return signedZero(exact.negative);
+        return signedZero!T(exact.negative);
 
-    const real value =
+    const T value =
         ldexp(
-            cast(real)quanta,
+            cast(T)quanta,
             minSubnormalExponent);
 
     return exact.negative ? -value : value;
 }
 
-private ExactRatio192 exactProduct(
+private ExactRatio192 exactProduct(T)(
     RealExact lhs,
     RealExact rhs,
     ulong scaleNumerator,
@@ -410,7 +424,7 @@ private ExactRatio192 exactProduct(
         multiply128By64(xy, n);
 
     assert(bitLength(numerator)
-        <= 2 * real.mant_dig + 63);
+        <= 2 * T.mant_dig + 63);
 
     return ExactRatio192(
         numerator,
@@ -419,7 +433,7 @@ private ExactRatio192 exactProduct(
         lhs.negative != rhs.negative);
 }
 
-private ExactRatio192 exactQuotient(
+private ExactRatio192 exactQuotient(T)(
     RealExact lhs,
     RealExact rhs,
     ulong scaleNumerator,
@@ -440,15 +454,79 @@ private ExactRatio192 exactQuotient(
     const denominator = multiply64(y, d);
 
     assert(bitLength(numerator)
-        <= real.mant_dig + 63);
+        <= T.mant_dig + 63);
     assert(bitLength(denominator)
-        <= real.mant_dig + 63);
+        <= T.mant_dig + 63);
 
     return ExactRatio192(
         numerator,
         denominator,
         lhs.exponent2 - rhs.exponent2,
         lhs.negative != rhs.negative);
+}
+
+T rescaleProductBinary(T)(
+    T lhs,
+    T rhs,
+    long numerator,
+    long denominator)
+    @safe pure nothrow @nogc
+    if (is(T == double) || is(T == real))
+{
+    static assert(T.mant_dig <= 64);
+    assert(numerator > 0);
+    assert(denominator > 0);
+
+    if (lhs == cast(T)0.0
+        || rhs == cast(T)0.0
+        || lhs != lhs
+        || rhs != rhs
+        || lhs == T.infinity
+        || lhs == -T.infinity
+        || rhs == T.infinity
+        || rhs == -T.infinity)
+    {
+        return lhs * rhs;
+    }
+
+    return quantize!T(
+        exactProduct!T(
+            decomposeBinary!T(lhs),
+            decomposeBinary!T(rhs),
+            cast(ulong)numerator,
+            cast(ulong)denominator));
+}
+
+T rescaleQuotientBinary(T)(
+    T lhs,
+    T rhs,
+    long numerator,
+    long denominator)
+    @safe pure nothrow @nogc
+    if (is(T == double) || is(T == real))
+{
+    static assert(T.mant_dig <= 64);
+    assert(numerator > 0);
+    assert(denominator > 0);
+
+    if (lhs == cast(T)0.0
+        || rhs == cast(T)0.0
+        || lhs != lhs
+        || rhs != rhs
+        || lhs == T.infinity
+        || lhs == -T.infinity
+        || rhs == T.infinity
+        || rhs == -T.infinity)
+    {
+        return lhs / rhs;
+    }
+
+    return quantize!T(
+        exactQuotient!T(
+            decomposeBinary!T(lhs),
+            decomposeBinary!T(rhs),
+            cast(ulong)numerator,
+            cast(ulong)denominator));
 }
 
 real rescaleProductReal(
@@ -458,27 +536,7 @@ real rescaleProductReal(
     long denominator)
     @safe pure nothrow @nogc
 {
-    assert(numerator > 0);
-    assert(denominator > 0);
-
-    if (lhs == 0.0L
-        || rhs == 0.0L
-        || lhs != lhs
-        || rhs != rhs
-        || lhs == real.infinity
-        || lhs == -real.infinity
-        || rhs == real.infinity
-        || rhs == -real.infinity)
-    {
-        return lhs * rhs;
-    }
-
-    return quantize(
-        exactProduct(
-            decomposeReal(lhs),
-            decomposeReal(rhs),
-            cast(ulong)numerator,
-            cast(ulong)denominator));
+    return rescaleProductBinary!real(lhs, rhs, numerator, denominator);
 }
 
 real rescaleQuotientReal(
@@ -488,25 +546,31 @@ real rescaleQuotientReal(
     long denominator)
     @safe pure nothrow @nogc
 {
-    assert(numerator > 0);
-    assert(denominator > 0);
+    return rescaleQuotientBinary!real(lhs, rhs, numerator, denominator);
+}
 
-    if (lhs == 0.0L
-        || rhs == 0.0L
-        || lhs != lhs
-        || rhs != rhs
-        || lhs == real.infinity
-        || lhs == -real.infinity
-        || rhs == real.infinity
-        || rhs == -real.infinity)
-    {
-        return lhs / rhs;
-    }
+double rescaleProductDoubleTrait(
+    double lhs,
+    double rhs,
+    long numerator,
+    long denominator)
+    @safe pure nothrow @nogc
+{
+    return rescaleProductBinary!double(lhs, rhs, numerator, denominator);
+}
 
-    return quantize(
-        exactQuotient(
-            decomposeReal(lhs),
-            decomposeReal(rhs),
-            cast(ulong)numerator,
-            cast(ulong)denominator));
+double rescaleQuotientDoubleTrait(
+    double lhs,
+    double rhs,
+    long numerator,
+    long denominator)
+    @safe pure nothrow @nogc
+{
+    return rescaleQuotientBinary!double(lhs, rhs, numerator, denominator);
+}
+
+RealExact decomposeDouble(double value)
+    @safe pure nothrow @nogc
+{
+    return decomposeBinary!double(value);
 }
