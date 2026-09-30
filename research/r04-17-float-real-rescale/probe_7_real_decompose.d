@@ -173,7 +173,7 @@ void main()
 
         writeln(
             "R04.17 Probe 7 PASS: layout-free real decomposition "
-            "round-trips on current <=64-bit significand format");
+            ~ "round-trips on current <=64-bit significand format");
     }
     else
     {
