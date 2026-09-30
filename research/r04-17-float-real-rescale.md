@@ -360,3 +360,71 @@ product/quotient canonical rescale.
 
 The `real` decision remains separate. Current real80 decomposition feasibility
 does not establish a portable all-target `real` contract.
+
+
+## Probe 9 — trait-driven current-real exact kernel
+
+The current baseline `real` property set is:
+
+```text
+mant_dig = 64
+min_exp  = -16381
+max_exp  = 16384
+```
+
+A layout-free exact kernel uses:
+
+- `frexp` / `ldexp` for represented-source decomposition/reconstruction;
+- one private UInt192 rational carrier;
+- exact cancellation before multiplication;
+- direct one-final-rounding using only `mant_dig`, `min_exp`, and
+  `max_exp`.
+
+Structural maxima for the current 64-bit-significand format are:
+
+```text
+product numerator       <= 191 bits
+quotient numerator      <= 127 bits
+quotient denominator    <= 127 bits
+```
+
+The independent Python Fraction oracle compared 10,006 deterministic product
+and quotient cases per baseline compiler.
+
+Results:
+
+```text
+DMD 2.111.0  PASS 10006
+LDC 1.41.0   PASS 10006
+```
+
+No byte-layout or x87 ABI parsing is used.
+
+## Probe 10 — cross-format trait-kernel validation
+
+The real kernel was generalized over binary floating types whose represented
+significand fits `ulong`.
+
+The same mechanism was instantiated for `double` (`mant_dig=53`) and compared
+bit-for-bit with the already accepted and independently qualified binary64
+production kernel.
+
+Each baseline compiler passed 40,098 product/quotient comparisons, including
+finite randomized cases and IEEE-special combinations:
+
+```text
+DMD 2.111.0  PASS 40098
+LDC 1.41.0   PASS 40098
+```
+
+Together, Probes 9 and 10 show that the mechanism is not specific to the x87
+storage layout:
+
+- 53-bit binary64-like format: matches the accepted binary64 reference;
+- 64-bit real80 property set: matches an independent exact-rational oracle.
+
+This supports a conditional `real` policy based on known binary format traits,
+not on `real.sizeof`, endianness, or raw memory layout.
+
+A production decision still requires IEEE-special, CTFE, Quantity-integration,
+and abstraction-overhead qualification for the `real` path itself.
