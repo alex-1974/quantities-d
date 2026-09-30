@@ -33,3 +33,7 @@ jobs:
         run: |
           "$DC" -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale research/r15-floating-integral/runner.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-12
           python3 research/r15-floating-integral/oracle.py /tmp/r15-probe-12
+      - name: Probe 13 represented floating source to integral
+        run: |
+          "$DC" -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral research/r15-floating-source-integral/runner.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-13
+          python3 research/r15-floating-source-integral/oracle.py /tmp/r15-probe-13
