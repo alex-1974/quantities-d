@@ -1,7 +1,22 @@
 module r04_17_probe_1_3;
 
+import core.stdc.string : memcpy;
 import std.stdio : writeln;
 import quantities.binary64_scale : rescaleProductBinary64;
+
+private ulong bitsOf(double value)
+{
+    ulong bits;
+    memcpy(&bits, &value, double.sizeof);
+    return bits;
+}
+
+private uint bitsOf(float value)
+{
+    uint bits;
+    memcpy(&bits, &value, float.sizeof);
+    return bits;
+}
 
 private void printProps(T)(string name)
 {
@@ -89,9 +104,9 @@ void main()
         1.0f + float.epsilon;
 
     writeln("double-rounding probe:");
-    writeln("  binary64 intermediate = ", viaBinary64.hexString);
-    writeln("  cast-to-float result  = ", doubleRounded.hexString);
-    writeln("  once-rounded expected = ", expectedOnceRounded.hexString);
+    writeln("  binary64 bits         = 0x", bitsOf(viaBinary64));
+    writeln("  cast-to-float bits    = 0x", bitsOf(doubleRounded));
+    writeln("  once-rounded bits     = 0x", bitsOf(expectedOnceRounded));
 
     assert(viaBinary64 == 1.0 + 0x1p-24);
     assert(doubleRounded == 1.0f);
