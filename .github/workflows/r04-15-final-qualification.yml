@@ -1,0 +1,101 @@
+name: R04.15 Final Qualification
+
+on:
+  push:
+    branches:
+      - research/r04-15-final-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualification:
+    name: R04.15 / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Compiler versions
+        shell: bash
+        run: |
+          echo "DC=$DC"
+          "$DC" --version
+          dub --version
+          objdump --version | head -1
+
+      - name: Probe 9 optimized native codegen
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-15-final
+
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off                 -Isource -i -c                 research/r04-15-final-qualification/codegen.d                 -of=/tmp/r04-15-final/codegen.o
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off                 -Isource -i -c                 research/r04-15-final-qualification/codegen.d                 -of=/tmp/r04-15-final/codegen.o
+              ;;
+          esac
+
+          python3             research/r04-15-final-qualification/compare_codegen.py             /tmp/r04-15-final/codegen.o
+
+      - name: Probe 10 compile-time impact
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-15-final
+
+          case "${{ matrix.compiler }}" in
+            dmd-*) KIND=dmd ;;
+            ldc-*) KIND=ldc ;;
+          esac
+
+          echo '=== BASELINE ==='
+          python3             research/r04-15-final-qualification/measure_compile.py             "$DC" "$KIND"             research/r04-15-final-qualification/compile_baseline.d             /tmp/r04-15-final/baseline.o             9 | tee /tmp/r04-15-final/baseline.txt
+
+          echo
+          echo '=== QUANTITY TEMPLATE PROBE ==='
+          python3             research/r04-15-final-qualification/measure_compile.py             "$DC" "$KIND"             research/r04-15-final-qualification/compile_templates.d             /tmp/r04-15-final/templates.o             9 | tee /tmp/r04-15-final/templates.txt
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def median(path):
+              for line in Path(path).read_text().splitlines():
+                  if line.startswith("median_ms:"):
+                      return float(line.split(":", 1)[1])
+              raise RuntimeError(path)
+
+          baseline = median("/tmp/r04-15-final/baseline.txt")
+          templates = median("/tmp/r04-15-final/templates.txt")
+          ratio = templates / baseline
+
+          print()
+          print(f"baseline median ms: {baseline:.3f}")
+          print(f"template median ms: {templates:.3f}")
+          print(f"template/baseline ratio: {ratio:.3f}")
+
+          # This is deliberately a broad regression tripwire rather than a
+          # performance target. The purpose is to reject catastrophic template
+          # growth while preserving normal CI-environment variance.
+          if ratio > 4.0:
+              raise SystemExit(
+                  "R04.15 Probe 10 FAIL: template compile-time ratio > 4.0"
+              )
+
+          print("R04.15 Probe 10 PASS: template compile-time ratio <= 4.0")
+          PY
