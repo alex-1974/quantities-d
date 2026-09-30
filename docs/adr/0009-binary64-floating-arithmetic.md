@@ -1,6 +1,6 @@
 # ADR 0009 — Binary64 Floating Arithmetic Semantics
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-30
 - Research: R04.15 — floating arithmetic
 - Issue: #27
@@ -362,6 +362,29 @@ R04.15 evidence includes:
 - positive native/identity CTFE tests;
 - deliberate negative CTFE tests for represented-source nontrivial rescale.
 
-The production implementation must preserve these semantics and rerun the
-repository unit, compile-negative, external-consumer, debug/release, and
-supported compiler gates before this ADR can move from Proposed to Accepted.
+Final R04.15 qualification completed these promotion gates on the baseline
+toolchains.
+
+Optimized native/identity code generation was compared directly with equivalent
+scalar leaf functions:
+
+- LDC 1.41.0 emitted instruction-identical bodies for addition, subtraction,
+  scalar multiplication, identity product, and identity quotient;
+- DMD 2.111.0 emitted the same floating arithmetic and control flow but retained
+  one additional apparently dead `movsd` load in each Quantity leaf;
+- a balanced DMD runtime comparison measured a Quantity/scalar median ratio of
+  `1.00005`, providing no evidence of a material runtime penalty from that
+  code-generation difference.
+
+Representative compile-time impact was also measured against the same
+`import quantities` baseline:
+
+- DMD 2.111.0: `77.811 ms -> 82.516 ms`, ratio `1.060`;
+- LDC 1.41.0: `316.528 ms -> 328.961 ms`, ratio `1.039`.
+
+The production slices passed the repository unit, compile-negative,
+external-consumer, and release-build gates on DMD 2.111.0 and LDC 1.41.0.
+
+R04.15 therefore satisfies the required qualification for this ADR. Scalar
+division and nontrivial `float`/`real` rescaling remain explicit deferred
+scope rather than conditions of this accepted binary64 contract.
