@@ -100,6 +100,8 @@ run_compiler() {
     run_case "$compiler" "$flag" M3ProductWrongResultDimension "Quantity product ResultSpec has the wrong physical Dimension."
     run_reject "$compiler" "$flag" M3QuantityProductMissingRelation
     run_reject "$compiler" "$flag" M3QuantityProductClassO
+    run_reject "$compiler" "$flag" M3UnsafeIntFloatQuantityProduct
+    run_reject "$compiler" "$flag" M3UnsafeLongDoubleQuantityProduct
     run_reject "$compiler" "$flag" M3QuantityProductCanonicalRescale
     run_reject "$compiler" "$flag" M3ExternalProductMissingRelation
     run_case "$compiler" "$flag" M3ExternalProductWrongResultDimension "external Quantity product ResultSpec has the wrong physical Dimension."
