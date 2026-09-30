@@ -50,7 +50,10 @@ void main()
         {
             auto source = floatFromBits(f[1].to!uint);
             const r = floatingToLong(source);
-            writeln(r.status, " ", r.value);
+            if (r.status == R15Status.exact)
+                writeln(r.status, " ", r.value);
+            else
+                writeln(r.status, " -");
         }
         else if (op == "DL")
         {
