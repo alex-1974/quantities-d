@@ -85,3 +85,11 @@ jobs:
           mkdir -p /tmp/r15
           "$DC" -Isource -i             research/r15-explicit-target-rep/probe_8_overflow_boundary.d             -of=/tmp/r15/probe_8
           /tmp/r15/probe_8
+
+
+      - name: Probe 9 public mathematical overflow status
+        shell: bash
+        run: |
+          mkdir -p /tmp/r15
+          "$DC" -Isource -i             research/r15-explicit-target-rep/probe_9_public_overflow_status.d             -of=/tmp/r15/probe_9
+          /tmp/r15/probe_9
