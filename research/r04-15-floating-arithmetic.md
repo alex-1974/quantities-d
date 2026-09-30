@@ -397,3 +397,104 @@ nontrivial canonical rescale. The next question is numerical rather than
 semantic: how a rational canonical rescale should be evaluated for floating
 representations without introducing avoidable overflow, underflow, extra
 rounding, or an unnecessary exact/checked contract.
+
+
+## Probe 8B — evaluation-order hazards for nontrivial floating rescale
+
+Source SHA-256:
+
+`a0276cd91151473954582e9656eeab9f97c6c1353dfff9c9d65241c9feb4484d`
+
+Probe 8B compared mathematically equivalent evaluation orders for a floating
+Quantity product or quotient followed by an exact rational canonical rescale.
+
+The probe reused `scaleBinary64()` as an exact rational scaler for one
+already-represented binary64 operand, but did not introduce a new product or
+quotient kernel.
+
+Both DMD 2.111 and LDC 1.41 built and ran the probe successfully, with
+identical results.
+
+### Product observations
+
+For
+
+`double.max * 2 * 1/2`
+
+the mathematical result is `double.max`, but product-first evaluation
+overflowed to infinity. Scaling either operand first avoided the overflow.
+
+For
+
+`double.max * 0.5 * 2`
+
+the mathematical result is again `double.max`. Product-first and scaling
+the right operand succeeded, while scaling the left operand first overflowed
+to infinity.
+
+For
+
+`minSubnormal * 2 * 1/2`
+
+the mathematical result is the minimum subnormal. Product-first and scaling
+the right operand succeeded, while scaling the tiny left operand first
+underflowed to zero.
+
+The symmetric case
+
+`2 * minSubnormal * 1/2`
+
+showed the opposite operand choice: scaling the right operand first
+underflowed to zero, while product-first and scaling the left operand
+preserved the minimum subnormal.
+
+### Quotient observations
+
+For
+
+`double.max / 0.5 * 1/2`
+
+quotient-first evaluation overflowed to infinity, while rescaling either side
+in an equivalent form preserved `double.max`.
+
+For
+
+`double.max / 2 * 2`
+
+quotient-first and denominator-side rescaling preserved `double.max`, while
+scaling the numerator side first overflowed to infinity.
+
+For
+
+`minSubnormal / 0.5 * 1/2`
+
+quotient-first and denominator-side rescaling preserved the minimum
+subnormal, while scaling the numerator side first underflowed to zero.
+
+### Probe 8B conclusion
+
+There is no single trivial evaluation order that preserves the intended
+floating result across the tested range.
+
+In particular, none of these policies is generally sufficient:
+
+- always compute the product or quotient first;
+- always apply the rational rescale to the left/numerator operand first;
+- always apply it to the right/denominator operand first.
+
+The failure mode is not compiler-specific. DMD and LDC produced identical
+results for all cases.
+
+This means `scaleBinary64()`, while useful as a building block for exact
+rational scaling of one represented binary64 value, is not by itself a
+general solution for nontrivial floating Quantity product/quotient rescaling.
+
+The next research question is whether quantities-d should:
+
+1. implement a joint floating product/quotient rescale kernel that considers
+   both represented operands and the rational canonical scale together; or
+2. keep direct floating Quantity product/quotient restricted to identity
+   canonical rescale and require an explicit/named operation for nontrivial
+   rescale.
+
+No production choice is made by this probe.
