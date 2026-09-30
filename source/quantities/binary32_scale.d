@@ -443,8 +443,8 @@ float rescaleProductBinary32(
     if (__ctfe)
     {
         assert(false,
-            "R04.17: nontrivial binary32 product rescale "
-            ~ "requires represented-source runtime semantics");
+            "quantities-d: nontrivial binary32 product rescale "
+            ~ "requires runtime represented-source semantics");
     }
 
     if (!finite(lhs)
@@ -476,8 +476,8 @@ float rescaleQuotientBinary32(
     if (__ctfe)
     {
         assert(false,
-            "R04.17: nontrivial binary32 quotient rescale "
-            ~ "requires represented-source runtime semantics");
+            "quantities-d: nontrivial binary32 quotient rescale "
+            ~ "requires runtime represented-source semantics");
     }
 
     if (!finite(lhs)
