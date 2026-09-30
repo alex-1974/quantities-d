@@ -200,6 +200,19 @@ public:
     }
 
     @safe pure nothrow @nogc
+    auto opBinary(string op, Scalar)(Scalar scalar) const
+        if (op == "/" &&
+            isScalableValue!Spec &&
+            !is(QuotientArithmeticRep!(Rep, Scalar) == void))
+    {
+        alias ResultRep = QuotientArithmeticRep!(Rep, Scalar);
+
+        return Quantity!(Spec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ /
+            cast(ResultRep)scalar);
+    }
+
+    @safe pure nothrow @nogc
     auto opBinaryRight(string op, Scalar)(Scalar scalar) const
         if (op == "*" &&
             isScalableValue!Spec &&
@@ -256,6 +269,7 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
 
 @safe unittest
 {
+    import quantities.arithmetic : DivisionStatus, exactDiv;
     import quantities.dimension : Dimensionless;
     import quantities.length : Length, Metre;
     import quantities.ratio : ExactRatio;
@@ -578,6 +592,68 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         long.max.quantity!(Length, Metre) * 0.5));
     static assert(!__traits(compiles,
         0.5 * long.max.quantity!(Length, Metre)));
+
+    // R04.16 research candidate: Quantity / scalar preserves Spec and canonical
+    // storage while reusing the floating quotient admission policy.
+    enum floatingScalarQuotient =
+        3.0.quantity!(Length, Metre) / 2.0;
+    static assert(is(
+        typeof(floatingScalarQuotient)
+        == Quantity!(Length, double)));
+    static assert(
+        floatingScalarQuotient.canonicalValue
+        == 1.5);
+
+    enum promotedScalarQuotient =
+        3.0f.quantity!(Length, Metre) / 2.0;
+    static assert(is(
+        typeof(promotedScalarQuotient)
+        == Quantity!(Length, double)));
+    static assert(
+        promotedScalarQuotient.canonicalValue
+        == 1.5);
+
+    enum mixedScalarQuotient =
+        int.max.quantity!(Length, Metre) / 0.5;
+    static assert(is(
+        typeof(mixedScalarQuotient)
+        == Quantity!(Length, double)));
+    static assert(
+        mixedScalarQuotient.canonicalValue
+        == 4_294_967_294.0);
+
+    enum reverseMixedScalarQuotient =
+        3.0.quantity!(Length, Metre) / 2;
+    static assert(is(
+        typeof(reverseMixedScalarQuotient)
+        == Quantity!(Length, double)));
+    static assert(
+        reverseMixedScalarQuotient.canonicalValue
+        == 1.5);
+
+    static assert(!__traits(compiles,
+        6.quantity!(Length, Metre) / 3));
+    static assert(!__traits(compiles,
+        1.quantity!(Length, Metre) / 0.5f));
+    static assert(!__traits(compiles,
+        long.max.quantity!(Length, Metre) / 0.5));
+    static assert(!__traits(compiles,
+        3.0 / 2.0.quantity!(Length, Metre)));
+
+    struct NonScalableLength
+    {
+        alias Dimension = Length.Dimension;
+        alias CanonicalUnit = Metre;
+    }
+
+    static assert(!__traits(compiles,
+        3.0.quantity!(NonScalableLength, Metre) / 2.0));
+
+    // Existing named integral exactDiv remains available and unambiguous.
+    enum r0416ExactScalarDivision =
+        6.quantity!(Length, Metre).exactDiv(3);
+    static assert(r0416ExactScalarDivision.status
+        == DivisionStatus.exact);
 
     static assert(!__traits(compiles,
         ulong.max.quantity!(Length, Metre) * ulong.max));
