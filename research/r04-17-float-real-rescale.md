@@ -92,3 +92,96 @@ the accepted binary64 kernel cannot simply be reused followed by a cast.
 - CTFE represented-source boundary;
 - performance/codegen;
 - separate real-format policy.
+
+
+## Probe 1 results
+
+Both baseline compilers on the current Ubuntu x86-64 runner report:
+
+```text
+float:
+    sizeof   = 4
+    alignof  = 4
+    mant_dig = 24
+    min_exp  = -125
+    max_exp  = 128
+
+double:
+    sizeof   = 8
+    alignof  = 8
+    mant_dig = 53
+    min_exp  = -1021
+    max_exp  = 1024
+
+real:
+    sizeof   = 16
+    alignof  = 16
+    mant_dig = 64
+    min_exp  = -16381
+    max_exp  = 16384
+```
+
+The observed `real` is therefore the x86 extended-precision family, but this
+is target evidence only and is not promoted as a portable D `real` contract.
+
+## Probe 2 result
+
+The structural binary32 bounds are confirmed:
+
+```text
+product numerator       <= 111 bits
+quotient numerator      <= 87 bits
+quotient denominator    <= 87 bits
+```
+
+A two-limb 128-bit exact representation is sufficient for both product and
+quotient. Unlike binary64 product, binary32 needs no UInt192 fallback.
+
+## Probe 3 result
+
+The constructed scale
+
+```text
+1 + 2^-24 + 2^-60
+```
+
+demonstrates a real double-rounding failure if binary32 is implemented by
+calling the exact binary64 kernel and then casting to `float`.
+
+Observed on both baseline compilers:
+
+```text
+binary64 intermediate -> exact binary32 midpoint
+cast-to-float bits     -> 1065353216
+correct once-round bits-> 1065353217
+```
+
+Therefore binary32 requires direct one-final-rounding to its own target format.
+
+## Probe 4 — exact binary32 kernel vs independent oracle
+
+A research-only binary32 kernel now implements:
+
+- represented-source float decomposition;
+- exact product and quotient construction;
+- algebraic cancellation;
+- two-limb 128-bit rational arithmetic;
+- direct round-to-nearest, ties-to-even binary32 quantization;
+- overflow, subnormal, and signed-result construction.
+
+An independent Python `Fraction` oracle generates exact represented float
+values, exact rational scales, and expected once-rounded binary32 bit patterns.
+
+The final deterministic set contains boundary cases plus randomized product and
+quotient cases with both small and near-63-bit scale components.
+
+Results on each baseline compiler:
+
+```text
+R04.17 Probe 4 PASS:
+    12007 exact-rational binary32 product/quotient comparisons
+    mismatches = 0
+```
+
+This validates the single-U128 binary32 architecture before IEEE-special,
+CTFE, and performance qualification.
