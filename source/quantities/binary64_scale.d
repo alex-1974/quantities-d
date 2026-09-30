@@ -431,6 +431,301 @@ double rebuild(bool negative, RoundedRational value)
     return negative ? -result : result;
 }
 
+
+struct ExactRational128
+{
+    Cent numerator;
+    Cent denominator;
+    int exponent2;
+    bool negative;
+}
+
+struct NormalizedCentRatio
+{
+    Cent numerator;
+    Cent denominator;
+    int exponent2;
+}
+
+@safe pure nothrow @nogc
+int compareCent(Cent a, Cent b)
+{
+    if (a.hi < b.hi) return -1;
+    if (a.hi > b.hi) return 1;
+    if (a.lo < b.lo) return -1;
+    if (a.lo > b.lo) return 1;
+    return 0;
+}
+
+@safe pure nothrow @nogc
+Cent subtractCent(Cent a, Cent b)
+{
+    assert(compareCent(a, b) >= 0);
+
+    const borrow = a.lo < b.lo ? 1UL : 0UL;
+    return Cent(
+        a.lo - b.lo,
+        a.hi - b.hi - borrow);
+}
+
+@safe pure nothrow @nogc
+Cent shiftCentExact(Cent value, int shift)
+{
+    bool overflow;
+    const result = shlCent(value, shift, overflow);
+    assert(!overflow);
+    return result;
+}
+
+@safe pure nothrow @nogc
+void cancel(ref ulong a, ref ulong b)
+{
+    const g = gcd(a, b);
+    if (g > 1)
+    {
+        a /= g;
+        b /= g;
+    }
+}
+
+@safe pure nothrow @nogc
+NormalizedCentRatio normalizeCentRatio(
+    Cent numerator,
+    Cent denominator)
+{
+    assert(!centIsZero(numerator));
+    assert(!centIsZero(denominator));
+
+    int exponent2 =
+        centBitLength(numerator) -
+        centBitLength(denominator);
+
+    Cent a;
+    Cent b;
+
+    if (exponent2 >= 0)
+    {
+        a = numerator;
+        b = shiftCentExact(denominator, exponent2);
+    }
+    else
+    {
+        a = shiftCentExact(numerator, -exponent2);
+        b = denominator;
+    }
+
+    if (compareCent(a, b) < 0)
+    {
+        --exponent2;
+
+        if (exponent2 >= 0)
+        {
+            a = numerator;
+            b = shiftCentExact(denominator, exponent2);
+        }
+        else
+        {
+            a = shiftCentExact(numerator, -exponent2);
+            b = denominator;
+        }
+    }
+
+    assert(compareCent(a, b) >= 0);
+
+    return NormalizedCentRatio(
+        a,
+        b,
+        exponent2);
+}
+
+@safe pure nothrow @nogc
+ulong roundedNormalizedSignificand(
+    Cent numerator,
+    Cent denominator,
+    int fractionBits)
+{
+    assert(fractionBits >= 0 && fractionBits <= 52);
+    assert(compareCent(numerator, denominator) >= 0);
+
+    ulong result = 1UL << fractionBits;
+    Cent remainder = subtractCent(numerator, denominator);
+
+    foreach (i; 0 .. fractionBits)
+    {
+        remainder = shiftCentExact(remainder, 1);
+
+        if (compareCent(remainder, denominator) >= 0)
+        {
+            result |= 1UL << (fractionBits - 1 - i);
+            remainder = subtractCent(remainder, denominator);
+        }
+    }
+
+    const doubledRemainder = shiftCentExact(remainder, 1);
+    const cmp = compareCent(doubledRemainder, denominator);
+
+    if (cmp > 0 || (cmp == 0 && (result & 1UL) != 0))
+        ++result;
+
+    return result;
+}
+
+@safe pure nothrow @nogc
+double binary64FromBits(ulong bits)
+{
+    double value;
+
+    () @trusted {
+        memcpy(&value, &bits, double.sizeof);
+    }();
+
+    return value;
+}
+
+@safe pure nothrow @nogc
+bool binary64Finite(double value)
+{
+    return ((binary64Bits(value) >> 52) & 0x7ffUL) != 0x7ffUL;
+}
+
+@safe pure nothrow @nogc
+bool binary64Zero(double value)
+{
+    return (binary64Bits(value) & 0x7fff_ffff_ffff_ffffUL) == 0;
+}
+
+@safe pure nothrow @nogc
+double quantizeExactBinary64(ExactRational128 exact)
+{
+    assert(!centIsZero(exact.numerator));
+    assert(!centIsZero(exact.denominator));
+
+    const normalized = normalizeCentRatio(
+        exact.numerator,
+        exact.denominator);
+
+    int topExponent =
+        exact.exponent2 +
+        normalized.exponent2;
+
+    const signBits =
+        exact.negative ? (1UL << 63) : 0UL;
+
+    if (topExponent > 1023)
+        return binary64FromBits(
+            signBits | (0x7ffUL << 52));
+
+    if (topExponent >= -1022)
+    {
+        ulong significand =
+            roundedNormalizedSignificand(
+                normalized.numerator,
+                normalized.denominator,
+                52);
+
+        if (significand == (1UL << 53))
+        {
+            significand >>= 1;
+            ++topExponent;
+
+            if (topExponent > 1023)
+                return binary64FromBits(
+                    signBits | (0x7ffUL << 52));
+        }
+
+        const exponentField =
+            cast(ulong)(topExponent + 1023);
+        const fraction =
+            significand - (1UL << 52);
+
+        return binary64FromBits(
+            signBits |
+            (exponentField << 52) |
+            fraction);
+    }
+
+    const quantumPower = topExponent + 1074;
+    ulong quanta;
+
+    if (quantumPower < -1)
+    {
+        quanta = 0;
+    }
+    else if (quantumPower == -1)
+    {
+        // The value is normalizedRatio * 0.5 minimum-subnormal quanta.
+        // Exactly normalizedRatio == 1 is the tie and rounds to even zero.
+        quanta =
+            centEqual(
+                normalized.numerator,
+                normalized.denominator)
+                ? 0UL
+                : 1UL;
+    }
+    else
+    {
+        assert(quantumPower <= 51);
+        quanta =
+            roundedNormalizedSignificand(
+                normalized.numerator,
+                normalized.denominator,
+                quantumPower);
+    }
+
+    if (quanta == 0)
+        return binary64FromBits(signBits);
+
+    if (quanta == (1UL << 52))
+    {
+        // Rounding at the top of the subnormal lattice reaches min_normal.
+        return binary64FromBits(
+            signBits | (1UL << 52));
+    }
+
+    assert(quanta < (1UL << 52));
+    return binary64FromBits(signBits | quanta);
+}
+
+@safe pure nothrow @nogc
+ExactRational128 quotientExactBinary64(
+    Binary64Exact lhs,
+    Binary64Exact rhs,
+    ulong scaleNumerator,
+    ulong scaleDenominator)
+{
+    assert(lhs.significand != 0);
+    assert(rhs.significand != 0);
+    assert(scaleNumerator != 0);
+    assert(scaleDenominator != 0);
+
+    ulong x = lhs.significand;
+    ulong y = rhs.significand;
+    ulong n = scaleNumerator;
+    ulong d = scaleDenominator;
+
+    cancel(x, y);
+    cancel(x, d);
+    cancel(n, y);
+    cancel(n, d);
+
+    const numerator =
+        mul(fromUlong128(x), fromUlong128(n));
+    const denominator =
+        mul(fromUlong128(y), fromUlong128(d));
+
+    // R04.15 structural bounds for represented binary64 operands and the
+    // current ExactRatio public range are <=116 bits on both sides.
+    assert(centBitLength(numerator) <= 116);
+    assert(centBitLength(denominator) <= 116);
+
+    return ExactRational128(
+        numerator,
+        denominator,
+        lhs.exponent2 - rhs.exponent2,
+        lhs.negative != rhs.negative);
+}
+
+
 public:
 @safe pure nothrow @nogc
 Binary64ScaleResult scaleBinary64(
@@ -465,6 +760,47 @@ Binary64ScaleResult scaleBinary64(
 
     const negative = source.negative != (numerator < 0);
     return Binary64ScaleResult(rebuild(negative, scaled), false);
+}
+
+/// Evaluate (lhs / rhs) * numerator / denominator from the represented
+/// binary64 operands as one exact rational expression and round exactly once.
+///
+/// This is intentionally runtime-only for nontrivial rescale semantics:
+/// ordinary D CTFE may retain excess precision beyond binary64 storage.
+@safe pure nothrow @nogc
+double rescaleQuotientBinary64(
+    double lhs,
+    double rhs,
+    long numerator,
+    long denominator)
+{
+    assert(numerator > 0);
+    assert(denominator > 0);
+
+    if (__ctfe)
+    {
+        assert(false,
+            "quantities-d: nontrivial binary64 quotient rescale "
+            ~ "requires runtime represented-source semantics");
+    }
+
+    // Positive finite rescaling cannot alter the IEEE class/sign of a native
+    // quotient that is already zero, infinity, or NaN.
+    if (!binary64Finite(lhs)
+        || !binary64Finite(rhs)
+        || binary64Zero(lhs)
+        || binary64Zero(rhs))
+    {
+        return lhs / rhs;
+    }
+
+    const exact = quotientExactBinary64(
+        decompose(lhs),
+        decompose(rhs),
+        cast(ulong)numerator,
+        cast(ulong)denominator);
+
+    return quantizeExactBinary64(exact);
 }
 
 @safe unittest
@@ -592,4 +928,73 @@ Binary64ScaleResult scaleBinary64(
     const tenth = scaleBinary64(1.0, 1, 10);
     assert(!tenth.overflow);
     assert(tenth.value == 0.1);
+
+    // R04.15: nontrivial quotient rescale is evaluated jointly and rounded
+    // once. Sequential quotient-first evaluation overflows here.
+    const quotientOverflowAvoided =
+        rescaleQuotientBinary64(
+            double.max,
+            0.5,
+            1,
+            2);
+    assert(quotientOverflowAvoided == double.max);
+
+    // Scaling the numerator first would underflow to zero. The joint exact
+    // expression remains exactly one minimum subnormal.
+    const quotientUnderflowAvoided =
+        rescaleQuotientBinary64(
+            minSubnormal,
+            0.5,
+            1,
+            2);
+    assert(quotientUnderflowAvoided == minSubnormal);
+
+    const quotientSimple =
+        rescaleQuotientBinary64(
+            3.0,
+            2.0,
+            2,
+            3);
+    assert(quotientSimple == 1.0);
+
+    const quotientOverflow =
+        rescaleQuotientBinary64(
+            double.max,
+            0.5,
+            1,
+            1);
+    assert(quotientOverflow == double.infinity);
+
+    const quotientPositiveInfinity =
+        rescaleQuotientBinary64(
+            1.0,
+            0.0,
+            2,
+            3);
+    assert(quotientPositiveInfinity == double.infinity);
+
+    const quotientNegativeInfinity =
+        rescaleQuotientBinary64(
+            1.0,
+            -0.0,
+            2,
+            3);
+    assert(quotientNegativeInfinity == -double.infinity);
+
+    const quotientNegativeZero =
+        rescaleQuotientBinary64(
+            -1.0,
+            double.infinity,
+            2,
+            3);
+    assert(quotientNegativeZero == 0.0);
+    assert((binary64Bits(quotientNegativeZero) >> 63) == 1);
+
+    const quotientNaN =
+        rescaleQuotientBinary64(
+            0.0,
+            0.0,
+            2,
+            3);
+    assert(quotientNaN != quotientNaN);
 }
