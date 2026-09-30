@@ -188,7 +188,10 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
 
 @safe unittest
 {
+    import quantities.dimension : Dimensionless;
     import quantities.length : Length, Metre;
+    import quantities.ratio : ExactRatio;
+    import quantities.unit : DerivedUnit;
 
     enum lhs = int.max.quantity!(Length, Metre);
     enum rhs = uint.max.quantity!(Length, Metre);
@@ -326,19 +329,15 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
 
     // Floating direct quotient requires an explicit semantic quotient relation
     // and an exact identity canonical rescale.
-    static struct RatioSpec
+    struct RatioSpec
     {
-        import quantities.dimension : Dimensionless;
-        import quantities.ratio : ExactRatio;
-        import quantities.unit : DerivedUnit;
-
         alias Dimension = Dimensionless;
         alias CanonicalUnit = DerivedUnit!(
             Dimensionless,
             ExactRatio!(1, 1));
     }
 
-    static struct QuotientLength
+    struct QuotientLength
     {
         alias Dimension = Length.Dimension;
         alias CanonicalUnit = Metre;
