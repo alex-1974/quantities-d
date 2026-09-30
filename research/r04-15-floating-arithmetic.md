@@ -1118,3 +1118,76 @@ The exact production cutoff remains a separate design choice. Probe 8D-P used
 quantizer. A future refinement may classify some 128-bit product numerators as
 safe without requiring the wide path, but such complexity should only be added
 if measurement shows a material gain.
+
+
+## Probe 8E — IEEE special-value dispatcher
+
+Probe 8E validated the special-value layer required around the exact binary64
+rational kernels.
+
+The dispatcher contract is:
+
+```text
+finite nonzero x/÷ finite nonzero
+    -> exact rational kernel
+    -> one final binary64 rounding
+
+at least one operand is ±0 / ±Inf / NaN
+    -> native IEEE-754 special-value operation
+```
+
+A positive finite canonical rescale does not change the NaN/Inf/zero
+classification or the sign of zero/infinity produced by the native special
+operation, so the exact rational kernel is not entered for those cases.
+
+The probe deliberately does not compare finite/nonzero cases against sequential
+native floating arithmetic. Probes 8B and 8C1 already established that such a
+comparison is semantically invalid for the chosen once-rounded contract because
+native evaluation order can introduce avoidable overflow/underflow and ordinary
+1-ULP differences.
+
+NaN comparison is classification-only; NaN payload/sign bits are not part of
+the quantities-d contract. Signed zero and infinity retain their IEEE sign.
+
+Corrected probe source SHA-256:
+
+`69f53664b5e1887ef7521db0d75aa3a238db698cfed97243508d81a98da01ace`
+
+Results on both baseline compilers:
+
+```text
+product cases : 630
+quotient cases: 630
+R04.15 Probe 8E PASS
+```
+
+DMD build/run: PASS/PASS.
+
+LDC build/run: PASS/PASS.
+
+Explicit boundaries included:
+
+- infinity times zero -> NaN;
+- zero divided by zero -> NaN;
+- infinity divided by infinity -> NaN;
+- finite divided by +0 -> +infinity;
+- finite divided by -0 -> -infinity;
+- positive finite divided by infinity -> +0;
+- negative finite divided by infinity -> -0.
+
+### Probe 8E conclusion
+
+The production binary64 arithmetic layer can preserve ordinary IEEE-754
+special-value behavior without weakening the exact finite arithmetic contract:
+
+- special inputs use native IEEE classification/sign behavior;
+- finite nonzero inputs use the exact represented-source rational kernel;
+- positive exact canonical rescaling is applied inside the finite kernel;
+- no additional quantities-d failure/status carrier is required for ordinary
+  direct floating arithmetic.
+
+This completes the runtime binary64 semantic feasibility work. The remaining
+promotion question is the runtime-vs-CTFE contract: represented-source binary64
+semantics require stored-bit decomposition, while accepted ADR 0007 already
+states that arbitrary-double CTFE must not silently use different excess-
+precision semantics under the same public contract.
