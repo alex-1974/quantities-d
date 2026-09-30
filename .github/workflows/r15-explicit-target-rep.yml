@@ -60,3 +60,12 @@ jobs:
           "$DC"             -Iresearch/r15-explicit-target-rep             research/r15-explicit-target-rep/probe_5_runner.d             research/r15-explicit-target-rep/identity_conversion_kernel.d             -of=/tmp/r15/probe_5
 
           python3             research/r15-explicit-target-rep/probe_5_oracle.py             /tmp/r15/probe_5
+
+
+      - name: Probe 6 current-real identity-scale oracle
+        shell: bash
+        run: |
+          mkdir -p /tmp/r15
+          "$DC"             -Iresearch/r15-explicit-target-rep             research/r15-explicit-target-rep/probe_6_runner.d             research/r15-explicit-target-rep/real_identity_conversion.d             -of=/tmp/r15/probe_6
+
+          python3             research/r15-explicit-target-rep/probe_6_oracle.py             /tmp/r15/probe_6
