@@ -1106,6 +1106,12 @@ bool rationalResultWithinBinary64Range(
 
     const source = decompose(value);
 
+    // Away from the upper range boundary, no wide products are needed:
+    // significand < 2^53, |numerator| <= 2^63 and denominator >= 1.
+    // exponent2 <= 907 therefore implies magnitude < 2^1023.
+    if (source.exponent2 <= 907)
+        return true;
+
     // Compare |source| * n / d with (2^53 - 1) * 2^971.
     // Both products fit in Cent: a binary64 significand uses <= 53 bits
     // and each integral factor uses <= 64 bits. Finite source exponent2
