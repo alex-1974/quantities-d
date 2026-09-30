@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 COUNT = 12000
-SEED = 0xR0417 if False else 0x41717
+SEED = 0x41717
 MAX_SCALE = (1 << 63) - 1
 
 def float_fraction(bits: int) -> Fraction:
