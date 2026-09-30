@@ -101,21 +101,55 @@ public:
         if (op == "/" &&
             !is(QuotientResultSpec!(Spec, OtherSpec) == void) &&
             !is(QuotientArithmeticRep!(Rep, OtherRep) == void) &&
-            QuotientCanonicalRescale!(
-                Spec,
-                OtherSpec,
-                QuotientResultSpec!(Spec, OtherSpec)).numerator == 1 &&
-            QuotientCanonicalRescale!(
-                Spec,
-                OtherSpec,
-                QuotientResultSpec!(Spec, OtherSpec)).denominator == 1)
+            (
+                (
+                    QuotientCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        QuotientResultSpec!(Spec, OtherSpec)).numerator == 1 &&
+                    QuotientCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        QuotientResultSpec!(Spec, OtherSpec)).denominator == 1
+                ) ||
+                (
+                    is(QuotientArithmeticRep!(Rep, OtherRep) == double) &&
+                    QuotientCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        QuotientResultSpec!(Spec, OtherSpec)).numerator > 0
+                )
+            ))
     {
         alias ResultSpec = QuotientResultSpec!(Spec, OtherSpec);
         alias ResultRep = QuotientArithmeticRep!(Rep, OtherRep);
+        alias Rescale = QuotientCanonicalRescale!(
+            Spec,
+            OtherSpec,
+            ResultSpec);
 
-        return Quantity!(ResultSpec, ResultRep).fromCanonical(
-            cast(ResultRep)canonical_ /
-            cast(ResultRep)rhs.canonicalValue);
+        static if (
+            Rescale.numerator == 1 &&
+            Rescale.denominator == 1)
+        {
+            return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                cast(ResultRep)canonical_ /
+                cast(ResultRep)rhs.canonicalValue);
+        }
+        else
+        {
+            static assert(is(ResultRep == double));
+
+            import quantities.binary64_scale :
+                rescaleQuotientBinary64;
+
+            return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                rescaleQuotientBinary64(
+                    cast(double)canonical_,
+                    cast(double)rhs.canonicalValue,
+                    Rescale.numerator,
+                    Rescale.denominator));
+        }
     }
 
     @safe pure nothrow @nogc
@@ -377,6 +411,42 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     static assert(!__traits(compiles,
         6.quantity!(QuotientLength, Metre)
             / 3.quantity!(QuotientLength, Metre)));
+
+    struct ScaledRatioSpec
+    {
+        alias Dimension = Dimensionless;
+        alias CanonicalUnit = DerivedUnit!(
+            Dimensionless,
+            ExactRatio!(2, 1));
+    }
+
+    struct ScaledQuotientLength
+    {
+        alias Dimension = Length.Dimension;
+        alias CanonicalUnit = Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = ScaledRatioSpec;
+        }
+    }
+
+    // Mathematical quotient double.max / 0.5 overflows if evaluated first.
+    // The exact 1/2 canonical rescale makes the final result double.max.
+    auto rescaledQuotient =
+        double.max.quantity!(ScaledQuotientLength, Metre)
+        / 0.5.quantity!(ScaledQuotientLength, Metre);
+    assert(is(
+        typeof(rescaledQuotient)
+        == Quantity!(ScaledRatioSpec, double)));
+    assert(rescaledQuotient.canonicalValue == double.max);
+
+    // Nontrivial represented-source rescale is deliberately runtime-only.
+    static assert(!__traits(compiles, {
+        enum ctfeRescaledQuotient =
+            6.0.quantity!(ScaledQuotientLength, Metre)
+            / 3.0.quantity!(ScaledQuotientLength, Metre);
+    }));
 
     enum product =
         uint.max.quantity!(Length, Metre) * uint.max;

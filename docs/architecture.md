@@ -106,14 +106,19 @@ use a floating-aware representation dispatcher:
   physical Dimension validation;
 - Quantity quotients still require an explicit semantic QuotientResultSpec and
   physical Dimension validation;
-- direct floating Quantity product/quotient is currently admitted only when
-  the corresponding canonical rescale is exactly 1/1;
+- direct floating Quantity product is currently admitted only when
+  ProductCanonicalRescale is exactly 1/1;
+- floating Quantity quotient supports identity rescale natively and positive
+  nontrivial canonical rescale when the admitted ResultRep is double;
+- nontrivial binary64 quotient rescale evaluates the represented operands and
+  exact rational scale jointly, then rounds once to binary64;
+- this represented-source binary64 quotient path is deliberately runtime-only;
 - integral/integral direct quotient remains unavailable and keeps the named
   exactDiv contract.
 
-This promoted slice does not yet establish nontrivial floating
-product/quotient canonical-rescale kernels, scalar division, or generalized
-exact-rescale support for float/real.
+This promoted slice does not yet establish nontrivial floating product
+canonical-rescale kernels, scalar division, or generalized exact-rescale
+support for float/real.
 
 ## Open design decisions
 
@@ -124,7 +129,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- nontrivial floating product/quotient rescale, scalar-division, and float/real policy;
+- nontrivial floating product rescale, scalar-division, and float/real policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.

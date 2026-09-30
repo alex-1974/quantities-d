@@ -118,7 +118,7 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3QuantityRawIntegralQuotient
     run_reject "$compiler" "$flag" M3UnsafeIntFloatQuantityQuotient
     run_reject "$compiler" "$flag" M3UnsafeLongDoubleQuantityQuotient
-    run_reject "$compiler" "$flag" M3FloatingQuantityQuotientCanonicalRescale
+    run_case "$compiler" "$flag" M3FloatingQuantityQuotientCanonicalRescale "quantities-d: nontrivial binary64 quotient rescale requires runtime represented-source semantics"
     run_reject "$compiler" "$flag" M3ExternalQuotientMissingRelation
     run_case "$compiler" "$flag" M3ExternalQuotientWrongResultDimension "external Quantity quotient ResultSpec has the wrong physical Dimension."
     run_reject "$compiler" "$flag" M3ExternalQuotientNoFallback
