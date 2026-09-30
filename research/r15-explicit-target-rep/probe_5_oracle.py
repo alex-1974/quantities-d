@@ -152,10 +152,10 @@ def expected(op, raw):
     assert op in ("FL", "DL")
 
     if fr < LONG_MIN or fr > LONG_MAX:
-        return "overflow 0"
+        return "overflow -"
 
     if fr.denominator != 1:
-        return "inexact 0"
+        return "inexact -"
 
     return f"exact {fr.numerator}"
 
