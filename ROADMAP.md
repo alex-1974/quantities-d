@@ -148,7 +148,7 @@ arithmetic core:
 - concrete Spec distinctions from R05 where consumer evidence justifies them.
 
 The next recommended numerical research slice is mixed-Rep / `float` / `real`
-conversion. R04.15–R04.17 established the represented-source floating
+conversion, tracked as R15 in Issue #42. R04.15–R04.17 established the represented-source floating
 decomposition, exact-rational, rounding, CTFE, and format-capability evidence
 needed to investigate that conversion problem without weakening the existing
 M1 conversion contract.
