@@ -59,3 +59,58 @@ jobs:
             research/r04-17-float-real-rescale/probe_4_oracle.py \
             /tmp/r04-17/probe_4 \
             /tmp/r04-17/cases.txt
+
+
+      - name: Probe 5 IEEE special values
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" -Isource -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_5_ieee.d \
+            research/r04-17-float-real-rescale/binary32_kernel.d \
+            -of=/tmp/r04-17/probe_5
+          /tmp/r04-17/probe_5
+
+      - name: Probe 6 native CTFE positive
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" \
+            research/r04-17-float-real-rescale/probe_6_positive.d \
+            -of=/tmp/r04-17/probe_6_positive
+          /tmp/r04-17/probe_6_positive
+
+      - name: Probe 6 represented-source CTFE negatives
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+
+          if "$DC" -Isource -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_6_negative_product.d \
+            research/r04-17-float-real-rescale/binary32_kernel.d \
+            -of=/tmp/r04-17/negative_product \
+            > /tmp/r04-17/product.log 2>&1
+          then
+            echo "ERROR: product CTFE negative unexpectedly compiled"
+            exit 1
+          fi
+
+          grep -F \
+            "R04.17: nontrivial binary32 product rescale requires represented-source runtime semantics" \
+            /tmp/r04-17/product.log
+
+          if "$DC" -Isource -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_6_negative_quotient.d \
+            research/r04-17-float-real-rescale/binary32_kernel.d \
+            -of=/tmp/r04-17/negative_quotient \
+            > /tmp/r04-17/quotient.log 2>&1
+          then
+            echo "ERROR: quotient CTFE negative unexpectedly compiled"
+            exit 1
+          fi
+
+          grep -F \
+            "R04.17: nontrivial binary32 quotient rescale requires represented-source runtime semantics" \
+            /tmp/r04-17/quotient.log
+
+          echo "R04.17 Probe 6 represented-source CTFE negatives PASS"
