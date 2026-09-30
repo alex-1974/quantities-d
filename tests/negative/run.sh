@@ -90,6 +90,9 @@ run_compiler() {
     run_reject "$compiler" "$flag" M3NonScalableMultiplication
     run_reject "$compiler" "$flag" M3NonScalableRightMultiplication
     run_reject "$compiler" "$flag" M3ClassOMultiplication
+    run_reject "$compiler" "$flag" M3UnsafeIntFloatScalarMultiplication
+    run_reject "$compiler" "$flag" M3UnsafeLongDoubleScalarMultiplication
+    run_reject "$compiler" "$flag" M3UnsafeRightLongDoubleScalarMultiplication
     run_reject "$compiler" "$flag" M3NonScalableExactDivision
     run_reject "$compiler" "$flag" M3ClassOExactDivision
     run_reject "$compiler" "$flag" M3ProductMissingRelation
