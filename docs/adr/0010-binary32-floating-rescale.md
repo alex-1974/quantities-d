@@ -1,6 +1,6 @@
 # ADR 0010: Exact nontrivial binary32 canonical rescale
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-30
 - Issue: #37
 - Related: ADR 0009
@@ -161,6 +161,14 @@ Naive sequential float arithmetic is substantially cheaper in the measured DMD
 workload, but it is not an interchangeable implementation because the
 double-rounding/evaluation-order research demonstrates different numerical
 results.
+
+## Acceptance
+
+The binary32 production slice was merged through PR #38 after the normal
+repository CI passed on DMD 2.111.0 and LDC 1.41.0.
+
+This ADR is therefore accepted for binary32. Issue #37 remains open only for
+the separate D `real` policy.
 
 ## Consequences
 
