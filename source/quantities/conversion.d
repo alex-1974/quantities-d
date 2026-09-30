@@ -1,6 +1,7 @@
 module quantities.conversion;
 
-import quantities.binary64_scale : scaleBinary64;
+import quantities.binary64_scale :
+    rationalResultWithinBinary64Range, scaleBinary64;
 import quantities.floating_exact : rationalResultExactlyBinary64;
 import quantities.quantity : Quantity;
 import quantities.traits : isQuantitySpec, isUnit;
@@ -373,6 +374,9 @@ ConversionResult!double convertFloating(
 
     if (!finite(value))
         return ConversionResult!double.withoutValue(ConversionStatus.nonFinite);
+
+    if (!rationalResultWithinBinary64Range(value, numerator, denominator))
+        return ConversionResult!double.withoutValue(ConversionStatus.overflow);
 
     const scaled = scaleBinary64(value, numerator, denominator);
 
@@ -894,4 +898,53 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         (-double.infinity).checkedQuantity!(Length, Metre);
     assert(negativeInfinityChecked.status == ConversionStatus.nonFinite);
     assert(!negativeInfinityChecked.hasValue);
+}
+
+@safe unittest
+{
+    import quantities : Length, LengthDimension, Metre, DerivedUnit, ExactRatio;
+
+    enum long d = 1L << 62;
+    alias AboveMetre = DerivedUnit!(LengthDimension, ExactRatio!(d + 1, d));
+    alias BelowMetre = DerivedUnit!(LengthDimension, ExactRatio!(d, d + 1));
+
+    foreach (source; [double.max, -double.max])
+    {
+        // Even an out-of-range result that rounds to finite double.max
+        // must report overflow, through construction and extraction alike.
+        const constructed = source.checkedQuantity!(Length, AboveMetre);
+        assert(constructed.status == ConversionStatus.overflow);
+        assert(!constructed.hasValue);
+        Quantity!(Length, double) quantityOutput;
+        assert(!constructed.tryValue(quantityOutput));
+
+        const exactConstructed = source.exactQuantity!(Length, AboveMetre);
+        ExactFailure failure;
+        assert(!exactConstructed.hasValue);
+        assert(exactConstructed.tryFailure(failure));
+        assert(failure == ExactFailure.overflow);
+
+        const q = Quantity!(Length, double).fromCanonical(source);
+        const extracted = q.checkedIn!BelowMetre;
+        assert(extracted.status == ConversionStatus.overflow);
+        assert(!extracted.hasValue);
+        double scalarOutput;
+        assert(!extracted.tryValue(scalarOutput));
+
+        const exactExtracted = q.exactIn!BelowMetre;
+        assert(!exactExtracted.hasValue);
+        assert(exactExtracted.tryFailure(failure));
+        assert(failure == ExactFailure.overflow);
+
+        // The exact boundary and values strictly inside remain valid.
+        const boundary = source.checkedQuantity!(Length, Metre);
+        assert(boundary.status == ConversionStatus.exact);
+        assert(boundary.tryValue(quantityOutput));
+        assert(quantityOutput.canonicalValue == source);
+
+        const inside = source.checkedQuantity!(Length, BelowMetre);
+        assert(inside.status == ConversionStatus.inexact);
+        assert(inside.tryValue(quantityOutput));
+        assert(quantityOutput.canonicalValue == source);
+    }
 }

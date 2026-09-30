@@ -114,6 +114,13 @@ A floating-to-floating conversion is `exact` iff applying the exact rational
 unit scale to the represented source value yields a mathematical result exactly
 representable in the target floating Rep.
 
+Range classification precedes rounding: an exact finite mathematical result
+outside `[-double.max, double.max]` is `overflow`, including the narrow interval
+above `double.max` that IEEE nearest-even quantization would round back to a
+finite boundary value. The quantizer's infinity-midpoint behavior remains an
+arithmetic implementation contract; its overflow flag alone does not establish
+conversion range validity.
+
 Round-trip or inverse-operation equality is not a valid exactness test.
 
 Integer-style `RoundingMode` is not applied to floating-to-floating conversion.
