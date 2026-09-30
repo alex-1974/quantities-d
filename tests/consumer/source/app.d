@@ -399,6 +399,26 @@ void main()
             && value.canonicalValue == 2;
     }());
 
+    enum floatingConsumerQuotient =
+        6.0.quantity!(QuotientLeft, Metre)
+        / 4.0f.quantity!(QuotientRight, Metre);
+    static assert(is(
+        typeof(floatingConsumerQuotient)
+        == Quantity!(ConsumerRatio, double)));
+    static assert(
+        floatingConsumerQuotient.canonicalValue
+        == 1.5);
+
+    enum mixedConsumerQuotient =
+        int.max.quantity!(QuotientLeft, Metre)
+        / 0.5.quantity!(QuotientRight, Metre);
+    static assert(is(
+        typeof(mixedConsumerQuotient)
+        == Quantity!(ConsumerRatio, double)));
+    static assert(
+        mixedConsumerQuotient.canonicalValue
+        == 4_294_967_294.0);
+
     struct QuotientRelations
     {
         template Quotient(Lhs, Rhs)

@@ -695,6 +695,90 @@ version (M3QuantityRawIntegralQuotient)
         / 3.quantity!(LengthRatio, production.Metre);
 }
 
+version (M3UnsafeIntFloatQuantityQuotient)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        1.quantity!(LengthRatio, production.Metre)
+        / 0.5f.quantity!(LengthRatio, production.Metre);
+}
+
+version (M3UnsafeLongDoubleQuantityQuotient)
+{
+    alias Unitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(1, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = Unitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        long.max.quantity!(LengthRatio, production.Metre)
+        / 0.5.quantity!(LengthRatio, production.Metre);
+}
+
+version (M3FloatingQuantityQuotientCanonicalRescale)
+{
+    alias ScaledUnitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(2, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = ScaledUnitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        6.0.quantity!(LengthRatio, production.Metre)
+        / 3.0.quantity!(LengthRatio, production.Metre);
+}
+
 version (M3ExternalQuotientMissingRelation)
 {
     struct ForeignLength
