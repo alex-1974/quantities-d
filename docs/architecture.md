@@ -106,19 +106,20 @@ use a floating-aware representation dispatcher:
   physical Dimension validation;
 - Quantity quotients still require an explicit semantic QuotientResultSpec and
   physical Dimension validation;
-- direct floating Quantity product is currently admitted only when
-  ProductCanonicalRescale is exactly 1/1;
-- floating Quantity quotient supports identity rescale natively and positive
-  nontrivial canonical rescale when the admitted ResultRep is double;
-- nontrivial binary64 quotient rescale evaluates the represented operands and
-  exact rational scale jointly, then rounds once to binary64;
-- this represented-source binary64 quotient path is deliberately runtime-only;
+- floating Quantity product and quotient support identity rescale
+  natively and positive nontrivial canonical rescale when the admitted
+  ResultRep is double;
+- nontrivial binary64 product/quotient rescale evaluates the represented
+  operands and exact rational scale jointly, then rounds once to binary64;
+- binary64 quotient uses the proven Cent/Cent kernel;
+- binary64 product uses the proven <=127-bit Cent fast path with UInt192
+  fallback for wider exact numerators;
+- represented-source nontrivial binary64 rescale is deliberately runtime-only;
 - integral/integral direct quotient remains unavailable and keeps the named
   exactDiv contract.
 
-This promoted slice does not yet establish nontrivial floating product
-canonical-rescale kernels, scalar division, or generalized exact-rescale
-support for float/real.
+This promoted slice does not yet establish scalar division or generalized
+nontrivial exact-rescale support for float/real.
 
 ## Open design decisions
 
@@ -129,7 +130,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- nontrivial floating product rescale, scalar-division, and float/real policy;
+- scalar-division and nontrivial float/real rescale policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.
