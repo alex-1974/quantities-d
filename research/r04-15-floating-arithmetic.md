@@ -1191,3 +1191,133 @@ promotion question is the runtime-vs-CTFE contract: represented-source binary64
 semantics require stored-bit decomposition, while accepted ADR 0007 already
 states that arbitrary-double CTFE must not silently use different excess-
 precision semantics under the same public contract.
+
+
+## Probe 8F — CTFE capability split
+
+Probe 8F established the compile-time boundary for the binary64 arithmetic
+design without changing production code.
+
+The candidate contract distinguishes two classes of floating operations.
+
+### Native / identity-rescale paths
+
+Same-Spec addition/subtraction, scalar arithmetic, and Quantity
+product/quotient with identity canonical rescale may use ordinary D floating
+arithmetic.
+
+These operations remain CTFE-capable and retain `@safe pure nothrow @nogc`.
+
+Both baseline compilers accepted representative CTFE expressions for:
+
+- addition;
+- subtraction;
+- scalar multiplication;
+- scalar division;
+- identity-rescale product;
+- identity-rescale quotient.
+
+The probe also reconfirmed the previously observed D CTFE excess-precision
+boundary. At compile time:
+
+```text
+identityProduct(double.max, 2.0) > double.max
+identityProduct(double.max, 2.0) != double.infinity
+```
+
+on both DMD 2.111 and LDC 1.41.
+
+After materialization into an actual `double` object at runtime, the same CTFE
+constant becomes `double.infinity`, as required by the binary64 storage
+boundary.
+
+Therefore ordinary floating CTFE is supported, but it is not a bit-exact
+binary64 representation oracle.
+
+### Nontrivial represented-source canonical rescale
+
+A nontrivial binary64 product or quotient canonical rescale uses the exact
+represented-source rational contract established by Probes 8C-8E.
+
+That contract depends on the stored binary64 representation and therefore must
+not silently use D CTFE excess-precision semantics.
+
+Probe 8F inserted an explicit `__ctfe` guard before the represented-source
+kernel. Both baseline compilers intentionally rejected compile-time use with
+the quantities-d diagnostic:
+
+```text
+quantities-d: nontrivial binary64 product rescale requires runtime represented-source semantics
+```
+
+and:
+
+```text
+quantities-d: nontrivial binary64 quotient rescale requires runtime represented-source semantics
+```
+
+The rejection is therefore a deliberate API/semantic boundary rather than an
+accidental failure in bit decomposition or `memcpy`.
+
+### Positive runtime results
+
+Corrected source hashes included:
+
+```text
+ctfe_gate.d:
+6a186ef794dfc1dcd26a229d3d6f7fe6bd44217e73076e21de018f868927166b
+
+positive.d:
+f29d4548444c3ae28734983c1a84a0b00017d30722fc37c9ff5b6984704a338d
+```
+
+Both baseline compilers produced:
+
+```text
+CTFE native/identity: PASS
+runtime represented-source product: 0x4000000000000000
+runtime represented-source quotient: 0x3ff0000000000000
+R04.15 Probe 8F positive PASS
+```
+
+The represented-source runtime values are exactly 2.0 and 1.0 respectively.
+
+Final summary:
+
+```text
+DMD positive build=0 run=0
+LDC positive build=0 run=0
+
+DMD intentional product CTFE rejection=PASS
+DMD intentional quotient CTFE rejection=PASS
+LDC intentional product CTFE rejection=PASS
+LDC intentional quotient CTFE rejection=PASS
+```
+
+### Probe 8F conclusion
+
+CTFE is a capability of the specific floating arithmetic path rather than a
+single all-or-nothing property of the floating API.
+
+The evidence supports this split:
+
+```text
+native / identity-rescale floating arithmetic
+    -> ordinary D floating semantics
+    -> CTFE-capable
+    -> may retain excess precision during CTFE
+
+nontrivial binary64 canonical rescale
+    -> represented-source exact rational semantics
+    -> one final binary64 rounding
+    -> runtime-only for arbitrary double operands
+    -> explicit CTFE rejection
+```
+
+This is consistent with ADR 0007: no public operation silently presents
+runtime represented-source binary64 semantics and compile-time excess-precision
+semantics as the same contract.
+
+With Probe 8F, the runtime binary64 arithmetic semantics, IEEE special values,
+kernel-width architecture, compiler-performance boundary, and CTFE capability
+split are all established sufficiently to draft the promotion ADR.
