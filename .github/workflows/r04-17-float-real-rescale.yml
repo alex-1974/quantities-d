@@ -206,3 +206,16 @@ jobs:
             research/r04-17-float-real-rescale/probe_9_real_oracle.py \
             /tmp/r04-17/probe_9 \
             /tmp/r04-17/real_cases.txt
+
+
+      - name: Probe 10 trait kernel against binary64 reference
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" \
+            -Isource \
+            -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_10_trait_double.d \
+            research/r04-17-float-real-rescale/real80_kernel.d \
+            -of=/tmp/r04-17/probe_10
+          /tmp/r04-17/probe_10
