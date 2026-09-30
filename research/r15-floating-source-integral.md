@@ -1,6 +1,6 @@
 # R15 Probe 13 — represented floating sources to long
 
-Status: research; baseline validation pending. Issue #42.
+Status: represented-source wrapper validated on both baseline compilers; not promoted. Issue #42.
 
 ## Scope
 
@@ -54,4 +54,20 @@ Seed 0x150013 adds 20,000 random cases. All earlier probes rerun in the matrix.
 
 ## Results
 
-Pending DMD 2.111.0 and LDC 1.41.0 CI.
+Tested code commit: `ba4cf1cf23c7b0dded005cf27257af56f66d1d7b`.
+CI: https://github.com/alex-1974/quantities-d/actions/runs/36776805449.
+
+DMD 2.111.0 and LDC 1.41.0 each passed 23,150 Probe 13 comparisons with zero
+mismatches: 761 exact, 13,636 inexact, 8,068 overflow and 685 nonFinite.
+The safe/pure/nothrow/nogc qualified-source consumers and compile-negative gates
+passed. Both environments report real traits (64,-16381,16384), so this run
+qualifies real80; the binary64-like real trait branch remains unqualified on a
+matching platform. The smallest real80 subnormal works through the canonicalized
+tuple path. Probes 10 (20,960), 11 (20,034) and 12 (20,560) also passed on each
+compiler. These are default-build research results, not performance or release
+qualification.
+
+Next: an invariant-owning result carrier and named mixed-Rep API candidate with
+actual Unit templates, construction/extraction symmetry and compile-negative
+consumer gates. Decide the exact-unrounded range rule explicitly before any
+production promotion. Research aggregates remain temporary scaffolding.
