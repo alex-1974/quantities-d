@@ -106,15 +106,18 @@ rescale use a floating-aware representation dispatcher:
   physical Dimension validation;
 - Quantity quotients still require an explicit semantic QuotientResultSpec and
   physical Dimension validation;
-- floating Quantity product and quotient support identity rescale
-  natively and positive nontrivial canonical rescale when the admitted
-  ResultRep is double;
-- nontrivial binary64 product/quotient rescale evaluates the represented
-  operands and exact rational scale jointly, then rounds once to binary64;
+- floating Quantity product and quotient support identity rescale natively and
+  positive nontrivial canonical rescale when the admitted ResultRep is float or
+  double;
+- nontrivial binary32/binary64 product/quotient rescale evaluates represented
+  operands and exact rational scale jointly, then rounds once to the target
+  floating format;
+- binary32 product and quotient use a private two-limb 128-bit exact carrier;
 - binary64 quotient uses the proven Cent/Cent kernel;
 - binary64 product uses the proven <=127-bit Cent fast path with UInt192
   fallback for wider exact numerators;
-- represented-source nontrivial binary64 rescale is deliberately runtime-only;
+- represented-source nontrivial binary32/binary64 rescale is deliberately
+  runtime-only;
 - scalable Quantity/scalar division preserves the same Spec and canonical
   storage and uses ordinary native floating division after the existing
   floating representation-admission gate;
@@ -125,8 +128,8 @@ rescale use a floating-aware representation dispatcher:
 - integral/integral direct Quantity quotient remains unavailable and keeps the
   named exactDiv contract.
 
-This promoted slice does not yet establish generalized nontrivial exact-rescale
-support for float/real.
+This promoted slice does not yet establish nontrivial exact-rescale support
+for D real.
 
 ## Open design decisions
 
@@ -137,7 +140,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- nontrivial float/real rescale policy;
+- nontrivial real rescale policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.
