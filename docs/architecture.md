@@ -88,9 +88,9 @@ separate compile-time axes.
 M3 now admits the first ordinary floating arithmetic operations without
 weakening the existing semantic gates or integral range-safety contracts.
 
-Same-Spec addition/subtraction, scalable scalar multiplication, and
-Quantity-by-Quantity product/quotient with an exact identity canonical rescale
-use a floating-aware representation dispatcher:
+Same-Spec addition/subtraction, scalable scalar multiplication/division,
+and Quantity-by-Quantity product/quotient with an exact identity canonical
+rescale use a floating-aware representation dispatcher:
 
 - integral/integral operations continue to use the established integral
   ResultRep selectors unchanged;
@@ -115,11 +115,18 @@ use a floating-aware representation dispatcher:
 - binary64 product uses the proven <=127-bit Cent fast path with UInt192
   fallback for wider exact numerators;
 - represented-source nontrivial binary64 rescale is deliberately runtime-only;
-- integral/integral direct quotient remains unavailable and keeps the named
-  exactDiv contract.
+- scalable Quantity/scalar division preserves the same Spec and canonical
+  storage and uses ordinary native floating division after the existing
+  floating representation-admission gate;
+- integral/integral direct scalar division remains unavailable and keeps the
+  named exactDiv(quantity, scalar) contract;
+- scalar/Quantity remains unavailable because it would require reciprocal
+  physical semantics rather than same-Spec scaling;
+- integral/integral direct Quantity quotient remains unavailable and keeps the
+  named exactDiv contract.
 
-This promoted slice does not yet establish scalar division or generalized
-nontrivial exact-rescale support for float/real.
+This promoted slice does not yet establish generalized nontrivial exact-rescale
+support for float/real.
 
 ## Open design decisions
 
@@ -130,7 +137,7 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- scalar-division and nontrivial float/real rescale policy;
+- nontrivial float/real rescale policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.
