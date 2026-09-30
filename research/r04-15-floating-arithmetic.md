@@ -325,3 +325,75 @@ scalar division is still only a research-stage candidate, and
 Quantity-by-Quantity floating product/quotient arithmetic requires a
 separate probe because canonical rescaling and semantic result resolution
 introduce additional contracts.
+
+
+## Probe 8A — floating Quantity product/quotient with identity canonical rescale
+
+Probe 8A extended the temporary Probe-7 integration patch only. No
+production commit was created.
+
+The experiment used the actual quantities-d semantic machinery:
+
+- `ProductResultSpec`;
+- `ProductCanonicalRescale`;
+- `QuotientResultSpec`;
+- `QuotientCanonicalRescale`;
+- the Probe-7 research `ArithmeticRep` dispatcher.
+
+Direct Quantity-by-Quantity floating multiplication and division were
+admitted only when the corresponding canonical rescale was exactly
+`1 / 1`.
+
+The temporary `source/quantities/quantity.d` SHA-256 after the Probe-8A
+patch was:
+
+`a5d8677d087f51f950e5e19a919c9f676214cfb83b649599fc6aaa230f0d55b2`
+
+### Product cases
+
+The probe confirmed:
+
+- `Quantity!(Length, double) * Quantity!(Length, double)`
+  resolves through the existing `Length * Length -> Area` semantic relation
+  and produces `Quantity!(Area, double)`;
+- admitted mixed `int * double` Quantity products use the dispatcher;
+- `int * float` remains rejected because the complete `int` domain is not
+  exactly representable in `float`;
+- `long * double` remains rejected for the same operand-conversion reason.
+
+The existing direct integral product behavior remained intact.
+
+### Quotient cases
+
+A local semantic quotient relation resolving same-kind length Quantities to a
+consumer-defined dimensionless ResultSpec confirmed:
+
+- `double / double` Quantity quotient works under identity canonical
+  rescaling;
+- admitted mixed `int / double` Quantity quotient works;
+- direct `int / int` Quantity quotient was deliberately not introduced;
+- `long / double` remains rejected by the mixed-representation admission
+  rule.
+
+### Validation
+
+Both baseline compilers rebuilt and passed the complete test suite:
+
+```text
+DMD=0
+LDC=0
+diff-check=0
+10 modules passed unittests
+```
+
+### Probe 8A conclusion
+
+Floating Quantity product and quotient semantics can reuse the existing
+semantic ResultSpec machinery when canonical storage requires no additional
+rescaling.
+
+This probe does **not** justify direct floating product or quotient for a
+nontrivial canonical rescale. The next question is numerical rather than
+semantic: how a rational canonical rescale should be evaluated for floating
+representations without introducing avoidable overflow, underflow, extra
+rounding, or an unnecessary exact/checked contract.
