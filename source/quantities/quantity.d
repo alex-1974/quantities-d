@@ -433,7 +433,7 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
 
     // Mathematical quotient double.max / 0.5 overflows if evaluated first.
     // The exact 1/2 canonical rescale makes the final result double.max.
-    const rescaledQuotient =
+    auto rescaledQuotient =
         double.max.quantity!(ScaledQuotientLength, Metre)
         / 0.5.quantity!(ScaledQuotientLength, Metre);
     assert(is(
