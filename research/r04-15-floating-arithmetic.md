@@ -780,3 +780,79 @@ including:
 
 Only after the 128-bit quantizer is bit-identical to the independent exact
 oracle should a wider UInt192 product fallback be implemented.
+
+
+## Probe 8C2-A2b-Q — once-rounded binary64 quotient quantization
+
+Probe 8C2-A2b-Q isolated the complete floating quotient path after Probe
+8C2-A2a had validated the exact rational `Cent/Cent * 2^e` construction.
+
+The independent Python oracle was corrected to preserve IEEE signed zero
+explicitly. Python `Fraction` itself has no signed-zero state, so zero-result
+sign is now carried from the original binary64 operand signs rather than being
+lost in the rational oracle.
+
+The D quantizer was also corrected in `normalizeRatio()`. When numerator and
+denominator have equal bit lengths but `N < D`, the initial exponent estimate
+is zero and must be corrected to `-1`. The original probe then attempted an
+invalid negative shift on the denominator side. The corrected implementation
+rebuilds the aligned numerator/denominator pair after changing the exponent.
+
+With those two probe defects removed, both baseline compilers passed the
+complete quotient-only oracle set:
+
+```text
+checked             : 11123
+mismatches          : 0
+max numerator bits  : 116
+max denominator bits: 116
+```
+
+DMD 2.111:
+
+```text
+build=0
+run=0
+```
+
+LDC 1.41:
+
+```text
+build=0
+run=0
+```
+
+### Probe 8C2-A2b-Q conclusion
+
+For the current binary64 and ExactRatio contracts, a nontrivial floating
+Quantity quotient can be evaluated exactly to an internal rational form using:
+
+```text
+numerator   : Cent   (<=116 bits)
+denominator : Cent   (<=116 bits)
+binary exponent : int
+sign        : bool
+```
+
+and then rounded once to binary64 without requiring an integer wider than 128
+bits.
+
+The tested quantizer uses:
+
+1. exact binary64 decomposition;
+2. exact cross-cancellation;
+3. exact `Cent/Cent * 2^e` rational construction;
+4. normalization without a wide `N << 52` intermediate;
+5. bit-by-bit remainder generation of the required significand bits;
+6. round-to-nearest, ties-to-even;
+7. direct treatment of subnormal and signed-zero boundaries.
+
+This establishes feasibility for a complete binary64 quotient kernel using
+existing `core.int128` machinery.
+
+The product path remains separate. Even a product whose exact rational
+numerator fits 128 bits can require one additional normalization bit, and the
+full current product domain still requires up to 169 bits before final
+rounding. Product research should therefore proceed with a deliberately wider
+internal representation rather than forcing the quotient architecture to grow
+beyond its proven requirement.
