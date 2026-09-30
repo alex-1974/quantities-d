@@ -36,46 +36,61 @@ void main()
     report!real("real", real(1));
 
     writeln();
+    writeln("=== ULONG PRE-CALL NARROWING WITNESS ===");
+
+    auto unsignedConverted =
+        ulong.max.checkedQuantity!(Length, Metre);
+
+    static assert(is(
+        typeof(unsignedConverted)
+        == ConversionResult!(Quantity!(Length, long))));
+
+    assert(unsignedConverted.hasValue);
+    assert(unsignedConverted.status == ConversionStatus.exact);
+
+    Quantity!(Length, long) signedQuantity;
+    assert(unsignedConverted.tryValue(signedQuantity));
+
+    writeln("ulong.max source: ", ulong.max);
+    writeln("stored signed canonical: ", signedQuantity.canonicalValue);
+    writeln("checkedQuantity status: ", unsignedConverted.status);
+
+    assert(
+        cast(ulong)signedQuantity.canonicalValue
+        != ulong.max
+        || signedQuantity.canonicalValue < 0);
+
+    writeln();
     writeln("=== REAL PRE-CALL NARROWING WITNESS ===");
 
-    // On the current qualified real80-like target this is the next represented
-    // real above 1.0L. It is not representable in binary64.
-    static assert(real.mant_dig > double.mant_dig);
+    // real.max is finite in the represented source format on this target but
+    // exceeds binary64 range. The current overload narrows it to double before
+    // quantities-d can classify the represented real source.
+    static assert(real.max > cast(real)double.max);
 
-    const real representedSource =
-        1.0L + real.epsilon;
+    const real representedSource = real.max;
+    assert(representedSource == representedSource);
+    assert(representedSource != real.infinity);
+    assert(cast(double)representedSource == double.infinity);
 
-    assert(representedSource != 1.0L);
-    assert(cast(double)representedSource == 1.0);
-
-    auto converted =
+    auto realConverted =
         representedSource.checkedQuantity!(Length, Metre);
 
     static assert(is(
-        typeof(converted)
+        typeof(realConverted)
         == ConversionResult!(Quantity!(Length, double))));
 
-    assert(converted.hasValue);
-    assert(converted.status == ConversionStatus.exact);
+    writeln("real.max is finite in source format: ",
+        representedSource != real.infinity);
+    writeln("pre-call cast(double) source is infinity: ",
+        cast(double)representedSource == double.infinity);
+    writeln("checkedQuantity status: ", realConverted.status);
 
-    Quantity!(Length, double) q;
-    assert(converted.tryValue(q));
-
-    writeln("represented real source differs from 1.0L: ",
-        representedSource != 1.0L);
-    writeln("pre-call cast(double) source == 1.0: ",
-        cast(double)representedSource == 1.0);
-    writeln("checkedQuantity status: ", converted.status);
-    writeln("stored canonical double == 1.0: ",
-        q.canonicalValue == 1.0);
-
-    // The API reports exact only because the narrowing already happened during
-    // overload argument conversion. This violates the intended represented-
-    // source exactness boundary.
-    assert(q.canonicalValue != cast(double)(representedSource + real.epsilon)
-        || representedSource != cast(real)q.canonicalValue);
+    assert(!realConverted.hasValue);
+    assert(realConverted.status == ConversionStatus.nonFinite);
 
     writeln(
-        "R15 Probe 2 PASS: current real source can lose information "
-        ~ "before checked conversion observes it");
+        "R15 Probe 2 PASS: current overloads can lose or misclassify "
+        ~ "represented source values before checked conversion observes them");
+
 }
