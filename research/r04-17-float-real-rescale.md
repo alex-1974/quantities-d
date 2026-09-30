@@ -279,3 +279,84 @@ quotient denominator <= 64 + 63      = 127 bits
 Thus a real80-specific exact architecture could reuse a 128-bit quotient path
 and a 192-bit product path, but such an implementation remains target/format
 research until a deliberate portability policy is chosen.
+
+
+## Probe 8 — binary32 integration performance and code generation
+
+Probe 8 separates two different questions.
+
+### A. Quantity abstraction overhead
+
+The direct exact binary32 kernel and the equivalent Quantity operation have the
+same represented-source, exact-once-rounded semantics.
+
+Balanced runtime medians:
+
+```text
+DMD 2.111.0
+  product  Quantity/direct = 0.998912
+  quotient Quantity/direct = 0.997503
+
+LDC 1.41.0
+  product  Quantity/direct = 1.00019
+  quotient Quantity/direct = 0.998551
+```
+
+No material Quantity-layer runtime overhead is observed.
+
+Code generation is consistent with earlier R04.15 evidence:
+
+- DMD calls the same exact kernel but retains additional apparently dead
+  `movss` loads around the Quantity wrapper;
+- LDC product wrappers reduce to the same kernel tail call;
+- LDC quotient chooses a different inlining shape for the Quantity wrapper, but
+  the balanced runtime result shows no material penalty.
+
+### B. Exact-kernel cost context
+
+Naive sequential float arithmetic is not semantically equivalent to the R04.17
+contract and is therefore not a performance gate.
+
+For context only, DMD measured:
+
+```text
+product:
+  exact      657704 ticks
+  sequential  14323 ticks
+  ratio       45.9194
+
+quotient:
+  exact      754110 ticks
+  sequential  14334 ticks
+  ratio       52.6099
+```
+
+This quantifies the cost of the stronger represented-source, one-final-rounding
+contract on this workload. It must not be interpreted as a regression against
+an interchangeable implementation, because Probe 3 proves that the sequential
+route can produce a different binary32 result.
+
+The LDC sequential workload fell below the resolution of the process-clock
+measurement (median one tick), so no LDC exact/sequential ratio is retained as
+evidence.
+
+## Binary32 integration conclusion
+
+The binary32 slice now has evidence for:
+
+- fixed structural width bounds;
+- direct binary32 quantization rather than binary64 double-rounding;
+- 12,007 independent exact-rational oracle comparisons per compiler;
+- IEEE special values;
+- runtime-only represented-source CTFE boundary;
+- integration through real Quantity product/quotient semantic relations;
+- compile-negative diagnostics;
+- external consumer behavior;
+- release builds;
+- DMD/LDC abstraction-overhead and code-generation qualification.
+
+The evidence supports selective production promotion of nontrivial binary32
+product/quotient canonical rescale.
+
+The `real` decision remains separate. Current real80 decomposition feasibility
+does not establish a portable all-target `real` contract.
