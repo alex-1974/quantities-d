@@ -1,6 +1,8 @@
 module r15_composed_kernel;
 
 import r15_rescale_kernel : Result, Status, fromBits;
+// Matches ADR 0007 vocabulary; no production API integration.
+enum IntegralRoundingMode { towardZero, floor, ceiling, nearestTiesAway }
 
 private:
 // Private research carrier. Little-endian base-2^32 limbs; no public Rep.
@@ -228,6 +230,69 @@ private Composed compose(ulong significand, bool negative,
 }
 
 public:
+// Probe 12 candidate only: range is checked on the exact unrounded value.
+// Aggregate is deliberately provisional, not a production result carrier.
+struct IntegralResult
+{
+    Status status;
+    bool hasValue;
+    long value;
+}
+
+IntegralResult convertComposedLong(ulong significand, int exponent2, bool negative,
+    long fn, long fd, long tn, long td, bool rounded, IntegralRoundingMode mode)
+    @safe pure nothrow @nogc
+{
+    // Covers all qualified source formats without unbounded exponent arithmetic.
+    assert(exponent2 >= -16445 && exponent2 <= 16383);
+    const r = compose(significand, negative, fn, fd, tn, td);
+    if (significand == 0)
+        return IntegralResult(Status.exact, true, 0);
+    const bound = cast(ulong)long.max + (r.negative ? 1UL : 0UL);
+    if (compareScaled(r.numerator, exponent2,
+        multiplySmall(r.denominator, bound), 0) > 0)
+        return IntegralResult(Status.overflow, false, 0);
+
+    // Find floor of magnitude. Every denominator*trial fits <=189 bits.
+    // Avoid shifting the separated exponent into a potentially huge integer.
+    ulong low = 0, high = bound;
+    while (low < high)
+    {
+        const distance = high - low;
+        const trial = low + distance / 2 + distance % 2;
+        if (compareScaled(r.numerator, exponent2,
+            multiplySmall(r.denominator, trial), 0) >= 0)
+            low = trial;
+        else
+            high = trial - 1;
+    }
+    const exact = low != 0 && compareScaled(r.numerator, exponent2,
+        multiplySmall(r.denominator, low), 0) == 0;
+    if (!exact && !rounded)
+        return IntegralResult(Status.inexact, false, 0);
+    if (!exact)
+    {
+        bool increment;
+        final switch (mode)
+        {
+            case IntegralRoundingMode.towardZero: break;
+            case IntegralRoundingMode.floor: increment = r.negative; break;
+            case IntegralRoundingMode.ceiling: increment = !r.negative; break;
+            case IntegralRoundingMode.nearestTiesAway:
+                // Inexact, in-range => low < bound, hence 2*low+1 fits ulong.
+                increment = compareScaled(r.numerator, exponent2 + 1,
+                    multiplySmall(r.denominator, low * 2UL + 1UL), 0) >= 0;
+                break;
+        }
+        if (increment) ++low;
+    }
+    assert(low <= bound);
+    const value = r.negative
+        ? (low == (1UL << 63) ? long.min : -cast(long)low)
+        : cast(long)low;
+    return IntegralResult(exact ? Status.exact : Status.inexact, true, value);
+}
+
 void composedWidths(ulong sig,long fn,long fd,long tn,long td,
     out int numeratorBits,out int denominatorBits) @safe pure nothrow @nogc
 {
@@ -285,5 +350,4 @@ Result!T convertComposedExact(T)(ulong significand,int exponent2,bool negative,
     }
     return Result!T(exact ? Status.exact : Status.inexact, fromBits!T(sign | bits));
 }
-
 
