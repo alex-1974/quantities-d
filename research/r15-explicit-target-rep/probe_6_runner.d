@@ -24,14 +24,23 @@ private void writeRealResult(RealResult r)
         return;
     }
 
+    ulong sig = p.significand;
+    int exp2 = p.exponent2;
+
+    while ((sig & 1UL) == 0)
+    {
+        sig >>= 1;
+        ++exp2;
+    }
+
     writeln(
         r.status,
         " ",
         p.negative ? 1 : 0,
         " ",
-        p.significand,
+        sig,
         " ",
-        p.exponent2);
+        exp2);
 }
 
 void main()
