@@ -3,7 +3,7 @@ name: R04.17 Real Policy Research
 on:
   push:
     branches:
-      - research/r04-17-float-real-rescale
+      - research/r04-17-real-policy
   workflow_dispatch:
 
 permissions:
@@ -66,3 +66,22 @@ jobs:
             research/r04-17-float-real-rescale/real80_kernel.d \
             -of=/tmp/r04-17-real/probe_10
           /tmp/r04-17-real/probe_10
+
+
+      - name: Repository unit tests with real integration
+        shell: bash
+        run: dub test --compiler="$DC" --force
+
+      - name: Repository compile-negative tests with real integration
+        shell: bash
+        run: bash tests/negative/run.sh "$DC"
+
+      - name: External consumer with real integration
+        shell: bash
+        run: |
+          cd tests/consumer
+          dub run --compiler="$DC" --force
+
+      - name: Release build with real integration
+        shell: bash
+        run: dub build --build=release --compiler="$DC" --force
