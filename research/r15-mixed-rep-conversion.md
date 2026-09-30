@@ -98,3 +98,87 @@ or an alternative policy object / helper.
 
 The public shape will be evaluated only after the pair/status matrix and
 conversion kernels are proven.
+
+
+## Probe 1 result — current overload surface
+
+Both baseline compilers show the same current construction behavior:
+
+```text
+byte   -> Quantity!(Spec, long)
+ubyte  -> Quantity!(Spec, long)
+short  -> Quantity!(Spec, long)
+ushort -> Quantity!(Spec, long)
+int    -> Quantity!(Spec, long)
+uint   -> Quantity!(Spec, long)
+long   -> Quantity!(Spec, long)
+ulong  -> Quantity!(Spec, long)
+
+float  -> Quantity!(Spec, double)
+double -> Quantity!(Spec, double)
+real   -> Quantity!(Spec, double)
+```
+
+Only `long` and `double` have explicit public construction overloads.
+The additional source types are admitted by D function-argument conversions
+before quantities-d sees the represented source value.
+
+Extraction does not have the same accidental widening:
+
+```text
+Quantity!(Spec, long).checkedIn   -> available
+Quantity!(Spec, float).checkedIn  -> unavailable
+Quantity!(Spec, double).checkedIn -> available
+Quantity!(Spec, real).checkedIn   -> unavailable
+```
+
+This demonstrates that source Rep and target Rep are not yet explicit
+independent parameters in the public conversion model.
+
+## Probe 2 result — pre-kernel source loss
+
+The accidental overload admission is not merely an API-shape issue.
+
+A concrete signedness witness on DMD 2.111 shows:
+
+```text
+ulong.max source:        18446744073709551615
+stored signed canonical: -1
+checkedQuantity status:  exact
+```
+
+The represented `ulong` source is converted to `long` before the checked
+conversion kernel is called. quantities-d therefore reports exactness for the
+already-corrupted argument rather than for the caller's represented source
+value.
+
+This violates the accepted ADR 0005 / ADR 0007 boundary:
+
+> checked conversion status must describe the requested conversion of the
+> represented source value; source loss must not occur before status
+> classification.
+
+The same structural problem exists for `real -> double`: on real formats wider
+than binary64, overload argument conversion can narrow the represented source
+before quantities-d can classify exactness, overflow, or non-finite state.
+
+The exact runtime manifestation of a particular out-of-binary64 real value is
+compiler/evaluation-context sensitive because D floating expressions may retain
+excess precision. That reinforces rather than weakens the contract requirement:
+the public entry point must receive the actual SourceRep explicitly instead of
+depending on an implicit parameter conversion.
+
+## Immediate consequence
+
+R15 discovered a production bug before defining any new mixed-Rep API.
+
+Issue #44 tracks the repair. The minimal fix is intentionally separate from the
+future conversion design:
+
+- preserve only the explicitly implemented `long` and `double` construction
+  source Reps;
+- reject other source Reps before D can implicitly narrow/widen them;
+- do not add a TargetRep API as part of the bugfix;
+- resume R15 pair/API research from that explicit-source baseline.
+
+This repair is a prerequisite for trustworthy mixed-Rep conversion research.
