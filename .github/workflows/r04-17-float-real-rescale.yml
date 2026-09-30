@@ -44,3 +44,18 @@ jobs:
           mkdir -p /tmp/r04-17
           "$DC"             -Isource -i             research/r04-17-float-real-rescale/probe_1_3.d             -of=/tmp/r04-17/probe_1_3
           /tmp/r04-17/probe_1_3
+
+
+      - name: Probe 4 exact binary32 oracle
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" -Isource -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_4_runner.d \
+            research/r04-17-float-real-rescale/binary32_kernel.d \
+            -of=/tmp/r04-17/probe_4
+
+          python3 \
+            research/r04-17-float-real-rescale/probe_4_oracle.py \
+            /tmp/r04-17/probe_4 \
+            /tmp/r04-17/cases.txt
