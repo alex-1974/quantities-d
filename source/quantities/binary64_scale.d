@@ -440,6 +440,301 @@ struct ExactRational128
     bool negative;
 }
 
+struct UInt192
+{
+    ulong lo;
+    ulong mid;
+    ulong hi;
+}
+
+struct ExactRational192
+{
+    UInt192 numerator;
+    ulong denominator;
+    int exponent2;
+    bool negative;
+}
+
+@safe pure nothrow @nogc
+UInt192 fromUlong192(ulong value)
+{
+    return UInt192(value, 0, 0);
+}
+
+@safe pure nothrow @nogc
+UInt192 fromCent192(Cent value)
+{
+    return UInt192(value.lo, value.hi, 0);
+}
+
+@safe pure nothrow @nogc
+int compare192(UInt192 a, UInt192 b)
+{
+    if (a.hi < b.hi) return -1;
+    if (a.hi > b.hi) return 1;
+    if (a.mid < b.mid) return -1;
+    if (a.mid > b.mid) return 1;
+    if (a.lo < b.lo) return -1;
+    if (a.lo > b.lo) return 1;
+    return 0;
+}
+
+@safe pure nothrow @nogc
+UInt192 subtract192(UInt192 a, UInt192 b)
+{
+    assert(compare192(a, b) >= 0);
+
+    const borrow0 = a.lo < b.lo ? 1UL : 0UL;
+    const lo = a.lo - b.lo;
+
+    const midSub = b.mid + borrow0;
+    const midCarry = midSub < b.mid ? 1UL : 0UL;
+    const borrow1 = (a.mid < midSub || midCarry != 0) ? 1UL : 0UL;
+    const mid = a.mid - midSub;
+
+    return UInt192(
+        lo,
+        mid,
+        a.hi - b.hi - borrow1);
+}
+
+@safe pure nothrow @nogc
+UInt192 shiftLeft192(UInt192 value, int shift)
+{
+    assert(shift >= 0);
+
+    foreach (_; 0 .. shift)
+    {
+        assert((value.hi & (1UL << 63)) == 0);
+        value.hi = (value.hi << 1) | (value.mid >> 63);
+        value.mid = (value.mid << 1) | (value.lo >> 63);
+        value.lo <<= 1;
+    }
+
+    return value;
+}
+
+@safe pure nothrow @nogc
+int bitLength192(UInt192 value)
+{
+    if (value.hi != 0)
+        return 128 + bitLength(value.hi);
+    if (value.mid != 0)
+        return 64 + bitLength(value.mid);
+    return bitLength(value.lo);
+}
+
+@safe pure nothrow @nogc
+UInt192 multiplyCentUlong192(Cent a, ulong b)
+{
+    const p0 = mul(
+        fromUlong128(a.lo),
+        fromUlong128(b));
+    const p1 = mul(
+        fromUlong128(a.hi),
+        fromUlong128(b));
+
+    const mid = p0.hi + p1.lo;
+    const carry = mid < p0.hi ? 1UL : 0UL;
+    const hi = p1.hi + carry;
+
+    assert(hi >= p1.hi);
+
+    return UInt192(
+        p0.lo,
+        mid,
+        hi);
+}
+
+struct Normalized192Ratio
+{
+    UInt192 numerator;
+    UInt192 denominator;
+    int exponent2;
+}
+
+@safe pure nothrow @nogc
+Normalized192Ratio normalize192Ratio(
+    UInt192 numerator,
+    ulong denominator)
+{
+    assert(bitLength192(numerator) != 0);
+    assert(denominator != 0);
+
+    int exponent2 =
+        bitLength192(numerator) -
+        bitLength(denominator);
+
+    UInt192 a;
+    UInt192 b;
+
+    if (exponent2 >= 0)
+    {
+        a = numerator;
+        b = shiftLeft192(
+            fromUlong192(denominator),
+            exponent2);
+    }
+    else
+    {
+        a = shiftLeft192(
+            numerator,
+            -exponent2);
+        b = fromUlong192(denominator);
+    }
+
+    if (compare192(a, b) < 0)
+    {
+        --exponent2;
+
+        if (exponent2 >= 0)
+        {
+            a = numerator;
+            b = shiftLeft192(
+                fromUlong192(denominator),
+                exponent2);
+        }
+        else
+        {
+            a = shiftLeft192(
+                numerator,
+                -exponent2);
+            b = fromUlong192(denominator);
+        }
+    }
+
+    assert(compare192(a, b) >= 0);
+
+    return Normalized192Ratio(a, b, exponent2);
+}
+
+@safe pure nothrow @nogc
+ulong roundedNormalizedSignificand192(
+    UInt192 numerator,
+    UInt192 denominator,
+    int fractionBits)
+{
+    assert(fractionBits >= 0 && fractionBits <= 52);
+    assert(compare192(numerator, denominator) >= 0);
+
+    ulong result = 1UL << fractionBits;
+    UInt192 remainder = subtract192(
+        numerator,
+        denominator);
+
+    foreach (i; 0 .. fractionBits)
+    {
+        remainder = shiftLeft192(remainder, 1);
+
+        if (compare192(remainder, denominator) >= 0)
+        {
+            result |= 1UL << (fractionBits - 1 - i);
+            remainder = subtract192(
+                remainder,
+                denominator);
+        }
+    }
+
+    const doubledRemainder =
+        shiftLeft192(remainder, 1);
+    const cmp = compare192(
+        doubledRemainder,
+        denominator);
+
+    if (cmp > 0 || (cmp == 0 && (result & 1UL) != 0))
+        ++result;
+
+    return result;
+}
+
+@safe pure nothrow @nogc
+double quantizeExactBinary64(ExactRational192 exact)
+{
+    assert(bitLength192(exact.numerator) != 0);
+    assert(exact.denominator != 0);
+
+    const normalized = normalize192Ratio(
+        exact.numerator,
+        exact.denominator);
+
+    int topExponent =
+        exact.exponent2 +
+        normalized.exponent2;
+
+    const signBits =
+        exact.negative ? (1UL << 63) : 0UL;
+
+    if (topExponent > 1023)
+        return binary64FromBits(
+            signBits | (0x7ffUL << 52));
+
+    if (topExponent >= -1022)
+    {
+        ulong significand =
+            roundedNormalizedSignificand192(
+                normalized.numerator,
+                normalized.denominator,
+                52);
+
+        if (significand == (1UL << 53))
+        {
+            significand >>= 1;
+            ++topExponent;
+
+            if (topExponent > 1023)
+                return binary64FromBits(
+                    signBits | (0x7ffUL << 52));
+        }
+
+        const exponentField =
+            cast(ulong)(topExponent + 1023);
+        const fraction =
+            significand - (1UL << 52);
+
+        return binary64FromBits(
+            signBits |
+            (exponentField << 52) |
+            fraction);
+    }
+
+    const quantumPower = topExponent + 1074;
+    ulong quanta;
+
+    if (quantumPower < -1)
+    {
+        quanta = 0;
+    }
+    else if (quantumPower == -1)
+    {
+        quanta =
+            compare192(
+                normalized.numerator,
+                normalized.denominator) == 0
+                ? 0UL
+                : 1UL;
+    }
+    else
+    {
+        assert(quantumPower <= 51);
+        quanta =
+            roundedNormalizedSignificand192(
+                normalized.numerator,
+                normalized.denominator,
+                quantumPower);
+    }
+
+    if (quanta == 0)
+        return binary64FromBits(signBits);
+
+    if (quanta == (1UL << 52))
+        return binary64FromBits(
+            signBits | (1UL << 52));
+
+    assert(quanta < (1UL << 52));
+    return binary64FromBits(signBits | quanta);
+}
+
+
 struct NormalizedCentRatio
 {
     Cent numerator;
@@ -687,6 +982,68 @@ double quantizeExactBinary64(ExactRational128 exact)
 }
 
 @safe pure nothrow @nogc
+ExactRational192 productExactBinary64(
+    Binary64Exact lhs,
+    Binary64Exact rhs,
+    ulong scaleNumerator,
+    ulong scaleDenominator)
+{
+    assert(lhs.significand != 0);
+    assert(rhs.significand != 0);
+    assert(scaleNumerator != 0);
+    assert(scaleDenominator != 0);
+
+    ulong x = lhs.significand;
+    ulong y = rhs.significand;
+    ulong n = scaleNumerator;
+    ulong d = scaleDenominator;
+
+    cancel(x, d);
+    cancel(y, d);
+    cancel(n, d);
+
+    const xy = mul(
+        fromUlong128(x),
+        fromUlong128(y));
+    const numerator =
+        multiplyCentUlong192(xy, n);
+
+    // R04.15 structural bounds for represented binary64 operands and the
+    // current ExactRatio range are <=169 numerator bits and <=63 denominator
+    // bits after exact cancellation.
+    assert(bitLength192(numerator) <= 169);
+    assert(bitLength(d) <= 63);
+
+    return ExactRational192(
+        numerator,
+        d,
+        lhs.exponent2 + rhs.exponent2,
+        lhs.negative != rhs.negative);
+}
+
+@safe pure nothrow @nogc
+double quantizeProductBinary64(ExactRational192 exact)
+{
+    // Conservative fast-path threshold established by R04.15 Probe 8D-P.
+    // The value is already exact; narrowing here changes representation only.
+    if (bitLength192(exact.numerator) <= 127)
+    {
+        assert(exact.numerator.hi == 0);
+
+        return quantizeExactBinary64(
+            ExactRational128(
+                Cent(
+                    exact.numerator.lo,
+                    exact.numerator.mid),
+                fromUlong128(exact.denominator),
+                exact.exponent2,
+                exact.negative));
+    }
+
+    return quantizeExactBinary64(exact);
+}
+
+@safe pure nothrow @nogc
 ExactRational128 quotientExactBinary64(
     Binary64Exact lhs,
     Binary64Exact rhs,
@@ -760,6 +1117,46 @@ Binary64ScaleResult scaleBinary64(
 
     const negative = source.negative != (numerator < 0);
     return Binary64ScaleResult(rebuild(negative, scaled), false);
+}
+
+/// Evaluate (lhs * rhs) * numerator / denominator from the represented
+/// binary64 operands as one exact rational expression and round exactly once.
+///
+/// Finite nonzero inputs use the R04.15 Cent fast path / UInt192 fallback.
+/// IEEE special values retain native product behavior. Nontrivial represented-
+/// source rescale is intentionally runtime-only.
+@safe pure nothrow @nogc
+double rescaleProductBinary64(
+    double lhs,
+    double rhs,
+    long numerator,
+    long denominator)
+{
+    assert(numerator > 0);
+    assert(denominator > 0);
+
+    if (__ctfe)
+    {
+        assert(false,
+            "quantities-d: nontrivial binary64 product rescale "
+            ~ "requires runtime represented-source semantics");
+    }
+
+    if (!binary64Finite(lhs)
+        || !binary64Finite(rhs)
+        || binary64Zero(lhs)
+        || binary64Zero(rhs))
+    {
+        return lhs * rhs;
+    }
+
+    const exact = productExactBinary64(
+        decompose(lhs),
+        decompose(rhs),
+        cast(ulong)numerator,
+        cast(ulong)denominator);
+
+    return quantizeProductBinary64(exact);
 }
 
 /// Evaluate (lhs / rhs) * numerator / denominator from the represented
@@ -928,6 +1325,59 @@ double rescaleQuotientBinary64(
     const tenth = scaleBinary64(1.0, 1, 10);
     assert(!tenth.overflow);
     assert(tenth.value == 0.1);
+
+    // R04.15 product: evaluating the native product first overflows, while
+    // the exact joint expression (double.max * 2) * 1/2 is double.max.
+    const productOverflowAvoided =
+        rescaleProductBinary64(
+            double.max,
+            2.0,
+            1,
+            2);
+    assert(productOverflowAvoided == double.max);
+
+    // Scaling one operand first can underflow even though the joint exact
+    // result is one minimum subnormal.
+    const productUnderflowAvoided =
+        rescaleProductBinary64(
+            minSubnormal,
+            2.0,
+            1,
+            2);
+    assert(productUnderflowAvoided == minSubnormal);
+
+    const productSimple =
+        rescaleProductBinary64(
+            1.5,
+            2.0,
+            2,
+            3);
+    assert(productSimple == 2.0);
+
+    const productOverflow =
+        rescaleProductBinary64(
+            double.max,
+            2.0,
+            1,
+            1);
+    assert(productOverflow == double.infinity);
+
+    const productNaN =
+        rescaleProductBinary64(
+            double.infinity,
+            0.0,
+            2,
+            3);
+    assert(productNaN != productNaN);
+
+    const productNegativeZero =
+        rescaleProductBinary64(
+            -0.0,
+            2.0,
+            2,
+            3);
+    assert(productNegativeZero == 0.0);
+    assert((binary64Bits(productNegativeZero) >> 63) == 1);
 
     // R04.15: nontrivial quotient rescale is evaluated jointly and rounded
     // once. Sequential quotient-first evaluation overflows here.
