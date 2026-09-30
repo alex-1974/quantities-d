@@ -47,7 +47,9 @@ jobs:
 
       - name: External consumer
         shell: bash
-        run: bash ./tests/consumer/run.sh "$DC"
+        run: |
+          cd tests/consumer
+          dub run --compiler="$DC" --force
 
       - name: Release build
         shell: bash
