@@ -1083,6 +1083,69 @@ ExactRational128 quotientExactBinary64(
 }
 
 
+package(quantities):
+/// True iff the exact finite value
+///
+///   value * numerator / denominator
+///
+/// lies outside the finite binary64 magnitude range. This is the conversion
+/// contract's mathematical range check; it is deliberately distinct from the
+/// IEEE round-to-nearest overflow-midpoint behavior used by scaleBinary64.
+@safe pure nothrow @nogc
+bool scaledMagnitudeExceedsBinary64FiniteRange(
+    double value,
+    long numerator,
+    long denominator)
+{
+    assert(denominator > 0);
+    assert(value == value);
+    assert(value <= double.max);
+    assert(value >= -double.max);
+
+    if (value == 0.0 || numerator == 0)
+        return false;
+
+    const source = decompose(value);
+    const numeratorMagnitude =
+        numerator < 0
+        ? cast(ulong)(-(numerator + 1)) + 1UL
+        : cast(ulong)numerator;
+
+    Cent lhs = mul(
+        fromUlong128(source.significand),
+        fromUlong128(numeratorMagnitude));
+
+    // double.max == (2^53 - 1) * 2^971.
+    Cent rhs = mul(
+        fromUlong128(cast(ulong)denominator),
+        fromUlong128((1UL << 53) - 1UL));
+
+    const shift = 971 - source.exponent2;
+
+    if (shift > 0)
+    {
+        bool overflow;
+        rhs = shlCent(rhs, shift, overflow);
+
+        // lhs is at most 116 bits. If the finite-range boundary cannot fit
+        // into Cent after alignment, it is necessarily larger than lhs.
+        if (overflow)
+            return false;
+    }
+    else if (shift < 0)
+    {
+        bool overflow;
+        lhs = shlCent(lhs, -shift, overflow);
+
+        // Conversely, an aligned lhs that exceeds Cent is necessarily larger
+        // than the finite binary64 boundary.
+        if (overflow)
+            return true;
+    }
+
+    return centGreater(lhs, rhs);
+}
+
 public:
 @safe pure nothrow @nogc
 Binary64ScaleResult scaleBinary64(
@@ -1295,6 +1358,28 @@ double rescaleQuotientBinary64(
         18014398509481984L);
     assert(!negativeAboveNormalMidpoint.overflow);
     assert(negativeAboveNormalMidpoint.value == -double.min_normal);
+
+    assert(!scaledMagnitudeExceedsBinary64FiniteRange(
+        double.max, 1, 1));
+    assert(!scaledMagnitudeExceedsBinary64FiniteRange(
+        -double.max, 1, 1));
+
+    enum long rangeDenominator = 1L << 62;
+    enum long rangeNumerator = rangeDenominator + 1L;
+
+    assert(scaledMagnitudeExceedsBinary64FiniteRange(
+        double.max,
+        rangeNumerator,
+        rangeDenominator));
+    assert(scaledMagnitudeExceedsBinary64FiniteRange(
+        -double.max,
+        rangeNumerator,
+        rangeDenominator));
+
+    assert(!scaledMagnitudeExceedsBinary64FiniteRange(
+        double.max,
+        rangeDenominator - 1L,
+        rangeDenominator));
 
     const trueOverflow = scaleBinary64(double.max, 2, 1);
     assert(trueOverflow.overflow);
