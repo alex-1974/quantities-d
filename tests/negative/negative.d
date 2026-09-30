@@ -219,6 +219,27 @@ version (M3ClassOMultiplication)
         * ulong.max;
 }
 
+version (M3UnsafeIntFloatScalarMultiplication)
+{
+    enum x =
+        1.quantity!(production.Length, production.Metre)
+        * 0.5f;
+}
+
+version (M3UnsafeLongDoubleScalarMultiplication)
+{
+    enum x =
+        long.max.quantity!(production.Length, production.Metre)
+        * 0.5;
+}
+
+version (M3UnsafeRightLongDoubleScalarMultiplication)
+{
+    enum x =
+        0.5
+        * long.max.quantity!(production.Length, production.Metre);
+}
+
 
 version (M3NonScalableExactDivision)
 {
