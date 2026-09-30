@@ -261,9 +261,30 @@ The first production promotion from this ADR may include:
 - native identity-rescale paths;
 - nontrivial represented-source exact rescale for `double` only.
 
-Scalar division remains a separate API-surface decision. R04.15 proved it is
-technically feasible, but feasibility alone does not establish that it belongs
-in the first public promotion.
+Scalar division was deliberately left for a separate API-surface decision in
+R04.15.
+
+R04.16 subsequently qualified and promoted `Quantity / scalar` for scalable
+Specs under the existing floating representation-admission policy.
+
+The accepted follow-up contract is:
+
+- `Quantity / scalar` only;
+- `isScalableValue!Spec` remains the semantic gate;
+- floating/floating and safely admitted mixed integral/floating forms use
+  `QuotientArithmeticRep!(Rep, Scalar)`;
+- the result preserves the same Spec and canonical storage;
+- ordinary native floating division supplies IEEE and CTFE semantics;
+- integral/integral direct scalar division remains unavailable and continues to
+  use the named `exactDiv(quantity, scalar)` API;
+- `scalar / Quantity` remains unavailable because it changes physical
+  semantics and would require an explicit reciprocal ResultSpec.
+
+R04.16 passed unit, compile-negative, external-consumer, release-build, and
+optimized-code-generation qualification on DMD 2.111.0 and LDC 1.41.0. LDC
+emitted an instruction-identical `divsd` leaf relative to the scalar
+reference. DMD repeated the already-qualified R04.15 pattern of the same
+floating operation plus one additional apparently dead `movsd` load.
 
 ## Explicitly deferred
 
