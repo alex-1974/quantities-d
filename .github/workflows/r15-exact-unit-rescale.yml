@@ -1,0 +1,27 @@
+name: R15 Exact Unit Rescale Research
+on:
+  push:
+    branches: [research/r15-exact-unit-rescale]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  oracle:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [dmd-2.111.0, ldc-1.41.0]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Versions
+        run: |
+          "$DC" --version
+          python3 --version
+      - name: Probe 10 exact scale and direct TargetRep
+        run: |
+          "$DC" -Iresearch/r15-exact-unit-rescale research/r15-exact-unit-rescale/runner.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-10
+          python3 research/r15-exact-unit-rescale/oracle.py /tmp/r15-probe-10
