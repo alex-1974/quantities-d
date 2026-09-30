@@ -2,7 +2,10 @@ module quantities.quantity;
 
 import std.traits : isIntegral;
 
-import quantities.arithmetic_rep : AddRep, MulRep, SubRep;
+import quantities.arithmetic_rep :
+    AddArithmeticRep,
+    MulRep,
+    SubArithmeticRep;
 import quantities.arithmetic_traits :
     AddResult,
     ProductCanonicalRescale,
@@ -42,13 +45,11 @@ public:
     auto opBinary(string op, OtherSpec, OtherRep)(
         Quantity!(OtherSpec, OtherRep) rhs) const
         if (op == "+" &&
-            isIntegral!Rep &&
-            isIntegral!OtherRep &&
             !is(AddResult!(Spec, OtherSpec) == void) &&
-            !is(AddRep!(Rep, OtherRep) == void))
+            !is(AddArithmeticRep!(Rep, OtherRep) == void))
     {
         alias ResultSpec = AddResult!(Spec, OtherSpec);
-        alias ResultRep = AddRep!(Rep, OtherRep);
+        alias ResultRep = AddArithmeticRep!(Rep, OtherRep);
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ +
@@ -59,13 +60,11 @@ public:
     auto opBinary(string op, OtherSpec, OtherRep)(
         Quantity!(OtherSpec, OtherRep) rhs) const
         if (op == "-" &&
-            isIntegral!Rep &&
-            isIntegral!OtherRep &&
             !is(SubResult!(Spec, OtherSpec) == void) &&
-            !is(SubRep!(Rep, OtherRep) == void))
+            !is(SubArithmeticRep!(Rep, OtherRep) == void))
     {
         alias ResultSpec = SubResult!(Spec, OtherSpec);
-        alias ResultRep = SubRep!(Rep, OtherRep);
+        alias ResultRep = SubArithmeticRep!(Rep, OtherRep);
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ -
@@ -189,6 +188,71 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     static assert(!__traits(compiles,
         long.max.quantity!(Length, Metre)
             + long.max.quantity!(Length, Metre)));
+
+    // Floating/floating addition and subtraction follow native D promotion.
+    enum floatingLhs =
+        1.25f.quantity!(Length, Metre);
+    enum floatingRhs =
+        2.5.quantity!(Length, Metre);
+    enum floatingSum =
+        floatingLhs + floatingRhs;
+    enum floatingDifference =
+        floatingRhs - floatingLhs;
+
+    static assert(is(
+        typeof(floatingSum)
+        == Quantity!(Length, double)));
+    static assert(is(
+        typeof(floatingDifference)
+        == Quantity!(Length, double)));
+    static assert(
+        floatingSum.canonicalValue
+        == 3.75);
+    static assert(
+        floatingDifference.canonicalValue
+        == 1.25);
+
+    // Mixed arithmetic is admitted only when the complete integral Rep domain
+    // is exactly representable in the floating ResultRep.
+    enum shortFloatingSum =
+        (cast(short)32_767).quantity!(Length, Metre)
+        + 0.5f.quantity!(Length, Metre);
+    static assert(is(
+        typeof(shortFloatingSum)
+        == Quantity!(Length, float)));
+    static assert(
+        shortFloatingSum.canonicalValue
+        == 32_767.5f);
+
+    enum intDoubleSum =
+        int.max.quantity!(Length, Metre)
+        + 0.5.quantity!(Length, Metre);
+    static assert(is(
+        typeof(intDoubleSum)
+        == Quantity!(Length, double)));
+    static assert(
+        intDoubleSum.canonicalValue
+        == 2_147_483_647.5);
+
+    enum doubleIntDifference =
+        0.5.quantity!(Length, Metre)
+        - int.max.quantity!(Length, Metre);
+    static assert(is(
+        typeof(doubleIntDifference)
+        == Quantity!(Length, double)));
+    static assert(
+        doubleIntDifference.canonicalValue
+        == -2_147_483_646.5);
+
+    static assert(!__traits(compiles,
+        1.quantity!(Length, Metre)
+            + 0.5f.quantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        long.max.quantity!(Length, Metre)
+            + 0.5.quantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        0.5.quantity!(Length, Metre)
+            - long.max.quantity!(Length, Metre)));
 
     struct Radius
     {
