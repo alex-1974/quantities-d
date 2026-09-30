@@ -5,7 +5,7 @@ import std.algorithm : sort;
 import std.stdio : writeln;
 import quantities;
 
-alias Kernel = double function(double, double) @safe pure nothrow @nogc;
+alias Kernel = extern(C) double function(double, double) @safe pure nothrow @nogc;
 
 extern(C):
 
