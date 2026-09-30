@@ -1,6 +1,6 @@
 # R15 Probe 12 — exact rational source to long with explicit rounding
 
-Status: research candidate; validation pending. Issue #42.
+Status: candidate kernel validated on both baseline compilers; not promoted. Issue #42.
 
 ## Scope and policy
 
@@ -64,4 +64,18 @@ cost. Unsigned targets and public mixed-Rep API integration remain outside scope
 
 ## Results
 
-Pending DMD 2.111.0 and LDC 1.41.0 CI comparison.
+Tested code commit: `72443c71c5077d01a58fcbf777fb4954aa370334`.
+CI: https://github.com/alex-1974/quantities-d/actions/runs/36776063293.
+
+DMD 2.111.0 and LDC 1.41.0 each passed all 20,560 Probe 12 comparisons with
+zero mismatches: 3,850 exact, 9,836 inexact, 6,874 overflow. Checked payload
+absence and rounded payload values are included in the comparison. The safe,
+pure, nothrow, nogc consumer and the explicit-tuple CTFE long.min check passed.
+Probe 10 (20,960 comparisons) and Probe 11 (20,034 comparisons) also passed
+unchanged on each compiler. These are default-build research runs; no release
+performance or arbitrary-source CTFE claim follows.
+
+Next: connect exact represented floating-source decomposition and nonFinite
+classification to this composed integral kernel, then qualify source deduction,
+negative constraints and the invariant-owning result/API candidate. The mixed-Rep
+boundary policy remains an explicit promotion decision.
