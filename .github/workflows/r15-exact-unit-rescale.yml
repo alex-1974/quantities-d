@@ -25,3 +25,7 @@ jobs:
         run: |
           "$DC" -Iresearch/r15-exact-unit-rescale research/r15-exact-unit-rescale/runner.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-10
           python3 research/r15-exact-unit-rescale/oracle.py /tmp/r15-probe-10
+      - name: Probe 11 exact composed Unit scales
+        run: |
+          "$DC" -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale research/r15-composed-unit-rescale/runner.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-11
+          python3 research/r15-composed-unit-rescale/oracle.py /tmp/r15-probe-11
