@@ -185,3 +185,97 @@ R04.17 Probe 4 PASS:
 
 This validates the single-U128 binary32 architecture before IEEE-special,
 CTFE, and performance qualification.
+
+
+## Probe 5 — IEEE special values
+
+The binary32 dispatcher was exercised over representative +0, -0, finite
+subnormal, finite normal, +Inf, -Inf, and NaN values.
+
+For cases where at least one operand is zero, infinity, or NaN, the research
+kernel delegates to the native operation before applying any exact finite
+kernel.
+
+Both baseline compilers passed:
+
+```text
+product special cases:  65
+quotient special cases: 65
+R04.17 Probe 5 PASS
+```
+
+NaN is compared by classification. Infinity and signed zero preserve the native
+sign/bit result.
+
+## Probe 6 — CTFE boundary
+
+The binary32 result follows the same path-specific CTFE distinction established
+for binary64:
+
+```text
+native / identity-rescale float arithmetic
+    -> ordinary D semantics
+    -> CTFE-capable
+
+nontrivial represented-source binary32 rescale
+    -> exact represented float semantics
+    -> one final binary32 rounding
+    -> runtime-only
+    -> deliberate CTFE rejection
+```
+
+DMD 2.111 and LDC 1.41 both pass the positive native CTFE probe and reject the
+represented-source product/quotient probes with the intentional R04.17
+diagnostics.
+
+## Probe 7 — layout-free current real80 decomposition
+
+The current x86-64 baseline reports:
+
+```text
+real:
+    sizeof   = 16
+    mant_dig = 64
+    min_exp  = -16381
+    max_exp  = 16384
+```
+
+A research probe decomposes finite nonzero `real` values without inspecting
+their byte layout:
+
+```text
+fraction, exponent = frexp(value)
+significand        = fraction * 2^real.mant_dig
+exponent2          = exponent - real.mant_dig
+reconstruct        = ldexp(significand, exponent2)
+```
+
+For formats with `real.mant_dig <= 64`, the significand fits a `ulong`.
+
+Fixed boundary values and 20,000 generated full-significand values round-trip
+exactly under both baseline compilers:
+
+```text
+R04.17 Probe 7 PASS:
+layout-free real decomposition round-trips on current <=64-bit significand format
+```
+
+This demonstrates feasibility for the current real80 property set without
+hard-coding the x87 storage layout.
+
+It is not a portable `real` production decision. D permits other real formats.
+In particular, a binary128-like `real` has a 113-bit significand and cannot use
+the same `ulong` decomposition carrier.
+
+The structural exact-width implications for the current 64-bit-significand
+format are:
+
+```text
+product numerator    <= 64 + 64 + 63 = 191 bits
+quotient numerator   <= 64 + 63      = 127 bits
+quotient denominator <= 64 + 63      = 127 bits
+```
+
+Thus a real80-specific exact architecture could reuse a 128-bit quotient path
+and a 192-bit product path, but such an implementation remains target/format
+research until a deliberate portability policy is chosen.
