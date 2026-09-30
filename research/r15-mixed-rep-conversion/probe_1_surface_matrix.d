@@ -56,7 +56,7 @@ void main()
 
         writeln(
             "float source currently resolves to: "
-            "ConversionResult!(Quantity!(Length, double))");
+            ~ "ConversionResult!(Quantity!(Length, double))");
     }
 
     static if (realConstructionCompiles)
