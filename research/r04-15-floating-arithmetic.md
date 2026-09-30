@@ -856,3 +856,55 @@ full current product domain still requires up to 169 bits before final
 rounding. Product research should therefore proceed with a deliberately wider
 internal representation rather than forcing the quotient architecture to grow
 beyond its proven requirement.
+
+
+## Probe 8C2-B1 — complete UInt192 product kernel
+
+Oracle SHA-256:
+`14146d2d7690ae1c2c7d247567a51d8c2b7b6f4b1032773c942cc4c2ea4d8016`
+
+D source SHA-256:
+`86ee6dd33df68ab0819b33f8b5a51d69a588110d17cb2765f2bd7bad63318d9f`
+
+Probe 8C2-B1 implemented a deliberately minimal internal `UInt192` for the
+full floating product path. Required operations were limited to construction,
+comparison, subtraction, shifts, bit length, and exact 128x64-to-192
+multiplication.
+
+Both baseline compilers passed with identical results:
+
+```text
+checked             : 11284
+mismatches          : 0
+max numerator bits  : 169
+max denominator bits: 63
+```
+
+The constructed structural maximum `(2^53 - 1)^2 * long.max` reached exactly
+169 bits.
+
+### Conclusion
+
+The complete current binary64 product domain with nontrivial exact rational
+canonical rescaling is feasible with:
+
+```text
+numerator      : UInt192 (<=169 bits used)
+denominator    : ulong   (<=63 bits)
+binary exponent: int
+sign           : bool
+```
+
+and one final round-to-nearest/ties-to-even binary64 quantization.
+
+Together with Probe 8C2-A2b-Q, correctness feasibility is now established for
+both operations:
+
+```text
+quotient: Cent / Cent * 2^e, <=116/116 bits
+product : UInt192 / ulong * 2^e, <=169/63 bits
+```
+
+The remaining choice is architectural/performance-oriented: retain separate
+narrow/wide kernels, share a UInt192 quantizer, or dispatch between them.
+That choice requires generated-code, runtime, code-size, and CTFE evidence.
