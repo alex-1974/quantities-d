@@ -4,6 +4,7 @@ import quantities;
 
 void main()
 {
+    mathematicalRangeRegression();
     enum canonical = 1.25.quantity!(Length, Metre);
     static assert(canonical.canonicalValue == 1.25);
     static assert(canonical.inUnit!Metre == 1.25);
@@ -608,4 +609,30 @@ void main()
 
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
     static assert(Quantity!(Length, long).sizeof == long.sizeof);
+}
+
+@safe pure nothrow @nogc
+void mathematicalRangeRegression()
+{
+    enum long d = 1L << 62;
+    alias AboveMetre = DerivedUnit!(LengthDimension, ExactRatio!(d + 1, d));
+    alias BelowMetre = DerivedUnit!(LengthDimension, ExactRatio!(d, d + 1));
+
+    const double[2] sources = [double.max, -double.max];
+    foreach (source; sources)
+    {
+        const made = source.checkedQuantity!(Length, AboveMetre);
+        assert(!made.hasValue && made.status == ConversionStatus.overflow);
+
+        double storedSource = source;
+        auto q = storedSource.quantity!(Length, Metre);
+        const read = q.checkedIn!BelowMetre;
+        assert(!read.hasValue && read.status == ConversionStatus.overflow);
+
+        ExactFailure failure;
+        const exactMade = source.exactQuantity!(Length, AboveMetre);
+        assert(exactMade.tryFailure(failure) && failure == ExactFailure.overflow);
+        const exactRead = q.exactIn!BelowMetre;
+        assert(exactRead.tryFailure(failure) && failure == ExactFailure.overflow);
+    }
 }
