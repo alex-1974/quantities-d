@@ -631,6 +631,25 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         reverseMixedScalarQuotient.canonicalValue
         == 1.5);
 
+    // Native floating scalar division keeps ordinary IEEE behavior and CTFE.
+    enum scalarPositiveInfinity =
+        1.0.quantity!(Length, Metre) / 0.0;
+    static assert(
+        scalarPositiveInfinity.canonicalValue
+        == double.infinity);
+
+    enum scalarNegativeInfinity =
+        1.0.quantity!(Length, Metre) / -0.0;
+    static assert(
+        scalarNegativeInfinity.canonicalValue
+        == -double.infinity);
+
+    enum scalarNaN =
+        0.0.quantity!(Length, Metre) / 0.0;
+    static assert(
+        scalarNaN.canonicalValue
+        != scalarNaN.canonicalValue);
+
     static assert(!__traits(compiles,
         6.quantity!(Length, Metre) / 3));
     static assert(!__traits(compiles,
