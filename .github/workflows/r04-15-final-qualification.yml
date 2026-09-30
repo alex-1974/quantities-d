@@ -39,6 +39,8 @@ jobs:
           objdump --version | head -1
 
       - name: Probe 9 optimized native codegen
+        id: codegen
+        continue-on-error: true
         shell: bash
         run: |
           mkdir -p /tmp/r04-15-final
@@ -53,6 +55,20 @@ jobs:
           esac
 
           python3             research/r04-15-final-qualification/compare_codegen.py             /tmp/r04-15-final/codegen.o
+
+      - name: Probe 9B runtime materiality
+        shell: bash
+        run: |
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off                 -Isource -i                 research/r04-15-final-qualification/runtime_codegen.d                 -of=/tmp/r04-15-final/runtime-codegen
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off                 -Isource -i                 research/r04-15-final-qualification/runtime_codegen.d                 -of=/tmp/r04-15-final/runtime-codegen
+              ;;
+          esac
+
+          /tmp/r04-15-final/runtime-codegen
 
       - name: Probe 10 compile-time impact
         shell: bash
