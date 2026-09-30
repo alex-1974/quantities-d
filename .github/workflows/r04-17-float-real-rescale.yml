@@ -190,3 +190,19 @@ jobs:
             objdump -d --no-show-raw-insn /tmp/r04-17/probe_8_codegen.o |
               sed -n "/<$sym>:/,/^$/p"
           done
+
+
+      - name: Probe 9 trait-driven real80 exact oracle
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" \
+            -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_9_real_runner.d \
+            research/r04-17-float-real-rescale/real80_kernel.d \
+            -of=/tmp/r04-17/probe_9
+
+          python3 \
+            research/r04-17-float-real-rescale/probe_9_real_oracle.py \
+            /tmp/r04-17/probe_9 \
+            /tmp/r04-17/real_cases.txt
