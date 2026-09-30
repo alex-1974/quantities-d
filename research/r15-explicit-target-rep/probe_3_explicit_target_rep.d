@@ -41,8 +41,8 @@ void main()
             Metre,
             float);
 
-    static assert(is(typeof(a.Source) == ulong));
-    static assert(is(typeof(a.Target) == float));
+    static assert(is(typeof(a).Source == ulong));
+    static assert(is(typeof(a).Target == float));
 
     const real sourceReal = real.max;
     auto b =
@@ -51,8 +51,8 @@ void main()
             Metre,
             double);
 
-    static assert(is(typeof(b.Source) == real));
-    static assert(is(typeof(b.Target) == double));
+    static assert(is(typeof(b).Source == real));
+    static assert(is(typeof(b).Target == double));
 
     immutable double sourceDouble = 1.0;
     auto c =
@@ -61,12 +61,12 @@ void main()
             Metre,
             float);
 
-    static assert(is(typeof(c.Source) == double));
-    static assert(is(typeof(c.Target) == float));
+    static assert(is(typeof(c).Source == double));
+    static assert(is(typeof(c).Target == float));
 
-    writeln("ulong source captured as: ", a.Source.stringof);
-    writeln("real source captured as:  ", b.Source.stringof);
-    writeln("double source captured as:", c.Source.stringof);
+    writeln("ulong source captured as: ", typeof(a).Source.stringof);
+    writeln("real source captured as:  ", typeof(b).Source.stringof);
+    writeln("double source captured as:", typeof(c).Source.stringof);
 
     writeln();
     writeln("=== EXTRACTION SOURCE/TARGET CAPTURE ===");
@@ -79,11 +79,11 @@ void main()
             Metre,
             double);
 
-    static assert(is(typeof(e.Source) == real));
-    static assert(is(typeof(e.Target) == double));
+    static assert(is(typeof(e).Source == real));
+    static assert(is(typeof(e).Target == double));
 
-    writeln("Quantity source Rep: ", e.Source.stringof);
-    writeln("requested target Rep:", e.Target.stringof);
+    writeln("Quantity source Rep: ", typeof(e).Source.stringof);
+    writeln("requested target Rep:", typeof(e).Target.stringof);
 
     writeln();
     writeln("R15 Probe 3 PASS: explicit TargetRep + deduced SourceRep preserves source identity");
