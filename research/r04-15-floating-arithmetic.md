@@ -1001,3 +1001,120 @@ additional measurements.
 This result also reinforces the workspace rule that source symmetry is not a
 performance oracle: the apparently simpler shared-wide architecture has a
 material compiler-dependent runtime cost.
+
+
+## Probe 8D-P — Cent fast path plus UInt192 fallback
+
+Probe 8D-P compared two semantically equivalent complete floating product
+implementations:
+
+1. always use the validated UInt192 product/quantization path;
+2. use a conservative Cent fast path when the exact post-cancellation
+   numerator bit bound is <=127, otherwise fall back to UInt192.
+
+The <=127 threshold deliberately leaves one full headroom bit for the narrow
+Cent quantizer's normalization and remainder doubling. Exact decomposition,
+cross-cancellation, and exponent/sign handling were shared before the branch,
+so the fallback path did not repeat semantic work.
+
+The benchmark used 4096 deterministic runtime-generated finite product inputs,
+a correctness preflight, warm-up, nine balanced AB/BA rounds, 100 repetitions
+per round, and an observable checksum.
+
+Preflight:
+
+```text
+correctness preflight: 4096 vectors
+fast-path cases     : 3543
+wide fallback cases : 553
+fast-path coverage  : 86.4990 %
+checksum            : 0x0225c87a44f6c154
+```
+
+### DMD 2.111 release build
+
+```text
+Always UInt192:
+  min    742764406 ns
+  median 749227723 ns
+  max    789030411 ns
+
+Cent fast-path + UInt192 fallback:
+  min    320334451 ns
+  median 323799045 ns
+  max    330255960 ns
+
+fast/wide median ratio: 0.432177
+speedup: 56.7823 %
+```
+
+The conservative narrow fast path more than halved runtime in this workload.
+
+### LDC 1.41 release build
+
+```text
+Always UInt192:
+  min    179898137 ns
+  median 181483071 ns
+  max    184132963 ns
+
+Cent fast-path + UInt192 fallback:
+  min    177603854 ns
+  median 178797566 ns
+  max    180725615 ns
+
+fast/wide median ratio: 0.985202
+speedup: 1.4798 %
+```
+
+LDC largely optimized the always-wide cost away; the fast path remained
+slightly faster at the median.
+
+### Build observations
+
+The lightweight benchmark compiled quickly:
+
+```text
+DMD release build: 0.196 s
+LDC release build: 0.341 s
+```
+
+Combined benchmark binary sizes were:
+
+```text
+DMD: text 605541 bytes, total 676933 bytes
+LDC: text 374811 bytes, total 437443 bytes
+```
+
+As with Probe 8D-Q, combined binary size is not attributed to either candidate
+individually.
+
+### Probe 8D-P conclusion
+
+The evidence favors a two-tier portable product architecture:
+
+```text
+exact decomposition + cancellation
+        |
+        +-- numerator safely <=127 bits
+        |       -> Cent product + Cent quantizer
+        |
+        +-- otherwise
+                -> UInt192 product + UInt192 quantizer
+```
+
+This architecture is materially faster on DMD 2.111 and does not impose a
+meaningful penalty on LDC 1.41 in the tested workload.
+
+The result also reinforces the earlier quotient finding:
+
+- quotient should remain on its complete narrow Cent/Cent kernel;
+- product benefits from a narrow Cent fast path with a UInt192 fallback;
+- a single always-wide portable kernel is not justified by the supported
+  compiler matrix.
+
+The exact production cutoff remains a separate design choice. Probe 8D-P used
+<=127 bits because that threshold is trivially safe for the existing narrow
+quantizer. A future refinement may classify some 128-bit product numerators as
+safe without requiring the wide path, but such complexity should only be added
+if measurement shows a material gain.
