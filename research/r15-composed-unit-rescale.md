@@ -1,7 +1,7 @@
 # R15 — Composed Unit-scale exact conversion
 
 Issue: #42
-Status: Probe 11 validation pending
+Status: Probe 11 qualified for the scope below; R15 remains active
 Builds on Probe 10 at develop base b592858.
 
 ## Mathematical scope
@@ -71,7 +71,7 @@ Runtime safe/pure/nothrow/nogc callability is compiled and exercised.
 
 ## Decision boundary
 
-Pending validation, retain a private wide fallback candidate rather than
+Retain the qualified private wide fallback candidate rather than
 introducing public wider Reps or rejecting valid results due to intermediate
 width. Whether to dispatch between the 128-bit and 192-bit candidates requires
 later semantic equivalence and performance qualification.
@@ -79,3 +79,29 @@ later semantic equivalence and performance qualification.
 Compile-time Unit-ratio composition, floating-to-integral conversion, real
 targets, public result carrier, CTFE admission, and performance/compile-time
 cost remain unqualified.
+
+## Probe 11 result
+
+At research commit `477fac8619e29c914cf37d9b2ae0d93a00ee776c`:
+
+- DMD 2.111.0: 20,034 composed-scale comparisons; zero mismatches.
+- LDC 1.41.0: 20,034 composed-scale comparisons; zero mismatches.
+- The fully reduced 190/126-bit witness is confirmed by both D implementations.
+- Probe 10 also remains green: 20,960 comparisons per compiler.
+- Both runtime attribute probes compile and execute.
+
+Evidence: [workflow run 36774397580](https://github.com/alex-1974/quantities-d/actions/runs/36774397580).
+
+Conclusion: 128 bits are insufficient for unrestricted composition of two
+signed-long Unit scales with a 64-bit represented source. A private 192-bit
+carrier is sufficient under the proved bounds, and this research implementation
+matches the independent Fraction oracle for both binary32 and binary64 targets.
+No public wide Rep is required by this finding.
+
+The tuple oracle and integer limb bounds establish the composed kernel's
+tested semantics. They do not qualify runtime performance, compile-time cost,
+CTFE admission, generic Unit declaration composition, or a public API.
+
+Next: Floating->Integral exact/range/fraction classification and explicit
+rounding against the same factorized mathematical value, before result-carrier
+and public API decisions.
