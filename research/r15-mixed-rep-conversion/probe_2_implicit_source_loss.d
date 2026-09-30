@@ -48,7 +48,7 @@ void main()
     assert(representedSource != 1.0L);
     assert(cast(double)representedSource == 1.0);
 
-    const converted =
+    auto converted =
         representedSource.checkedQuantity!(Length, Metre);
 
     static assert(is(
