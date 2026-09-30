@@ -247,6 +247,22 @@ void main()
     // Mathematical product is 3 and canonical rescale is 2/3.
     assert(rescaledConsumerProduct.canonicalValue == 2.0);
 
+    enum scalarDivision =
+        3.0.quantity!(Length, Metre) / 2.0;
+    static assert(is(
+        typeof(scalarDivision)
+        == Quantity!(Length, double)));
+    static assert(scalarDivision.canonicalValue == 1.5);
+
+    enum mixedScalarDivision =
+        int.max.quantity!(Length, Metre) / 0.5;
+    static assert(is(
+        typeof(mixedScalarDivision)
+        == Quantity!(Length, double)));
+    static assert(
+        mixedScalarDivision.canonicalValue
+        == 4_294_967_294.0);
+
     enum exactDivision =
         int.min.quantity!(Length, Metre).exactDiv(-1);
     static assert(exactDivision.status == DivisionStatus.exact);
