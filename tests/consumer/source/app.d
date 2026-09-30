@@ -624,7 +624,8 @@ void mathematicalRangeRegression()
         const made = source.checkedQuantity!(Length, AboveMetre);
         assert(!made.hasValue && made.status == ConversionStatus.overflow);
 
-        const q = source.quantity!(Length, Metre);
+        double storedSource = source;
+        auto q = storedSource.quantity!(Length, Metre);
         const read = q.checkedIn!BelowMetre;
         assert(!read.hasValue && read.status == ConversionStatus.overflow);
 
