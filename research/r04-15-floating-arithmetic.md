@@ -1321,3 +1321,211 @@ semantics as the same contract.
 With Probe 8F, the runtime binary64 arithmetic semantics, IEEE special values,
 kernel-width architecture, compiler-performance boundary, and CTFE capability
 split are all established sufficiently to draft the promotion ADR.
+
+
+## Probe 9 — optimized native/identity code generation
+
+Probe 9 compared optimized scalar reference functions against the corresponding
+Quantity operations for the paths whose contract is ordinary native floating
+arithmetic:
+
+- same-Spec addition;
+- same-Spec subtraction;
+- scalar multiplication;
+- identity-rescale Quantity product;
+- identity-rescale Quantity quotient.
+
+The probe used `extern(C)` leaf functions and release-optimized object code
+with bounds checks disabled so the comparison addressed the generated
+arithmetic body rather than debug instrumentation.
+
+### LDC 1.41.0
+
+LDC generated instruction-identical leaf bodies for all five pairs.
+
+Representative examples:
+
+```text
+raw_add:      addsd %xmm1,%xmm0 | ret
+quantity_add: addsd %xmm1,%xmm0 | ret
+
+raw_product:      mulsd %xmm1,%xmm0 | ret
+quantity_product: mulsd %xmm1,%xmm0 | ret
+
+raw_quotient:      divsd %xmm1,%xmm0 | ret
+quantity_quotient: divsd %xmm1,%xmm0 | ret
+```
+
+The same exact-body result held for subtraction and scalar multiplication.
+
+### DMD 2.111.0
+
+DMD generated the same floating arithmetic instruction and the same basic
+prologue/epilogue for each pair, but the Quantity variants contained one
+additional load into `%xmm2` that was not subsequently consumed by the leaf
+body.
+
+Representative addition:
+
+```text
+raw_add:
+push %rax
+movsd %xmm0,(%rsp)
+movsd (%rsp),%xmm0
+addsd %xmm1,%xmm0
+pop %rcx
+ret
+
+quantity_add:
+push %rax
+movsd %xmm0,(%rsp)
+movsd 0x0(%rip),%xmm2
+movsd (%rsp),%xmm0
+addsd %xmm1,%xmm0
+pop %rcx
+ret
+```
+
+The same extra-load shape appeared in Quantity subtraction, scalar
+multiplication, identity product, and identity quotient.
+
+There were no additional calls or control-flow branches.
+
+Therefore the native/identity Quantity abstraction disappears completely under
+LDC 1.41, while DMD 2.111 retains a small apparently dead load. Source-shape or
+instruction-count evidence alone is not sufficient to classify the runtime
+impact, so Probe 9B measured that difference directly.
+
+
+## Probe 9B — DMD codegen difference runtime materiality
+
+Probe 9B compared scalar addition with the corresponding Quantity addition in a
+balanced runtime workload.
+
+The final probe used:
+
+- warm-up for both paths;
+- 11 timed rounds;
+- alternating AB/BA order;
+- 20,000,000 calls per path per round;
+- an observable checksum;
+- the same optimized compiler configurations used for the code-generation
+  inspection.
+
+The GitHub runner's DMD 2.111 druntime could not initialize `MonoTime` because
+it failed to obtain the monotonic-clock frequency. That timing-harness issue was
+avoided by using the C process `clock()` source for the final relative
+comparison; production quantities-d code was unchanged.
+
+### DMD 2.111.0
+
+```text
+raw median ticks:      147563
+quantity median ticks: 147570
+quantity/raw ratio:    1.00005
+```
+
+The observed ratio is approximately 0.005% above the scalar reference and does
+not establish a material runtime penalty for the additional DMD load.
+
+### LDC 1.41.0
+
+```text
+raw median ticks:      1
+quantity median ticks: 1
+quantity/raw ratio:    1
+```
+
+The process-clock resolution is too coarse for the LDC absolute timing to be
+useful performance evidence. The stronger LDC evidence is Probe 9 itself:
+instruction-identical leaf bodies.
+
+### Probe 9 conclusion
+
+The evidence supports the zero-overhead intent for native/identity floating
+arithmetic with one compiler-specific qualification:
+
+- LDC 1.41 emits identical scalar and Quantity leaf bodies;
+- DMD 2.111 retains one additional apparently dead `movsd` load;
+- the controlled DMD runtime comparison found no material penalty.
+
+The DMD difference is retained as code-generation evidence rather than hidden by
+normalizing the assembly comparison.
+
+
+## Probe 10 — compile-time impact
+
+Probe 10 measured whether the promoted floating operator templates introduce an
+accidental compile-time explosion.
+
+Two translation units used the same public `import quantities` baseline:
+
+1. a scalar-only baseline;
+2. a representative Quantity unit instantiating floating addition,
+   subtraction, scalar multiplication, identity product, and identity quotient.
+
+Each compiler performed one warm-up compile followed by nine measured release
+compiles. The comparison is a regression canary, not a normative performance
+target. A deliberately broad `4.0x` ratio was used only to reject catastrophic
+template-cost growth under the CI environment.
+
+Final medians:
+
+```text
+DMD 2.111.0
+  baseline:  77.811 ms
+  templates: 82.516 ms
+  ratio:      1.060
+
+LDC 1.41.0
+  baseline:  316.528 ms
+  templates: 328.961 ms
+  ratio:      1.039
+```
+
+Both compilers remained far below the broad regression tripwire.
+
+In this probe, the representative promoted floating operator set added about
+6.0% compile time on DMD and about 3.9% on LDC relative to the same-package
+import baseline.
+
+### Probe 10 conclusion
+
+No accidental template-cost explosion was observed. The measured overhead is
+small for the representative instantiation set, and the executable probe can be
+reused as a future regression canary if the floating dispatcher grows
+substantially.
+
+
+## R04.15 qualification conclusion
+
+All ten probes required by Issue #27 have now been completed.
+
+The promoted production scope establishes:
+
+- same-Spec floating addition/subtraction;
+- scalable floating scalar multiplication;
+- evidence-backed floating ResultRep promotion and mixed integral/floating
+  admission;
+- Quantity product and quotient through explicit semantic result relations;
+- native identity-rescale floating product/quotient;
+- exact represented-source nontrivial binary64 product/quotient rescale with
+  one final binary64 rounding;
+- native IEEE special-value behavior;
+- path-specific CTFE semantics;
+- `@safe pure nothrow @nogc` contracts for the promoted paths;
+- external consumer and compile-negative coverage;
+- optimized-code-generation evidence;
+- compile-time impact evidence.
+
+Deliberately deferred work is not an incomplete part of this R04.15 contract:
+
+- scalar division remains a separate public-API decision because technical
+  feasibility alone does not establish consumer need;
+- nontrivial exact rescale for `float` and `real` requires separate
+  representation-specific research;
+- automatic semantic Dimensionless results, generic cross-Spec arithmetic, and
+  floating math functions remain outside the promoted scope.
+
+ADR 0009 is therefore ready to move from Proposed to Accepted for the documented
+binary64 and native/identity floating arithmetic scope.
