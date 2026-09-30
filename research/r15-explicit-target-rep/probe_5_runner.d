@@ -59,7 +59,10 @@ void main()
         {
             auto source = doubleFromBits(f[1].to!ulong);
             const r = floatingToLong(source);
-            writeln(r.status, " ", r.value);
+            if (r.status == R15Status.exact)
+                writeln(r.status, " ", r.value);
+            else
+                writeln(r.status, " -");
         }
         else
         {
