@@ -85,3 +85,34 @@ jobs:
       - name: Release build with real integration
         shell: bash
         run: dub build --build=release --compiler="$DC" --force
+
+
+      - name: Probe 11 real IEEE and native CTFE
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17-real
+          "$DC" \
+            -Isource -i \
+            research/r04-17-real-policy/probe_11_ieee.d \
+            -of=/tmp/r04-17-real/probe_11
+          /tmp/r04-17-real/probe_11
+
+      - name: Probe 12 real Quantity overhead
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17-real
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off \
+                -Isource -i \
+                research/r04-17-real-policy/probe_12_performance.d \
+                -of=/tmp/r04-17-real/probe_12
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off \
+                -Isource -i \
+                research/r04-17-real-policy/probe_12_performance.d \
+                -of=/tmp/r04-17-real/probe_12
+              ;;
+          esac
+          /tmp/r04-17-real/probe_12
