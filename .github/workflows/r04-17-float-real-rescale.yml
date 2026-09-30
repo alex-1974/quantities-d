@@ -114,3 +114,13 @@ jobs:
             /tmp/r04-17/quotient.log
 
           echo "R04.17 Probe 6 represented-source CTFE negatives PASS"
+
+
+      - name: Probe 7 layout-free real decomposition
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          "$DC" \
+            research/r04-17-float-real-rescale/probe_7_real_decompose.d \
+            -of=/tmp/r04-17/probe_7
+          /tmp/r04-17/probe_7
