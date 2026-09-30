@@ -43,11 +43,11 @@ jobs:
 
       - name: Compile-negative tests
         shell: bash
-        run: ./tests/negative/run.sh "$DC"
+        run: bash ./tests/negative/run.sh "$DC"
 
       - name: External consumer
         shell: bash
-        run: ./tests/consumer/run.sh "$DC"
+        run: bash ./tests/consumer/run.sh "$DC"
 
       - name: Release build
         shell: bash
