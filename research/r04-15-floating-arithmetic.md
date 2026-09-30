@@ -498,3 +498,129 @@ The next research question is whether quantities-d should:
    rescale.
 
 No production choice is made by this probe.
+
+
+## Probe 8C1 — exact rational oracle and fixed-width bounds
+
+Source SHA-256:
+
+`e4d1221f332789b203c92af98b1d7badaf616f7c2dc32c9f85af1072c01ae7af`
+
+Probe 8C1 used Python `Fraction` as an independent exact rational oracle.
+It decomposed finite binary64 values exactly, evaluated the complete
+mathematical product or quotient with the canonical rational rescale, and
+rounded only once at the final binary64 boundary.
+
+The probe also derived structural fixed-width bounds from the current
+binary64 significand width and the current signed-64-bit ExactRatio scale
+domain.
+
+### Known boundary vectors
+
+The exact oracle confirmed all Probe-8B boundary cases.
+
+For products:
+
+- `double.max * 2 * 1/2` rounds to `double.max`; product-first produced
+  infinity.
+- `double.max * 0.5 * 2` rounds to `double.max`; scaling the left operand
+  first produced infinity.
+- `minSubnormal * 2 * 1/2` rounds to the minimum subnormal; scaling the tiny
+  left operand first produced zero.
+- `2 * minSubnormal * 1/2` rounds to the minimum subnormal; scaling the tiny
+  right operand first produced zero.
+
+For quotients:
+
+- `double.max / 0.5 * 1/2` rounds to `double.max`; quotient-first produced
+  infinity.
+- `double.max / 2 * 2` rounds to `double.max`; scaling the numerator side
+  first produced infinity.
+- `minSubnormal / 0.5 * 1/2` rounds to the minimum subnormal; scaling the
+  numerator side first produced zero.
+
+### Structural width bounds
+
+With binary64 significands of at most 53 bits and current positive scale
+magnitudes bounded by signed 64-bit `long`, the exact unnormalized rational
+kernel requires at most:
+
+```text
+product numerator bits : 169
+product denominator bits: 63
+quotient numerator bits: 116
+quotient denominator bits: 116
+```
+
+The binary exponent can be tracked separately.
+
+This means the research problem does not require arbitrary-precision integers
+under the current quantities-d contracts. A fixed-width internal kernel is
+theoretically sufficient.
+
+### Random oracle comparison
+
+20,000 deterministic random finite binary64 pairs were tested over ratios
+including:
+
+- `1/1`
+- `1/2`
+- `2/1`
+- `2/3`
+- `3/2`
+- `5/7`
+- `7/5`
+- `381/1250`
+- `1200/3937`
+- `1000/1`
+- `1/1000`
+
+Mismatch counts against the exact once-rounded oracle were:
+
+```text
+product first: 3429
+scale left   : 3567
+scale right  : 3610
+
+quotient first: 3419
+scale lhs     : 3615
+```
+
+The first product counterexample was not an overflow/underflow case but a
+one-ULP rounding difference:
+
+```text
+oracle        bits=0x47e14a4ffe991a6d
+product first bits=0x47e14a4ffe991a6e
+```
+
+Likewise, the first quotient counterexample differed by one ULP:
+
+```text
+oracle         bits=0xe528fa65126e9cbb
+quotient first bits=0xe528fa65126e9cba
+```
+
+### Probe 8C1 conclusion
+
+The nontrivial floating canonical-rescale problem is not limited to avoiding
+intermediate infinity or zero. Ordinary multiple-rounding effects also cause
+frequent one-ULP disagreement with the exact mathematical expression rounded
+once to binary64.
+
+The evidence therefore supports evaluating the complete represented operands
+and exact rational canonical scale in a joint fixed-width kernel, followed by
+one final binary64 rounding step, if quantities-d chooses to support direct
+nontrivial floating product/quotient rescaling.
+
+The current bounds suggest:
+
+- product: an internal unsigned width of at least 169 bits for the exact
+  significand numerator, with a <=63-bit denominator;
+- quotient: <=116-bit numerator and <=116-bit denominator;
+- binary exponent tracked separately.
+
+Probe 8C1 does not yet choose the internal representation. Probe 8C2 should
+compare implementation strategies such as a compact UInt192-style value,
+composition from existing `core.int128` primitives, and aggressive exact
+cross-cancellation before fixed-width multiplication.
