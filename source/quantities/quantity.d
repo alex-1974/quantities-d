@@ -13,6 +13,7 @@ import quantities.arithmetic_traits :
     QuotientResultSpec,
     SubResult,
     isScalableValue;
+import quantities.real_scale : supportsExactRealRescale;
 import quantities.traits : isQuantitySpec, isUnit;
 
 struct Quantity(Spec, Rep)
@@ -92,7 +93,11 @@ public:
                 (
                     (
                         is(MulArithmeticRep!(Rep, OtherRep) == float) ||
-                        is(MulArithmeticRep!(Rep, OtherRep) == double)
+                        is(MulArithmeticRep!(Rep, OtherRep) == double) ||
+                        (
+                            is(MulArithmeticRep!(Rep, OtherRep) == real) &&
+                            supportsExactRealRescale
+                        )
                     ) &&
                     ProductCanonicalRescale!(
                         Spec,
@@ -130,10 +135,8 @@ public:
                         Rescale.numerator,
                         Rescale.denominator));
             }
-            else
+            else static if (is(ResultRep == double))
             {
-                static assert(is(ResultRep == double));
-
                 import quantities.binary64_scale :
                     rescaleProductBinary64;
 
@@ -141,6 +144,21 @@ public:
                     rescaleProductBinary64(
                         cast(double)canonical_,
                         cast(double)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
+            else
+            {
+                static assert(is(ResultRep == real));
+                static assert(supportsExactRealRescale);
+
+                import quantities.real_scale :
+                    rescaleProductReal;
+
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleProductReal(
+                        cast(real)canonical_,
+                        cast(real)rhs.canonicalValue,
                         Rescale.numerator,
                         Rescale.denominator));
             }
@@ -167,7 +185,11 @@ public:
                 (
                     (
                         is(QuotientArithmeticRep!(Rep, OtherRep) == float) ||
-                        is(QuotientArithmeticRep!(Rep, OtherRep) == double)
+                        is(QuotientArithmeticRep!(Rep, OtherRep) == double) ||
+                        (
+                            is(QuotientArithmeticRep!(Rep, OtherRep) == real) &&
+                            supportsExactRealRescale
+                        )
                     ) &&
                     QuotientCanonicalRescale!(
                         Spec,
@@ -205,10 +227,8 @@ public:
                         Rescale.numerator,
                         Rescale.denominator));
             }
-            else
+            else static if (is(ResultRep == double))
             {
-                static assert(is(ResultRep == double));
-
                 import quantities.binary64_scale :
                     rescaleQuotientBinary64;
 
@@ -216,6 +236,21 @@ public:
                     rescaleQuotientBinary64(
                         cast(double)canonical_,
                         cast(double)rhs.canonicalValue,
+                        Rescale.numerator,
+                        Rescale.denominator));
+            }
+            else
+            {
+                static assert(is(ResultRep == real));
+                static assert(supportsExactRealRescale);
+
+                import quantities.real_scale :
+                    rescaleQuotientReal;
+
+                return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                    rescaleQuotientReal(
+                        cast(real)canonical_,
+                        cast(real)rhs.canonicalValue,
                         Rescale.numerator,
                         Rescale.denominator));
             }
@@ -483,6 +518,17 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         == Quantity!(ScaledAreaSpec, float)));
     assert(rescaledFloatProduct.canonicalValue == float.max);
 
+    static if (supportsExactRealRescale)
+    {
+        auto rescaledRealProduct =
+            real.max.quantity!(LengthToScaledArea, Metre)
+            * 2.0L.quantity!(LengthToScaledArea, Metre);
+        assert(is(
+            typeof(rescaledRealProduct)
+            == Quantity!(ScaledAreaSpec, real)));
+        assert(rescaledRealProduct.canonicalValue == real.max);
+    }
+
     // Nontrivial represented-source product rescale is runtime-only.
     static assert(!__traits(compiles, {
         enum ctfeRescaledProduct =
@@ -494,6 +540,14 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
             1.5f.quantity!(LengthToScaledArea, Metre)
             * 2.0f.quantity!(LengthToScaledArea, Metre);
     }));
+    static if (supportsExactRealRescale)
+    {
+        static assert(!__traits(compiles, {
+            enum ctfeRescaledRealProduct =
+                1.5L.quantity!(LengthToScaledArea, Metre)
+                * 2.0L.quantity!(LengthToScaledArea, Metre);
+        }));
+    }
 
     // Floating direct quotient requires an explicit semantic quotient relation
     // and an exact identity canonical rescale.
@@ -583,6 +637,17 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         == Quantity!(ScaledRatioSpec, float)));
     assert(rescaledFloatQuotient.canonicalValue == float.max);
 
+    static if (supportsExactRealRescale)
+    {
+        auto rescaledRealQuotient =
+            real.max.quantity!(ScaledQuotientLength, Metre)
+            / 0.5L.quantity!(ScaledQuotientLength, Metre);
+        assert(is(
+            typeof(rescaledRealQuotient)
+            == Quantity!(ScaledRatioSpec, real)));
+        assert(rescaledRealQuotient.canonicalValue == real.max);
+    }
+
     // Nontrivial represented-source rescale is deliberately runtime-only.
     static assert(!__traits(compiles, {
         enum ctfeRescaledQuotient =
@@ -594,6 +659,14 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
             6.0f.quantity!(ScaledQuotientLength, Metre)
             / 3.0f.quantity!(ScaledQuotientLength, Metre);
     }));
+    static if (supportsExactRealRescale)
+    {
+        static assert(!__traits(compiles, {
+            enum ctfeRescaledRealQuotient =
+                6.0L.quantity!(ScaledQuotientLength, Metre)
+                / 3.0L.quantity!(ScaledQuotientLength, Metre);
+        }));
+    }
 
     enum product =
         uint.max.quantity!(Length, Metre) * uint.max;

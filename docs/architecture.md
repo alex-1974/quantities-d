@@ -107,16 +107,21 @@ rescale use a floating-aware representation dispatcher:
 - Quantity quotients still require an explicit semantic QuotientResultSpec and
   physical Dimension validation;
 - floating Quantity product and quotient support identity rescale natively and
-  positive nontrivial canonical rescale when the admitted ResultRep is float or
-  double;
-- nontrivial binary32/binary64 product/quotient rescale evaluates represented
-  operands and exact rational scale jointly, then rounds once to the target
-  floating format;
+  positive nontrivial canonical rescale when the admitted ResultRep is float,
+  double, or a qualified real format;
+- nontrivial binary32/binary64/qualified-real product/quotient rescale evaluates
+  represented operands and exact rational scale jointly, then rounds once to
+  the target floating format;
 - binary32 product and quotient use a private two-limb 128-bit exact carrier;
 - binary64 quotient uses the proven Cent/Cent kernel;
 - binary64 product uses the proven <=127-bit Cent fast path with UInt192
   fallback for wider exact numerators;
-- represented-source nontrivial binary32/binary64 rescale is deliberately
+- qualified real rescale is available only when D-visible numeric traits match
+  the validated binary64-like or real80-like property sets; unsupported real
+  formats keep the nontrivial operator form unavailable;
+- qualified real product and quotient use a private UInt192 exact carrier and
+  layout-free frexp/ldexp decomposition;
+- represented-source nontrivial binary32/binary64/real rescale is deliberately
   runtime-only;
 - scalable Quantity/scalar division preserves the same Spec and canonical
   storage and uses ordinary native floating division after the existing
@@ -128,8 +133,8 @@ rescale use a floating-aware representation dispatcher:
 - integral/integral direct Quantity quotient remains unavailable and keeps the
   named exactDiv contract.
 
-This promoted slice does not yet establish nontrivial exact-rescale support
-for D real.
+No nontrivial real fallback is provided for unqualified implementation-defined
+real formats such as binary128-like or double-double forms.
 
 ## Open design decisions
 
@@ -140,7 +145,6 @@ API:
 - mixed-unit arithmetic;
 - general cross-Spec arithmetic beyond explicitly declared semantic relations;
 - dimensionless Quantity result semantics;
-- nontrivial real rescale policy;
 - affine quantity-point support;
 - angle integration;
 - dynamic-unit representation.

@@ -489,6 +489,35 @@ version (R0417FloatingQuantityProductCanonicalRescale)
 }
 
 
+version (R0417RealQuantityProductCanonicalRescale)
+{
+    alias ScaledSquareMetre = production.DerivedUnit!(
+        production.AreaDimension,
+        production.ExactRatio!(2, 1));
+
+    struct ScaledArea
+    {
+        alias Dimension = production.AreaDimension;
+        alias CanonicalUnit = ScaledSquareMetre;
+    }
+
+    struct LengthToScaledArea
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = ScaledArea;
+        }
+    }
+
+    enum x =
+        1.5L.quantity!(LengthToScaledArea, production.Metre)
+        * 2.0L.quantity!(LengthToScaledArea, production.Metre);
+}
+
+
 version (M3ExternalProductMissingRelation)
 {
     struct ForeignLength
@@ -898,6 +927,34 @@ version (R0417FloatingQuantityQuotientCanonicalRescale)
     enum x =
         6.0f.quantity!(LengthRatio, production.Metre)
         / 3.0f.quantity!(LengthRatio, production.Metre);
+}
+
+version (R0417RealQuantityQuotientCanonicalRescale)
+{
+    alias ScaledUnitless = production.DerivedUnit!(
+        production.Dimensionless,
+        production.ExactRatio!(2, 1));
+
+    struct RatioSpec
+    {
+        alias Dimension = production.Dimensionless;
+        alias CanonicalUnit = ScaledUnitless;
+    }
+
+    struct LengthRatio
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum x =
+        6.0L.quantity!(LengthRatio, production.Metre)
+        / 3.0L.quantity!(LengthRatio, production.Metre);
 }
 
 version (M3ExternalQuotientMissingRelation)

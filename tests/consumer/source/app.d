@@ -255,6 +255,27 @@ void main()
         == Quantity!(ConsumerScaledArea, float)));
     assert(rescaledFloatConsumerProduct.canonicalValue == 2.0f);
 
+    static if (
+        (
+            real.mant_dig == 53 &&
+            real.min_exp == -1021 &&
+            real.max_exp == 1024
+        ) ||
+        (
+            real.mant_dig == 64 &&
+            real.min_exp == -16381 &&
+            real.max_exp == 16384
+        ))
+    {
+        auto rescaledRealConsumerProduct =
+            1.5L.quantity!(ScaledProductLength, Metre)
+            * 2.0L.quantity!(ScaledProductLength, Metre);
+        assert(is(
+            typeof(rescaledRealConsumerProduct)
+            == Quantity!(ConsumerScaledArea, real)));
+        assert(rescaledRealConsumerProduct.canonicalValue == 2.0L);
+    }
+
     enum scalarDivision =
         3.0.quantity!(Length, Metre) / 2.0;
     static assert(is(
@@ -519,6 +540,27 @@ void main()
         typeof(rescaledFloatConsumerQuotient)
         == Quantity!(ConsumerScaledRatio, float)));
     assert(rescaledFloatConsumerQuotient.canonicalValue == 1.0f);
+
+    static if (
+        (
+            real.mant_dig == 53 &&
+            real.min_exp == -1021 &&
+            real.max_exp == 1024
+        ) ||
+        (
+            real.mant_dig == 64 &&
+            real.min_exp == -16381 &&
+            real.max_exp == 16384
+        ))
+    {
+        auto rescaledRealConsumerQuotient =
+            3.0L.quantity!(ScaledQuotientLeft, Metre)
+            / 2.0L.quantity!(ScaledQuotientRight, Metre);
+        assert(is(
+            typeof(rescaledRealConsumerQuotient)
+            == Quantity!(ConsumerScaledRatio, real)));
+        assert(rescaledRealConsumerQuotient.canonicalValue == 1.0L);
+    }
 
     struct QuotientRelations
     {
