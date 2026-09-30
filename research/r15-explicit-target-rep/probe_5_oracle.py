@@ -127,18 +127,25 @@ def expected(op, raw):
     fr = f32_fraction(bits) if op[0] == "F" else f64_fraction(bits)
 
     if fr is None:
-        return "nonFinite 0"
+        return "nonFinite -"
 
     if op == "FD":
-        out, overflow = target_double(fr)
-        assert not overflow
+        if fr == 0 and (bits >> 31):
+            out = 1 << 63
+        else:
+            out, overflow = target_double(fr)
+            assert not overflow
         status = "exact" if f64_fraction(out) == fr else "inexact"
         return f"{status} {out}"
 
     if op == "DF":
-        out, overflow = target_float(fr)
+        if fr == 0 and (bits >> 63):
+            out = 1 << 31
+            overflow = False
+        else:
+            out, overflow = target_float(fr)
         if overflow:
-            return "overflow 0"
+            return "overflow -"
         status = "exact" if f32_fraction(out) == fr else "inexact"
         return f"{status} {out}"
 
