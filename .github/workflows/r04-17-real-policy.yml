@@ -1,0 +1,68 @@
+name: R04.17 Real Policy Research
+
+on:
+  push:
+    branches:
+      - research/r04-17-float-real-rescale
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real:
+    name: R04.17 real / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Versions and real properties
+        shell: bash
+        run: |
+          echo "DC=$DC"
+          "$DC" --version
+          dub --version
+          "$DC" \
+            research/r04-17-float-real-rescale/probe_7_real_decompose.d \
+            -of=/tmp/r04-17-real-props
+          /tmp/r04-17-real-props
+
+      - name: Probe 9 exact current-real oracle
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17-real
+          "$DC" \
+            -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_9_real_runner.d \
+            research/r04-17-float-real-rescale/real80_kernel.d \
+            -of=/tmp/r04-17-real/probe_9
+          python3 \
+            research/r04-17-float-real-rescale/probe_9_real_oracle.py \
+            /tmp/r04-17-real/probe_9 \
+            /tmp/r04-17-real/cases.txt
+
+      - name: Probe 10 trait kernel against binary64 reference
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17-real
+          "$DC" \
+            -Isource -i \
+            -Iresearch/r04-17-float-real-rescale \
+            research/r04-17-float-real-rescale/probe_10_trait_double.d \
+            research/r04-17-float-real-rescale/real80_kernel.d \
+            -of=/tmp/r04-17-real/probe_10
+          /tmp/r04-17-real/probe_10
