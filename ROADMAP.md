@@ -120,10 +120,38 @@ multiplication performs exact canonical cancellation before multiplication and
 uses the measured LDC checked-integer backend fast path while retaining the
 portable DMD path.
 
-This is still a partial M3 implementation, not M3 completion. Floating-point
-arithmetic, general cross-Spec addition/subtraction, automatic/generic
-Dimensionless semantic results, broader promotion policy, and consumer-driven mathematical functions remain
-open research-first work.
+R04.15–R04.17 have since promoted the floating arithmetic and represented-source
+rescale contract:
+
+- same-Spec floating addition/subtraction;
+- scalable floating scalar multiplication and `Quantity / scalar`;
+- explicit semantic floating Quantity product/quotient relations;
+- native identity-rescale product/quotient paths;
+- exact nontrivial binary64 canonical rescale with one final binary64 rounding;
+- exact nontrivial binary32 canonical rescale with a direct binary32 quantizer;
+- conditional exact nontrivial D `real` rescale for qualified binary64-like
+  and real80-like trait sets, while unsupported `real` formats remain unavailable;
+- path-specific CTFE boundaries, IEEE-special handling, external-consumer
+  coverage, independent rational-oracle validation, and DMD/LDC codegen/runtime
+  qualification for the promoted floating paths.
+
+This is still a partial M3 implementation, not M3 completion. The remaining
+high-value research questions are now concentrated above the numerical
+arithmetic core:
+
+- floating and mixed-Rep conversion beyond the current signed-`long` and
+  binary64 conversion slices;
+- general cross-Spec addition/subtraction beyond explicit semantic relations;
+- automatic/generic Dimensionless semantic result policy;
+- mixed-unit arithmetic ergonomics without weakening explicit conversion intent;
+- consumer-driven mathematical functions such as `abs`, `sqrt`, and `hypot`;
+- concrete Spec distinctions from R05 where consumer evidence justifies them.
+
+The next recommended numerical research slice is mixed-Rep / `float` / `real`
+conversion, tracked as R15 in Issue #42. R04.15–R04.17 established the represented-source floating
+decomposition, exact-rational, rounding, CTFE, and format-capability evidence
+needed to investigate that conversion problem without weakening the existing
+M1 conversion contract.
 
 ## Deferred until justified
 

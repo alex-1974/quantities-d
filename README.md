@@ -10,7 +10,7 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core and M2 minimal linear-unit work are complete. M3 is in progress; its first integral-arithmetic slice is implemented. No stable public release exists yet.**
+**M1 static core and M2 minimal linear-unit work are complete. M3 is in progress and now includes promoted integral and floating arithmetic semantics, derived dimensions, exact product/quotient relations, and qualified nontrivial floating canonical rescale. No stable public release exists yet.**
 
 The repository now contains the first production quantity core and the checked
 conversion contract accepted by ADR 0007.
@@ -24,17 +24,22 @@ Current production coverage includes:
 - explicit checked / exact-required / rounded non-canonical conversion for
   signed `long`;
 - checked / exact-required non-canonical conversion for binary64 `double`;
-- M3 integral arithmetic: safe same-Spec `+` / `-`, symmetric integral scalar multiplication, explicit `exactDiv`, and semantic `Quantity * Quantity` products;
+- same-Spec integral and floating `+` / `-` under explicit representation-admission rules;
+- symmetric scalar multiplication and promoted `Quantity / scalar` for scalable Specs;
+- integral Class-W direct arithmetic plus Class-O64 `checkedAdd`, `checkedSub`, and `checkedMul`;
+- named integral `exactDiv` and `exactMul` for value-dependent exact arithmetic;
 - open canonical dimension algebra and exact derived-unit algebra, with `Area` / `SquareMetre` as the first production derived-dimension case;
-- consumer-owned product relations through explicit `product!Relations` and `exactMul!Relations` APIs;
-- exact integral `Quantity / Quantity` semantics through named `exactDiv`, with explicit operand-owned or consumer-owned quotient relations and compile-time result-range proof;
+- explicit semantic `Quantity * Quantity` and `Quantity / Quantity` result relations, including consumer-owned relation sets;
+- native identity-rescale floating product/quotient paths;
+- exact represented-source nontrivial binary32 and binary64 canonical rescale with one final rounding;
+- conditional exact nontrivial D `real` rescale for the qualified binary64-like and real80-like trait sets;
 - compile-negative API-boundary tests;
 - external-consumer tests on DMD 2.111 and LDC 1.41.
 
-`float`, `real`, mixed-Rep conversion, floating-point arithmetic, general
-cross-Spec arithmetic beyond explicit product/quotient relations, automatic or
-generic dimensionless-result semantics, affine quantity points, and
-runtime-parsed unit metadata are not yet production-complete.
+M3 is not complete. Remaining research-first areas include mixed-Rep conversion,
+general cross-Spec additive semantics, automatic/generic Dimensionless result
+semantics, mixed-unit arithmetic ergonomics, consumer-driven mathematical
+functions, affine quantity points, and runtime-parsed unit metadata.
 
 M1 and M2 are complete. PR #15 promoted the first evidence-backed R04
 arithmetic slice after DMD/LDC debug and release tests, external-consumer
@@ -184,10 +189,11 @@ type ranges are representable and canonical storage requires no lossy rescale.
 `exactMul` provides the value-dependent exact path for nontrivial canonical
 rescaling and reports an inexact result rather than truncating.
 
-This is not the completion of M3. Floating-point arithmetic, general cross-Spec
-addition/subtraction, dimensionless Quantity results, broader Class-O checked
-arithmetic, and consumer-driven mathematical functions remain research-first
-work.
+This is not the completion of M3. The integral core has since been extended by
+checked Class-O64 arithmetic and qualified floating arithmetic/rescale semantics.
+General cross-Spec addition/subtraction, automatic Dimensionless semantics,
+mixed-Rep conversion, and consumer-driven mathematical functions remain
+research-first work.
 
 
 ### M3 exact Quantity quotient slice
