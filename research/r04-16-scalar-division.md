@@ -92,3 +92,130 @@ No represented-source binary64 kernel or runtime-only CTFE boundary is involved.
 - optimized codegen comparison;
 - overload-resolution confirmation;
 - final API-justification decision.
+
+
+## Qualification results
+
+The final branch-only qualification run passed on both baseline compilers:
+
+```text
+DMD 2.111.0
+  unit tests            PASS
+  compile-negative      PASS
+  external consumer     PASS
+  release build         PASS
+  optimized codegen     PASS
+
+LDC 1.41.0
+  unit tests            PASS
+  compile-negative      PASS
+  external consumer     PASS
+  release build         PASS
+  optimized codegen     PASS
+```
+
+The compile-negative suite confirmed all intended API boundaries:
+
+- raw integral Quantity / integral scalar remains unavailable;
+- int Quantity / float is rejected by the complete-domain admission rule;
+- long Quantity / double is rejected by the complete-domain admission rule;
+- scalar / Quantity remains unavailable;
+- non-scalable Specs cannot use scalar division.
+
+The existing named integral `exactDiv(quantity, scalar)` continued to pass its
+unit and consumer coverage in the same overload environment.
+
+## Optimized code generation
+
+### LDC 1.41.0
+
+The scalar reference and Quantity operator compile to identical leaf bodies:
+
+```text
+raw_scalar_div:
+    divsd %xmm1,%xmm0
+    ret
+
+quantity_scalar_div:
+    divsd %xmm1,%xmm0
+    ret
+```
+
+### DMD 2.111.0
+
+DMD repeats the same R04.15 native-Quantity code-generation pattern:
+
+```text
+raw_scalar_div:
+    push
+    spill/reload xmm0
+    divsd %xmm1,%xmm0
+    pop
+    ret
+
+quantity_scalar_div:
+    push
+    spill xmm0
+    additional apparently dead movsd -> xmm2
+    reload xmm0
+    divsd %xmm1,%xmm0
+    pop
+    ret
+```
+
+There are no additional calls or branches. This is the same known DMD 2.111
+leaf-code difference already qualified by R04.15, where the corresponding
+runtime comparison found no material penalty.
+
+## API justification
+
+There is currently no direct default-branch workspace consumer of quantities-d,
+so R04.16 does not claim immediate downstream demand.
+
+However, promotion has more than technical feasibility:
+
+1. scalar multiplication is already part of the scalable-Quantity algebra;
+2. `Quantity / scalar` preserves the same Spec and canonical storage, so it
+   introduces no new physical semantic resolution;
+3. the integral case already has the distinct named `exactDiv` contract,
+   producing a clear non-overlapping boundary;
+4. external established units libraries treat quantity/scalar division as
+   ordinary scaling;
+5. the real production overload set was tested directly, including ambiguity,
+   negative forms, CTFE, IEEE behavior, consumer compilation, and optimized
+   codegen.
+
+The operation is therefore a small completion of the existing scalable-value
+contract rather than a new derived-quantity semantic family.
+
+## R04.16 conclusion
+
+The evidence supports promotion of exactly this API:
+
+```text
+Quantity!(Spec, Rep) / scalar
+
+requirements:
+    isScalableValue!Spec
+    QuotientArithmeticRep!(Rep, Scalar) != void
+
+result:
+    Quantity!(Spec, ResultRep)
+
+semantics:
+    ordinary native floating division
+    same Spec
+    canonical storage unchanged
+    CTFE-capable
+    @safe pure nothrow @nogc
+```
+
+Explicit non-goals remain:
+
+- integral/integral direct scalar division;
+- scalar / Quantity;
+- reciprocal Spec synthesis;
+- Dimensionless synthesis;
+- any represented-source rescale kernel.
+
+R04.16 is ready for selective production promotion plus an ADR 0009 follow-up.
