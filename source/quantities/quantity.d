@@ -3,11 +3,14 @@ module quantities.quantity;
 import quantities.arithmetic_rep :
     AddArithmeticRep,
     MulArithmeticRep,
+    QuotientArithmeticRep,
     SubArithmeticRep;
 import quantities.arithmetic_traits :
     AddResult,
     ProductCanonicalRescale,
     ProductResultSpec,
+    QuotientCanonicalRescale,
+    QuotientResultSpec,
     SubResult,
     isScalableValue;
 import quantities.traits : isQuantitySpec, isUnit;
@@ -89,6 +92,29 @@ public:
 
         return Quantity!(ResultSpec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ *
+            cast(ResultRep)rhs.canonicalValue);
+    }
+
+    @safe pure nothrow @nogc
+    auto opBinary(string op, OtherSpec, OtherRep)(
+        Quantity!(OtherSpec, OtherRep) rhs) const
+        if (op == "/" &&
+            !is(QuotientResultSpec!(Spec, OtherSpec) == void) &&
+            !is(QuotientArithmeticRep!(Rep, OtherRep) == void) &&
+            QuotientCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                QuotientResultSpec!(Spec, OtherSpec)).numerator == 1 &&
+            QuotientCanonicalRescale!(
+                Spec,
+                OtherSpec,
+                QuotientResultSpec!(Spec, OtherSpec)).denominator == 1)
+    {
+        alias ResultSpec = QuotientResultSpec!(Spec, OtherSpec);
+        alias ResultRep = QuotientArithmeticRep!(Rep, OtherRep);
+
+        return Quantity!(ResultSpec, ResultRep).fromCanonical(
+            cast(ResultRep)canonical_ /
             cast(ResultRep)rhs.canonicalValue);
     }
 
@@ -297,6 +323,61 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     static assert(!__traits(compiles,
         long.max.quantity!(Length, Metre)
             * 0.5.quantity!(Length, Metre)));
+
+    // Floating direct quotient requires an explicit semantic quotient relation
+    // and an exact identity canonical rescale.
+    static struct RatioSpec
+    {
+        import quantities.dimension : Dimensionless;
+        import quantities.ratio : ExactRatio;
+        import quantities.unit : DerivedUnit;
+
+        alias Dimension = Dimensionless;
+        alias CanonicalUnit = DerivedUnit!(
+            Dimensionless,
+            ExactRatio!(1, 1));
+    }
+
+    static struct QuotientLength
+    {
+        alias Dimension = Length.Dimension;
+        alias CanonicalUnit = Metre;
+
+        template QuotientWith(Rhs)
+        {
+            alias QuotientWith = RatioSpec;
+        }
+    }
+
+    enum floatingQuotient =
+        3.0.quantity!(QuotientLength, Metre)
+        / 1.5f.quantity!(QuotientLength, Metre);
+    static assert(is(
+        typeof(floatingQuotient)
+        == Quantity!(RatioSpec, double)));
+    static assert(
+        floatingQuotient.canonicalValue
+        == 2.0);
+
+    enum mixedQuotient =
+        int.max.quantity!(QuotientLength, Metre)
+        / 0.5.quantity!(QuotientLength, Metre);
+    static assert(is(
+        typeof(mixedQuotient)
+        == Quantity!(RatioSpec, double)));
+    static assert(
+        mixedQuotient.canonicalValue
+        == 4_294_967_294.0);
+
+    static assert(!__traits(compiles,
+        1.quantity!(QuotientLength, Metre)
+            / 0.5f.quantity!(QuotientLength, Metre)));
+    static assert(!__traits(compiles,
+        long.max.quantity!(QuotientLength, Metre)
+            / 0.5.quantity!(QuotientLength, Metre)));
+    static assert(!__traits(compiles,
+        6.quantity!(QuotientLength, Metre)
+            / 3.quantity!(QuotientLength, Metre)));
 
     enum product =
         uint.max.quantity!(Length, Metre) * uint.max;
