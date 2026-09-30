@@ -72,15 +72,15 @@ void main()
     writeln("=== EXTRACTION SOURCE/TARGET CAPTURE ===");
 
     auto q =
-        Quantity!(Length, real).fromCanonical(1.0L);
+        1.0.quantity!(Length, Metre);
 
     auto e =
         q.checkedInR15!(
             Metre,
-            double);
+            float);
 
-    static assert(is(typeof(e).Source == real));
-    static assert(is(typeof(e).Target == double));
+    static assert(is(typeof(e).Source == double));
+    static assert(is(typeof(e).Target == float));
 
     writeln("Quantity source Rep: ", typeof(e).Source.stringof);
     writeln("requested target Rep:", typeof(e).Target.stringof);
