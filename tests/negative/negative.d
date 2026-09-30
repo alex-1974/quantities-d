@@ -277,6 +277,47 @@ version (R0416NonScalableScalarDivision)
         6.0.quantity!(Radius, production.Metre) / 3.0;
 }
 
+version (ConversionUnsupportedUlongSource)
+{
+    enum x =
+        ulong.max.checkedQuantity!(
+            production.Length,
+            production.Metre);
+}
+
+version (ConversionUnsupportedFloatSource)
+{
+    enum x =
+        1.0f.checkedQuantity!(
+            production.Length,
+            production.Metre);
+}
+
+version (ConversionUnsupportedRealSource)
+{
+    enum x =
+        1.0L.checkedQuantity!(
+            production.Length,
+            production.Metre);
+}
+
+version (ConversionUnsupportedIntExactSource)
+{
+    enum x =
+        1.exactQuantity!(
+            production.Length,
+            production.Metre);
+}
+
+version (ConversionUnsupportedDoubleRoundedSource)
+{
+    enum x =
+        1.0.roundedQuantity!(
+            production.Length,
+            production.Metre,
+            production.RoundingMode.towardZero);
+}
+
 version (M3NonScalableExactDivision)
 {
     struct Radius

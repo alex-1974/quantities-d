@@ -60,6 +60,27 @@ void main()
         return extracted.tryValue(value) && value == 2L;
     }());
 
+    // Construction conversion source Reps are intentionally exact-match
+    // for the currently promoted API. Unsupported source types must not be
+    // implicitly narrowed before quantities-d can observe them.
+    static assert(!__traits(compiles,
+        ulong.max.checkedQuantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        1.0f.checkedQuantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        1.0L.checkedQuantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        1.exactQuantity!(Length, Metre)));
+    static assert(!__traits(compiles,
+        1.0.roundedQuantity!(
+            Length,
+            Metre,
+            RoundingMode.towardZero)));
+
+    enum stillLong =
+        1L.checkedQuantity!(Length, Metre);
+    static assert(stillLong.status == ConversionStatus.exact);
+
     const internationalDouble =
         1.0.checkedQuantity!(Length, InternationalFoot);
     assert(internationalDouble.hasValue);

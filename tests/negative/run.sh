@@ -98,6 +98,11 @@ run_compiler() {
     run_reject "$compiler" "$flag" R0416UnsafeLongDoubleScalarDivision
     run_reject "$compiler" "$flag" R0416ScalarOverQuantity
     run_reject "$compiler" "$flag" R0416NonScalableScalarDivision
+    run_case "$compiler" "$flag" ConversionUnsupportedUlongSource "checkedQuantity: source Rep is not supported by the current conversion contract."
+    run_case "$compiler" "$flag" ConversionUnsupportedFloatSource "checkedQuantity: source Rep is not supported by the current conversion contract."
+    run_case "$compiler" "$flag" ConversionUnsupportedRealSource "checkedQuantity: source Rep is not supported by the current conversion contract."
+    run_case "$compiler" "$flag" ConversionUnsupportedIntExactSource "exactQuantity: source Rep is not supported by the current conversion contract."
+    run_case "$compiler" "$flag" ConversionUnsupportedDoubleRoundedSource "roundedQuantity: source Rep is not supported by the current conversion contract."
     run_reject "$compiler" "$flag" M3NonScalableExactDivision
     run_reject "$compiler" "$flag" M3ClassOExactDivision
     run_reject "$compiler" "$flag" M3ProductMissingRelation

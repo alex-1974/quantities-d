@@ -4,6 +4,7 @@ import quantities.binary64_scale : scaleBinary64;
 import quantities.floating_exact : rationalResultExactlyBinary64;
 import quantities.quantity : Quantity;
 import quantities.traits : isQuantitySpec, isUnit;
+import std.traits : Unqual;
 
 enum ConversionStatus
 {
@@ -446,6 +447,37 @@ ExactResult!T exactResult(T)(ConversionResult!T result)
 }
 
 public:
+
+// Guard the currently implemented construction source-Rep contract.
+//
+// Without these exact-match templates, D may implicitly convert unsupported
+// source types before overload resolution reaches the long/double kernels
+// (for example ulong -> long or real -> double). That would let information be
+// lost before quantities-d can report conversion status.
+@safe pure nothrow @nogc
+auto checkedQuantity(Spec, Unit, Source)(Source value)
+    if (!is(Unqual!Source == long) && !is(Unqual!Source == double))
+{
+    static assert(false,
+        "checkedQuantity: source Rep is not supported by the current conversion contract.");
+}
+
+@safe pure nothrow @nogc
+auto exactQuantity(Spec, Unit, Source)(Source value)
+    if (!is(Unqual!Source == long) && !is(Unqual!Source == double))
+{
+    static assert(false,
+        "exactQuantity: source Rep is not supported by the current conversion contract.");
+}
+
+@safe pure nothrow @nogc
+auto roundedQuantity(Spec, Unit, RoundingMode mode, Source)(Source value)
+    if (!is(Unqual!Source == long))
+{
+    static assert(false,
+        "roundedQuantity: source Rep is not supported by the current conversion contract.");
+}
+
 @safe pure nothrow @nogc
 auto checkedQuantity(Spec, Unit)(long value)
 {
