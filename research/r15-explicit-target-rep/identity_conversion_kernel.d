@@ -193,7 +193,7 @@ private bool floatingEqualsLong(T)(T target, long source)
 FloatResult!T longToFloating(T)(long source)
     if (is(T == float) || is(T == double))
 {
-    const T target = forceStorage(cast(T)source);
+    T target = forceStorage(cast(T)source);
 
     return FloatResult!T(
         floatingEqualsLong(target, source)
@@ -206,13 +206,13 @@ FloatResult!T floatingToFloating(S, T)(S source)
     if ((is(S == float) || is(S == double)) &&
         (is(T == float) || is(T == double)))
 {
-    const auto src = decompose(source);
+    auto src = decompose(source);
 
     if (!src.finite)
         return FloatResult!T(R15Status.nonFinite, T.init);
 
-    const T target = forceStorage(cast(T)source);
-    const auto dst = decompose(target);
+    T target = forceStorage(cast(T)source);
+    auto dst = decompose(target);
 
     if (!dst.finite)
         return FloatResult!T(R15Status.overflow, T.init);
