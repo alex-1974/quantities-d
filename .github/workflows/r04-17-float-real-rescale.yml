@@ -1,9 +1,6 @@
 name: R04.17 Float Real Rescale Research
 
 on:
-  push:
-    branches:
-      - research/r04-17-float-real-rescale
   workflow_dispatch:
 
 permissions:
