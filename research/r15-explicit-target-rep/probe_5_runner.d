@@ -32,13 +32,19 @@ void main()
         {
             auto source = floatFromBits(f[1].to!uint);
             const r = floatingToFloating!(float, double)(source);
-            writeln(r.status, " ", doubleBits(r.value));
+            if (r.status == R15Status.overflow || r.status == R15Status.nonFinite)
+                writeln(r.status, " -");
+            else
+                writeln(r.status, " ", doubleBits(r.value));
         }
         else if (op == "DF")
         {
             auto source = doubleFromBits(f[1].to!ulong);
             const r = floatingToFloating!(double, float)(source);
-            writeln(r.status, " ", floatBits(r.value));
+            if (r.status == R15Status.overflow || r.status == R15Status.nonFinite)
+                writeln(r.status, " -");
+            else
+                writeln(r.status, " ", floatBits(r.value));
         }
         else if (op == "FL")
         {
