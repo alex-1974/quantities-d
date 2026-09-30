@@ -4,6 +4,7 @@ import std.traits : isIntegral;
 
 import quantities.arithmetic_rep :
     AddArithmeticRep,
+    MulArithmeticRep,
     MulRep,
     SubArithmeticRep;
 import quantities.arithmetic_traits :
@@ -99,12 +100,10 @@ public:
     @safe pure nothrow @nogc
     auto opBinary(string op, Scalar)(Scalar scalar) const
         if (op == "*" &&
-            isIntegral!Rep &&
-            isIntegral!Scalar &&
             isScalableValue!Spec &&
-            !is(MulRep!(Rep, Scalar) == void))
+            !is(MulArithmeticRep!(Rep, Scalar) == void))
     {
-        alias ResultRep = MulRep!(Rep, Scalar);
+        alias ResultRep = MulArithmeticRep!(Rep, Scalar);
 
         return Quantity!(Spec, ResultRep).fromCanonical(
             cast(ResultRep)canonical_ *
@@ -114,12 +113,10 @@ public:
     @safe pure nothrow @nogc
     auto opBinaryRight(string op, Scalar)(Scalar scalar) const
         if (op == "*" &&
-            isIntegral!Rep &&
-            isIntegral!Scalar &&
             isScalableValue!Spec &&
-            !is(MulRep!(Scalar, Rep) == void))
+            !is(MulArithmeticRep!(Scalar, Rep) == void))
     {
-        alias ResultRep = MulRep!(Scalar, Rep);
+        alias ResultRep = MulArithmeticRep!(Scalar, Rep);
 
         return Quantity!(Spec, ResultRep).fromCanonical(
             cast(ResultRep)scalar *
@@ -284,6 +281,55 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
         uint.max * uint.max.quantity!(Length, Metre);
     static assert(is(typeof(productRight) == Quantity!(Length, ulong)));
     static assert(productRight.canonicalValue == product.canonicalValue);
+
+    // Floating scalar multiplication follows native D promotion after the
+    // full-domain operand-admission gate succeeds.
+    enum floatingScalarProduct =
+        1.5f.quantity!(Length, Metre) * 2.0;
+    enum floatingScalarProductRight =
+        2.0 * 1.5f.quantity!(Length, Metre);
+    static assert(is(
+        typeof(floatingScalarProduct)
+        == Quantity!(Length, double)));
+    static assert(is(
+        typeof(floatingScalarProductRight)
+        == Quantity!(Length, double)));
+    static assert(
+        floatingScalarProduct.canonicalValue
+        == 3.0);
+    static assert(
+        floatingScalarProductRight.canonicalValue
+        == 3.0);
+
+    enum intDoubleProduct =
+        int.max.quantity!(Length, Metre) * 0.5;
+    enum doubleIntProduct =
+        0.5 * int.max.quantity!(Length, Metre);
+    static assert(is(
+        typeof(intDoubleProduct)
+        == Quantity!(Length, double)));
+    static assert(is(
+        typeof(doubleIntProduct)
+        == Quantity!(Length, double)));
+    static assert(
+        intDoubleProduct.canonicalValue
+        == 1_073_741_823.5);
+    static assert(
+        doubleIntProduct.canonicalValue
+        == 1_073_741_823.5);
+
+    enum shortFloatProduct =
+        (cast(short)32_767).quantity!(Length, Metre) * 0.5f;
+    static assert(is(
+        typeof(shortFloatProduct)
+        == Quantity!(Length, float)));
+
+    static assert(!__traits(compiles,
+        1.quantity!(Length, Metre) * 0.5f));
+    static assert(!__traits(compiles,
+        long.max.quantity!(Length, Metre) * 0.5));
+    static assert(!__traits(compiles,
+        0.5 * long.max.quantity!(Length, Metre)));
 
     static assert(!__traits(compiles,
         ulong.max.quantity!(Length, Metre) * ulong.max));
