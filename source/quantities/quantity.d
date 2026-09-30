@@ -78,21 +78,55 @@ public:
         if (op == "*" &&
             !is(ProductResultSpec!(Spec, OtherSpec) == void) &&
             !is(MulArithmeticRep!(Rep, OtherRep) == void) &&
-            ProductCanonicalRescale!(
-                Spec,
-                OtherSpec,
-                ProductResultSpec!(Spec, OtherSpec)).numerator == 1 &&
-            ProductCanonicalRescale!(
-                Spec,
-                OtherSpec,
-                ProductResultSpec!(Spec, OtherSpec)).denominator == 1)
+            (
+                (
+                    ProductCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        ProductResultSpec!(Spec, OtherSpec)).numerator == 1 &&
+                    ProductCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        ProductResultSpec!(Spec, OtherSpec)).denominator == 1
+                ) ||
+                (
+                    is(MulArithmeticRep!(Rep, OtherRep) == double) &&
+                    ProductCanonicalRescale!(
+                        Spec,
+                        OtherSpec,
+                        ProductResultSpec!(Spec, OtherSpec)).numerator > 0
+                )
+            ))
     {
         alias ResultSpec = ProductResultSpec!(Spec, OtherSpec);
         alias ResultRep = MulArithmeticRep!(Rep, OtherRep);
+        alias Rescale = ProductCanonicalRescale!(
+            Spec,
+            OtherSpec,
+            ResultSpec);
 
-        return Quantity!(ResultSpec, ResultRep).fromCanonical(
-            cast(ResultRep)canonical_ *
-            cast(ResultRep)rhs.canonicalValue);
+        static if (
+            Rescale.numerator == 1 &&
+            Rescale.denominator == 1)
+        {
+            return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                cast(ResultRep)canonical_ *
+                cast(ResultRep)rhs.canonicalValue);
+        }
+        else
+        {
+            static assert(is(ResultRep == double));
+
+            import quantities.binary64_scale :
+                rescaleProductBinary64;
+
+            return Quantity!(ResultSpec, ResultRep).fromCanonical(
+                rescaleProductBinary64(
+                    cast(double)canonical_,
+                    cast(double)rhs.canonicalValue,
+                    Rescale.numerator,
+                    Rescale.denominator));
+        }
     }
 
     @safe pure nothrow @nogc
@@ -360,6 +394,43 @@ auto inUnit(Unit, Spec, Rep)(Quantity!(Spec, Rep) value)
     static assert(!__traits(compiles,
         long.max.quantity!(Length, Metre)
             * 0.5.quantity!(Length, Metre)));
+
+    struct ScaledAreaSpec
+    {
+        import quantities.area : AreaDimension;
+        alias Dimension = AreaDimension;
+        alias CanonicalUnit = DerivedUnit!(
+            AreaDimension,
+            ExactRatio!(2, 1));
+    }
+
+    struct LengthToScaledArea
+    {
+        alias Dimension = Length.Dimension;
+        alias CanonicalUnit = Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = ScaledAreaSpec;
+        }
+    }
+
+    // Native product-first evaluation overflows. Exact product with the 1/2
+    // canonical rescale has the finite result double.max.
+    auto rescaledProduct =
+        double.max.quantity!(LengthToScaledArea, Metre)
+        * 2.0.quantity!(LengthToScaledArea, Metre);
+    assert(is(
+        typeof(rescaledProduct)
+        == Quantity!(ScaledAreaSpec, double)));
+    assert(rescaledProduct.canonicalValue == double.max);
+
+    // Nontrivial represented-source product rescale is runtime-only.
+    static assert(!__traits(compiles, {
+        enum ctfeRescaledProduct =
+            1.5.quantity!(LengthToScaledArea, Metre)
+            * 2.0.quantity!(LengthToScaledArea, Metre);
+    }));
 
     // Floating direct quotient requires an explicit semantic quotient relation
     // and an exact identity canonical rescale.

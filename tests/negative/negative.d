@@ -395,6 +395,34 @@ version (M3QuantityProductCanonicalRescale)
         * 1000.quantity!(LengthToKm2, production.Metre);
 }
 
+version (M3FloatingQuantityProductCanonicalRescale)
+{
+    alias ScaledSquareMetre = production.DerivedUnit!(
+        production.AreaDimension,
+        production.ExactRatio!(2, 1));
+
+    struct ScaledArea
+    {
+        alias Dimension = production.AreaDimension;
+        alias CanonicalUnit = ScaledSquareMetre;
+    }
+
+    struct LengthToScaledArea
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = ScaledArea;
+        }
+    }
+
+    enum x =
+        1.5.quantity!(LengthToScaledArea, production.Metre)
+        * 2.0.quantity!(LengthToScaledArea, production.Metre);
+}
+
 
 version (M3ExternalProductMissingRelation)
 {

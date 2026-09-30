@@ -217,6 +217,36 @@ void main()
         mixedQuantityProduct.canonicalValue
         == 1_073_741_823.5);
 
+    alias ConsumerScaledAreaUnit = DerivedUnit!(
+        AreaDimension,
+        ExactRatio!(3, 2));
+
+    struct ConsumerScaledArea
+    {
+        alias Dimension = AreaDimension;
+        alias CanonicalUnit = ConsumerScaledAreaUnit;
+    }
+
+    struct ScaledProductLength
+    {
+        alias Dimension = LengthDimension;
+        alias CanonicalUnit = Metre;
+
+        template ProductWith(Rhs)
+        {
+            alias ProductWith = ConsumerScaledArea;
+        }
+    }
+
+    auto rescaledConsumerProduct =
+        1.5.quantity!(ScaledProductLength, Metre)
+        * 2.0.quantity!(ScaledProductLength, Metre);
+    assert(is(
+        typeof(rescaledConsumerProduct)
+        == Quantity!(ConsumerScaledArea, double)));
+    // Mathematical product is 3 and canonical rescale is 2/3.
+    assert(rescaledConsumerProduct.canonicalValue == 2.0);
+
     enum exactDivision =
         int.min.quantity!(Length, Metre).exactDiv(-1);
     static assert(exactDivision.status == DivisionStatus.exact);
