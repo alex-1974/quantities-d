@@ -205,3 +205,123 @@ The next probe should compose this policy with the actual
 `arithmetic_rep.d`, `arithmetic_traits.d`, and `quantity.d` contracts
 while preserving existing integral behavior. Floating Quantity-by-Quantity
 product rescaling remains out of scope for that step.
+
+
+## Probe 7 — integration against the real quantities-d operator architecture
+
+Probe 7 used a clean temporary checkout of
+`research/r04-15-floating-arithmetic` at
+`d0ae2b5b0bf18eec473ca9b759d0620aedb2a153`.
+
+The temporary checkout patched the real
+`source/quantities/arithmetic_rep.d` and
+`source/quantities/quantity.d` while leaving the research branch itself
+unchanged. The patch deliberately kept the established integral
+`AddRep`, `SubRep`, and `MulRep` contracts intact and introduced a
+research-stage `ArithmeticRep` dispatcher beside them.
+
+The temporary integration changed only ordinary same-Spec addition and
+subtraction plus scalar multiplication/division to use the dispatcher.
+Quantity-by-Quantity multiplication remained on the existing integral
+path and was intentionally left out of scope.
+
+### Probe 7A — in-tree integration
+
+The first test run exposed only a probe-source precedence error in
+
+`cast(short)2.quantity!(...)`
+
+which parsed as a cast of the resulting Quantity. After correcting this
+to
+
+`(cast(short)2).quantity!(...)`
+
+both DMD 2.111 and LDC 1.41 passed all 10 existing unittest modules and
+`git diff --check` passed.
+
+Final temporary patched-file SHA-256 values:
+
+- `source/quantities/arithmetic_rep.d`:
+  `934ba763346865bd794961fe2e42780aa70ac372c8b511349400eca28af01821`
+- `source/quantities/quantity.d`:
+  `fe36ac5e89d91e14cc576554f3bff26ece4f81486f7c42c6eaa8d63b77faab70`
+
+This demonstrated that the dispatcher model can be composed with the real
+Quantity operator constraints without regressing the existing integral
+test suite.
+
+### Probe 7B — external positive and compile-negative consumers
+
+A separate set of external consumer translation units then exercised the
+public Quantity surface.
+
+Positive consumer SHA-256:
+
+- `positive.d`:
+  `27c0fa30eb9d4b63a67a4f0377bc0baf098039246b6382e8c554c4df76028ede`
+
+It covered:
+
+- floating/floating same-Spec addition;
+- `float + double` promotion;
+- admitted `short + float`;
+- admitted `int + double`;
+- scalar `int * double`;
+- symmetric scalar `double * int Quantity`;
+- research-stage scalar `int / double`.
+
+The positive consumer built and ran successfully with both DMD and LDC.
+
+Six external negative consumers checked:
+
+1. `int + float`;
+2. `long + double`;
+3. `long * double`;
+4. `long / double`;
+5. addition on a non-additive Spec;
+6. scalar multiplication on a non-scalable Spec.
+
+All six were rejected by both compilers.
+
+The rejection sites were the intended architectural gates:
+
+- unsafe mixed representation combinations failed because
+  `ArithmeticRep!(...) == void`;
+- a non-additive Spec failed through
+  `AddResult!(...) == void`;
+- a non-scalable Spec failed through
+  `isScalableValue!Spec`.
+
+No negative consumer failed because of an unrelated internal template or
+compiler error.
+
+The complete suite was re-run after the external consumers:
+
+```text
+DMD positive consumer:      0
+LDC positive consumer:      0
+DMD unexpected negatives:   0
+LDC unexpected negatives:   0
+DMD full suite:             0
+LDC full suite:             0
+```
+
+### Probe 7 conclusion
+
+The dispatcher hypothesis survives integration with the actual
+quantities-d architecture.
+
+The evidence supports keeping three concerns separate:
+
+1. semantic admissibility remains in the existing semantic traits such as
+   `AddResult` and `isScalableValue`;
+2. integral full-range safety remains in the established
+   `AddRep/SubRep/MulRep` contracts;
+3. ordinary floating and admitted mixed representation selection can be
+   layered through a dispatcher without weakening either of the first two.
+
+The temporary patch is not promoted production code. In particular,
+scalar division is still only a research-stage candidate, and
+Quantity-by-Quantity floating product/quotient arithmetic requires a
+separate probe because canonical rescaling and semantic result resolution
+introduce additional contracts.
