@@ -348,8 +348,8 @@ private T quantize(T)(ExactRatio192 exact)
 
             if (topExponent > maxTopExponent)
                 return exact.negative
-                    ? -real.infinity
-                    : real.infinity;
+                    ? -T.infinity
+                    : T.infinity;
         }
 
         T value =
