@@ -353,6 +353,20 @@ version (M3QuantityProductClassO)
         * long.max.quantity!(production.Length, production.Metre);
 }
 
+version (M3UnsafeIntFloatQuantityProduct)
+{
+    enum x =
+        1.quantity!(production.Length, production.Metre)
+        * 0.5f.quantity!(production.Length, production.Metre);
+}
+
+version (M3UnsafeLongDoubleQuantityProduct)
+{
+    enum x =
+        long.max.quantity!(production.Length, production.Metre)
+        * 0.5.quantity!(production.Length, production.Metre);
+}
+
 version (M3QuantityProductCanonicalRescale)
 {
     alias SquareKilometre = production.DerivedUnit!(
