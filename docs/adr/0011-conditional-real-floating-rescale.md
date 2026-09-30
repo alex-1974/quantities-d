@@ -1,6 +1,6 @@
 # ADR 0011: Conditional exact nontrivial D real canonical rescale
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-30
 - Issue: #37
 - Related: ADR 0009, ADR 0010
@@ -173,6 +173,10 @@ LDC 1.41.0
 ```
 
 No material Quantity-layer overhead was observed.
+
+## Acceptance
+
+The qualified conditional `real` production slice was merged via PR #40 at develop commit `e3c0a40520f7f399ba33ca84f160616298762353`. The normal repository CI passed on DMD 2.111.0 and LDC 1.41.0, and the supporting R04.17 research qualification remains the evidence basis for the trait-gated contract.
 
 ## Consequences
 
