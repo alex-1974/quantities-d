@@ -700,3 +700,83 @@ No performance claim is made from the observed 85.8380% coverage. The next
 probe should first establish correctness of the 128-bit quotient path and the
 <=128-bit product subset against the exact oracle before deciding whether a
 fast-path split is worthwhile.
+
+
+## Probe 8C2-A2a — exact Cent/Cent rational core
+
+Source SHA-256:
+
+`29ba2e13b11f37b15378957d9c923898fa40abaa87a6f1579da5282e970dbc7e`
+
+Probe 8C2-A2a implemented the exact rational pre-rounding core in D using
+`core.int128.Cent` and exact cross-cancellation. `std.bigint.BigInt` was
+used only as an independent research oracle.
+
+No Quantity API or final binary64 rounding was involved.
+
+Both DMD 2.111 and LDC 1.41 built and ran the probe successfully with identical
+results.
+
+### Quotient core
+
+100,000 deterministic finite binary64 quotient cases were checked.
+
+```text
+checked             : 100000
+mismatches          : 0
+max numerator bits  : 116
+max denominator bits: 116
+```
+
+Every candidate `Cent/Cent * 2^e` rational value was mathematically identical
+to the independent BigInt oracle.
+
+This validates the structural conclusion from Probe 8C2-A1: the full current
+floating quotient rational core fits within 128 bits on both sides.
+
+### Product <=128 subset
+
+The same probe tested the product path only when exact cross-cancellation and
+fixed-width multiplication remained representable in `Cent`.
+
+```text
+checked             : 85670
+skipped wide        : 14330
+mismatches          : 0
+max numerator bits  : 117
+```
+
+All covered product cases matched the independent BigInt oracle exactly.
+
+The skipped cases are expected and remain the responsibility of the wider
+product path established by Probe 8C2-A1.
+
+### Probe 8C2-A2a conclusion
+
+The exact rational stage can be represented correctly in D as:
+
+```text
+numerator   : Cent
+denominator : Cent
+binary exponent : int
+sign        : bool
+```
+
+for:
+
+- the complete current floating quotient domain; and
+- the product subset whose cross-cancelled numerator fits 128 bits.
+
+The next step is final binary64 quantization of this exact
+`Cent/Cent * 2^e` form. That rounding step must preserve the existing
+represented-source semantics already validated in `binary64_scale.d`,
+including:
+
+- round-to-nearest, ties-to-even;
+- direct subnormal-lattice rounding;
+- signed zero;
+- the normal/subnormal boundary;
+- the finite/infinity midpoint.
+
+Only after the 128-bit quantizer is bit-identical to the independent exact
+oracle should a wider UInt192 product fallback be implemented.
