@@ -1,6 +1,6 @@
 module r04_15_runtime_codegen;
 
-import core.time : MonoTime;
+import core.stdc.time : clock;
 import std.algorithm : sort;
 import std.stdio : writeln;
 import quantities;
@@ -29,7 +29,7 @@ private ulong runKernel(Kernel kernel, size_t iterations, ref double checksum)
     double x = 1.0;
     double y = 0.00000011920928955078125; // exactly 2^-23
 
-    const start = MonoTime.currTime;
+    const start = clock();
 
     foreach (_; 0 .. iterations)
     {
@@ -37,10 +37,10 @@ private ulong runKernel(Kernel kernel, size_t iterations, ref double checksum)
         y += 0.000000059604644775390625; // exactly 2^-24
     }
 
-    const stop = MonoTime.currTime;
+    const stop = clock();
     checksum += x + y;
 
-    return cast(ulong)(stop - start).total!"nsecs";
+    return cast(ulong)(stop - start);
 }
 
 void main()
@@ -86,8 +86,8 @@ void main()
         cast(double)rawMedian;
 
     writeln("checksum: ", checksum);
-    writeln("raw median ns: ", rawMedian);
-    writeln("quantity median ns: ", quantityMedian);
+    writeln("raw median ticks: ", rawMedian);
+    writeln("quantity median ticks: ", quantityMedian);
     writeln("quantity/raw median ratio: ", ratio);
 
     // Broad materiality gate. Probe 9 already records exact instruction shape;
