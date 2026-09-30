@@ -908,3 +908,96 @@ product : UInt192 / ulong * 2^e, <=169/63 bits
 The remaining choice is architectural/performance-oriented: retain separate
 narrow/wide kernels, share a UInt192 quantizer, or dispatch between them.
 That choice requires generated-code, runtime, code-size, and CTFE evidence.
+
+
+## Probe 8D-Q — narrow Cent quotient vs shared UInt192 quantizer
+
+Probe 8D-Q compared two semantically equivalent implementations of the
+already-validated floating quotient:
+
+1. the narrow `Cent/Cent` quotient quantizer;
+2. the same exact rational value widened losslessly to
+   `UInt192/UInt192` before quantization.
+
+The benchmark used 4096 deterministic runtime-generated finite quotient inputs,
+a correctness preflight, warm-up, nine timed rounds, balanced AB/BA ordering,
+100 repetitions per round, and an observable checksum.
+
+Both implementations produced the identical checksum:
+
+`0x60bec92cdf4406b8`
+
+### DMD 2.111 release build
+
+```text
+Cent:
+  min    311459101 ns
+  median 313903297 ns
+  max    331038742 ns
+
+UInt192:
+  min    563386418 ns
+  median 572272244 ns
+  max    641479097 ns
+
+wide/cent median ratio: 1.823085
+```
+
+The shared UInt192 quantizer was approximately 82.3% slower than the narrow
+Cent quotient quantizer in this benchmark.
+
+### LDC 1.41 release build
+
+```text
+Cent:
+  min    217633448 ns
+  median 218392433 ns
+  max    223979379 ns
+
+UInt192:
+  min    222065798 ns
+  median 223345361 ns
+  max    252836352 ns
+
+wide/cent median ratio: 1.022679
+```
+
+The shared UInt192 quantizer was approximately 2.3% slower at the median on
+LDC.
+
+### Build and binary observations
+
+The corrected lightweight harness compiled quickly:
+
+```text
+DMD release build: 0.203 s
+LDC release build: 0.298 s
+```
+
+Combined benchmark binary sizes were:
+
+```text
+DMD: text 603602 bytes, total 674810 bytes
+LDC: text 373771 bytes, total 436579 bytes
+```
+
+These combined binary sizes are not attributable to one implementation and
+therefore are not used as a per-kernel code-size conclusion.
+
+### Probe 8D-Q conclusion
+
+A single always-wide UInt192 quotient quantizer is not justified as the default
+portable architecture by this evidence.
+
+For DMD 2.111, widening the already-sufficient 116-bit quotient rational to
+UInt192 carries a large runtime cost. LDC 1.41 largely optimizes that extra
+width away, but the portable implementation must account for the supported
+compiler matrix.
+
+The current evidence therefore favors retaining the narrow `Cent/Cent`
+quotient kernel unless later compiler-specific specialization is justified by
+additional measurements.
+
+This result also reinforces the workspace rule that source symmetry is not a
+performance oracle: the apparently simpler shared-wide architecture has a
+material compiler-dependent runtime cost.
