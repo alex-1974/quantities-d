@@ -241,6 +241,42 @@ version (M3UnsafeRightLongDoubleScalarMultiplication)
 }
 
 
+version (R0416RawIntegralScalarDivision)
+{
+    enum x =
+        6.quantity!(production.Length, production.Metre) / 3;
+}
+
+version (R0416UnsafeIntFloatScalarDivision)
+{
+    enum x =
+        1.quantity!(production.Length, production.Metre) / 0.5f;
+}
+
+version (R0416UnsafeLongDoubleScalarDivision)
+{
+    enum x =
+        long.max.quantity!(production.Length, production.Metre) / 0.5;
+}
+
+version (R0416ScalarOverQuantity)
+{
+    enum x =
+        2.0 / 3.0.quantity!(production.Length, production.Metre);
+}
+
+version (R0416NonScalableScalarDivision)
+{
+    struct Radius
+    {
+        alias Dimension = production.LengthDimension;
+        alias CanonicalUnit = production.Metre;
+    }
+
+    enum x =
+        6.0.quantity!(Radius, production.Metre) / 3.0;
+}
+
 version (M3NonScalableExactDivision)
 {
     struct Radius
