@@ -143,3 +143,50 @@ jobs:
       - name: Release build with binary32 integration
         shell: bash
         run: dub build --build=release --compiler="$DC" --force
+
+
+      - name: Probe 8 binary32 performance
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off \
+                -Isource -i \
+                research/r04-17-float-real-rescale/probe_8_performance.d \
+                -of=/tmp/r04-17/probe_8_perf
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off \
+                -Isource -i \
+                research/r04-17-float-real-rescale/probe_8_performance.d \
+                -of=/tmp/r04-17/probe_8_perf
+              ;;
+          esac
+          /tmp/r04-17/probe_8_perf
+
+      - name: Probe 8 binary32 codegen
+        shell: bash
+        run: |
+          mkdir -p /tmp/r04-17
+          case "${{ matrix.compiler }}" in
+            dmd-*)
+              "$DC" -O -release -inline -boundscheck=off \
+                -Isource -i -c \
+                research/r04-17-float-real-rescale/probe_8_codegen.d \
+                -of=/tmp/r04-17/probe_8_codegen.o
+              ;;
+            ldc-*)
+              "$DC" -O3 -release -boundscheck=off \
+                -Isource -i -c \
+                research/r04-17-float-real-rescale/probe_8_codegen.d \
+                -of=/tmp/r04-17/probe_8_codegen.o
+              ;;
+          esac
+
+          for sym in direct_product quantity_product direct_quotient quantity_quotient
+          do
+            echo "=== $sym ==="
+            objdump -d --no-show-raw-insn /tmp/r04-17/probe_8_codegen.o |
+              sed -n "/<$sym>:/,/^$/p"
+          done
