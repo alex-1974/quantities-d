@@ -624,3 +624,79 @@ Probe 8C1 does not yet choose the internal representation. Probe 8C2 should
 compare implementation strategies such as a compact UInt192-style value,
 composition from existing `core.int128` primitives, and aggressive exact
 cross-cancellation before fixed-width multiplication.
+
+
+## Probe 8C2-A1 — cross-cancel plus 128-bit coverage
+
+Source SHA-256:
+
+`eb8aaff7798cf28ec906c874e21346f524ffbe02894c3cbdedc049c561deba6b`
+
+Probe 8C2-A1 isolated the fixed-width coverage question before implementing
+division or final binary64 rounding.
+
+The probe decomposed finite binary64 operands to exact significands, applied
+exact cross-cancellation against the rational scale, and measured the
+remaining numerator/denominator bit widths.
+
+Both DMD 2.111 and LDC 1.41 produced identical results and passed.
+
+### Constructed extrema
+
+The constructed product case reached the previously proven maximum:
+
+```text
+product numerator = 169 bits
+product denominator = 1 bit
+```
+
+The constructed quotient case stayed within:
+
+```text
+quotient numerator = 116 bits
+quotient denominator = 54 bits
+```
+
+### Deterministic random coverage
+
+Over 200,000 finite binary64 operand pairs and the Probe-8C scale set:
+
+```text
+product samples       : 200000
+product <=128 bits    : 171676
+product 129..169 bits : 28324
+product max observed  : 169 bits
+product <=128 coverage: 85.8380 %
+
+quotient samples      : 200000
+quotient <=128/128    : 200000
+quotient max numerator: 116 bits
+quotient max denom    : 116 bits
+quotient 128 coverage : 100.0000 %
+```
+
+The 85.8380% product figure is specific to this deterministic research
+distribution and must not be interpreted as a real-workload frequency.
+
+### Probe 8C2-A1 conclusion
+
+Cross-cancellation does not remove the need for a wider-than-128-bit product
+path under the current quantities-d contracts.
+
+A 128-bit-only floating product kernel would be incomplete because valid
+inputs still require up to 169 exact numerator bits.
+
+For quotient arithmetic, the exact rational structure remains fully bounded by
+128 bits on both numerator and denominator sides. This supports using existing
+`core.int128` machinery as the primary exact quotient representation.
+
+For product arithmetic, a practical architecture may use:
+
+- an optional <=128-bit fast path after cross-cancellation; and
+- a complete >=169-bit fallback/reference path, such as a minimal UInt192-style
+  internal value.
+
+No performance claim is made from the observed 85.8380% coverage. The next
+probe should first establish correctness of the 128-bit quotient path and the
+<=128-bit product subset against the exact oracle before deciding whether a
+fast-path split is worthwhile.
