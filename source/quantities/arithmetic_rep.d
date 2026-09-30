@@ -1,6 +1,6 @@
 module quantities.arithmetic_rep;
 
-import std.traits : isIntegral, isSigned;
+import std.traits : isFloatingPoint, isIntegral, isSigned;
 
 package(quantities):
 
@@ -128,6 +128,66 @@ template MulRep(A, B)
 {
     static assert(isIntegral!A && isIntegral!B);
     alias MulRep = SelectRep!(MulShape!(A, B));
+}
+
+/*
+ * Floating arithmetic admission is separate from the integral range
+ * selectors above. Integral/integral combinations continue to delegate to
+ * the established AddRep/SubRep contracts unchanged.
+ *
+ * For mixed integral/floating arithmetic, admit the native floating result
+ * only when every value of the integral operand Rep is exactly representable
+ * by that floating ResultRep. This prevents operand information loss before
+ * the arithmetic operation itself. Ordinary floating result rounding remains
+ * native floating semantics after admission.
+ */
+private enum integralValueBits(T) =
+    bits!T - (isSigned!T ? 1 : 0);
+
+private template FloatingBinaryRep(A, B)
+{
+    static if (isFloatingPoint!A && isFloatingPoint!B)
+        alias FloatingBinaryRep = typeof(A.init + B.init);
+    else static if (
+        isIntegral!A &&
+        !is(A == bool) &&
+        isFloatingPoint!B)
+    {
+        alias Candidate = typeof(A.init + B.init);
+        static if (integralValueBits!A <= Candidate.mant_dig)
+            alias FloatingBinaryRep = Candidate;
+        else
+            alias FloatingBinaryRep = void;
+    }
+    else static if (
+        isFloatingPoint!A &&
+        isIntegral!B &&
+        !is(B == bool))
+    {
+        alias Candidate = typeof(A.init + B.init);
+        static if (integralValueBits!B <= Candidate.mant_dig)
+            alias FloatingBinaryRep = Candidate;
+        else
+            alias FloatingBinaryRep = void;
+    }
+    else
+        alias FloatingBinaryRep = void;
+}
+
+template AddArithmeticRep(A, B)
+{
+    static if (isIntegral!A && isIntegral!B)
+        alias AddArithmeticRep = AddRep!(A, B);
+    else
+        alias AddArithmeticRep = FloatingBinaryRep!(A, B);
+}
+
+template SubArithmeticRep(A, B)
+{
+    static if (isIntegral!A && isIntegral!B)
+        alias SubArithmeticRep = SubRep!(A, B);
+    else
+        alias SubArithmeticRep = FloatingBinaryRep!(A, B);
 }
 
 
@@ -483,6 +543,25 @@ template QuotientRep(A, B)
 static assert(is(AddRep!(int, uint) == long));
 static assert(is(SubRep!(uint, uint) == long));
 static assert(is(MulRep!(uint, uint) == ulong));
+
+// Dispatcher preserves the existing integral result rules.
+static assert(is(AddArithmeticRep!(int, uint) == long));
+static assert(is(SubArithmeticRep!(uint, uint) == long));
+
+// Floating/floating follows native D promotion.
+static assert(is(AddArithmeticRep!(float, double) == double));
+static assert(is(SubArithmeticRep!(double, float) == double));
+
+// Mixed arithmetic is admitted only when the complete integral operand domain
+// is exactly representable by the native floating result Rep.
+static assert(is(AddArithmeticRep!(short, float) == float));
+static assert(is(AddArithmeticRep!(int, double) == double));
+static assert(is(SubArithmeticRep!(double, int) == double));
+static assert(is(AddArithmeticRep!(int, float) == void));
+static assert(is(AddArithmeticRep!(long, double) == void));
+static assert(is(SubArithmeticRep!(double, long) == void));
+static assert(is(AddArithmeticRep!(bool, double) == void));
+static assert(is(SubArithmeticRep!(double, bool) == void));
 static assert(is(AddRep!(long, long) == void));
 static assert(is(MulRep!(ulong, ulong) == void));
 
