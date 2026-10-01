@@ -19,45 +19,45 @@ IntegralResult identityOrComposedLong(From,To,S)(S value,
             To.Scale.numerator,To.Scale.denominator,rounded,mode);
     else
     {
-    ulong sig;
-    int exponent2;
-    bool negative;
-    static if (is(Unqual!S == float) || is(Unqual!S == double))
-    {
-        enum p = is(Unqual!S == float) ? 24 : 53;
-        enum expBits = is(Unqual!S == float) ? 8 : 11;
-        enum bias = is(Unqual!S == float) ? 127 : 1023;
-        enum signShift = is(Unqual!S == float) ? 31 : 63;
-        const raw = storedBits(value);
-        const ef = (raw >> (p-1)) & ((1UL << expBits)-1UL);
-        if (ef == ((1UL << expBits)-1UL))
-            return IntegralResult(Status.nonFinite, false, 0);
-        const fraction = raw & ((1UL << (p-1))-1UL);
-        sig = ef == 0 ? fraction : fraction | (1UL << (p-1));
-        exponent2 = ef == 0 ? 1-bias-(p-1) : cast(int)ef-bias-(p-1);
-        negative = (raw >> signShift) != 0;
-    }
-    else
-    {
-        if (value != value || value > real.max || value < -real.max)
-            return IntegralResult(Status.nonFinite, false, 0);
-        if (value == 0)
-            return identityLong(0,0,false,rounded,mode);
-        negative = value < 0;
-        int e;
-        const f = frexp(negative ? -value : value, e);
-        sig = cast(ulong)ldexp(f, real.mant_dig);
-        exponent2 = e-real.mant_dig;
-        // frexp normalizes subnormals: a 64-bit tuple for real80 minSubnormal
-        // has exponent -16508. Remove redundant zero bits before the bounded
-        // integral tuple kernel, preserving the exact represented value.
-        while ((sig & 1UL) == 0)
+        ulong sig;
+        int exponent2;
+        bool negative;
+        static if (is(Unqual!S == float) || is(Unqual!S == double))
         {
-            sig >>= 1;
-            ++exponent2;
+            enum p = is(Unqual!S == float) ? 24 : 53;
+            enum expBits = is(Unqual!S == float) ? 8 : 11;
+            enum bias = is(Unqual!S == float) ? 127 : 1023;
+            enum signShift = is(Unqual!S == float) ? 31 : 63;
+            const raw = storedBits(value);
+            const ef = (raw >> (p-1)) & ((1UL << expBits)-1UL);
+            if (ef == ((1UL << expBits)-1UL))
+                return IntegralResult(Status.nonFinite, false, 0);
+            const fraction = raw & ((1UL << (p-1))-1UL);
+            sig = ef == 0 ? fraction : fraction | (1UL << (p-1));
+            exponent2 = ef == 0 ? 1-bias-(p-1) : cast(int)ef-bias-(p-1);
+            negative = (raw >> signShift) != 0;
         }
-    }
-    return identityLong(sig,exponent2,negative,rounded,mode);
+        else
+        {
+            if (value != value || value > real.max || value < -real.max)
+                return IntegralResult(Status.nonFinite, false, 0);
+            if (value == 0)
+                return identityLong(0,0,false,rounded,mode);
+            negative = value < 0;
+            int e;
+            const f = frexp(negative ? -value : value, e);
+            sig = cast(ulong)ldexp(f, real.mant_dig);
+            exponent2 = e-real.mant_dig;
+            // frexp normalizes subnormals: a 64-bit tuple for real80 minSubnormal
+            // has exponent -16508. Remove redundant zero bits before the bounded
+            // integral tuple kernel, preserving the exact represented value.
+            while ((sig & 1UL) == 0)
+            {
+                sig >>= 1;
+                ++exponent2;
+            }
+        }
+        return identityLong(sig,exponent2,negative,rounded,mode);
     }
 }
 

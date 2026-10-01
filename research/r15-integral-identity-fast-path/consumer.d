@@ -44,10 +44,10 @@ bool identityIntegralChecks() @safe pure nothrow @nogc
         {
             const(real) boundary=cast(real)ulong.max/2;
             static foreach(mode;[RoundingMode.towardZero,RoundingMode.floor,RoundingMode.ceiling,RoundingMode.nearestTiesAway])
-            {
+            {{
                 const over=boundary.roundedQuantityAs!(Length,Metre,long,mode);
                 if(over.status!=ConversionStatus.overflow || over.tryValue(value)) return false;
-            }
+            }}
         }
     }
     return true;

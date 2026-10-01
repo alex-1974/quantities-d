@@ -152,6 +152,10 @@ void main()
         r15DoubleLong(1.0)!=r15BaselineDoubleLong(1.0) ||
         r15DoubleLongFloor(-1.5)!=r15BaselineDoubleLongFloor(-1.5))
         throw new Exception("codegen wrapper sanity gate failed");
+    static if(qualifiedReal)
+        if(r15RealLong(1L)!=r15BaselineRealLong(1L) ||
+           r15RealLongFloor(-1.5L)!=r15BaselineRealLongFloor(-1.5L))
+            throw new Exception("real codegen wrapper sanity gate failed");
     writeln("INTEGRAL_IDENTITY_COST_HEADER,case,api_median_ns,kernel_median_ns,ratio,api_min_ns,api_max_ns,kernel_min_ns,kernel_max_ns,checksum");
     measure!(float,Length,Metre,false,float)("float_float_identity");
     measure!(double,Length,Metre,false,double)("double_double_identity");
