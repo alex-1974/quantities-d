@@ -1,0 +1,395 @@
+CODEGEN {"symbol": "r15FloatLong", "instructions": 59, "calls": ["bc3ba:\tcall   bf564 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTfZQBmFNaNbNiNffbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "bc3d5:\tcall   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "bc3e2:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc419:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc424:\tcall   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "bc454:\tcall   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 12, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15FloatLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000bc3a0 <r15FloatLong>:
+   bc3a0:	push   rbp
+   bc3a1:	mov    rbp,rsp
+   bc3a4:	sub    rsp,0x70
+   bc3a8:	mov    QWORD PTR [rbp-0x70],rbx
+   bc3ac:	movss  DWORD PTR [rbp-0x8],xmm0
+   bc3b1:	movss  xmm0,DWORD PTR [rbp-0x8]
+   bc3b6:	xor    esi,esi
+   bc3b8:	mov    edi,esi
+   bc3ba:	call   bf564 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTfZQBmFNaNbNiNffbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   bc3bf:	mov    QWORD PTR [rbp-0x40],rax
+   bc3c3:	mov    QWORD PTR [rbp-0x38],rdx
+   bc3c7:	xor    eax,eax
+   bc3c9:	mov    QWORD PTR [rbp-0x30],rax
+   bc3cd:	lea    rsi,[rbp-0x30]
+   bc3d1:	lea    rdi,[rbp-0x40]
+   bc3d5:	call   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   bc3da:	xor    al,0x1
+   bc3dc:	je     bc40d <r15FloatLong+0x6d>
+   bc3de:	lea    rdi,[rbp-0x40]
+   bc3e2:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc3e7:	mov    ebx,eax
+   bc3e9:	mov    QWORD PTR [rbp-0x20],0x0
+   bc3f1:	cmp    ebx,0x2
+   bc3f4:	jne    bc3fc <r15FloatLong+0x5c>
+   bc3f6:	mov    BYTE PTR [rbp-0x20],0x3
+   bc3fa:	jmp    bc405 <r15FloatLong+0x65>
+   bc3fc:	cmp    ebx,0x3
+   bc3ff:	jne    bc405 <r15FloatLong+0x65>
+   bc401:	mov    BYTE PTR [rbp-0x20],0x4
+   bc405:	mov    rax,QWORD PTR [rbp-0x20]
+   bc409:	xor    ecx,ecx
+   bc40b:	jmp    bc42c <r15FloatLong+0x8c>
+   bc40d:	mov    rsi,QWORD PTR [rbp-0x30]
+   bc411:	mov    QWORD PTR [rbp-0x68],rsi
+   bc415:	lea    rdi,[rbp-0x40]
+   bc419:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc41e:	mov    edi,eax
+   bc420:	mov    rsi,QWORD PTR [rbp-0x68]
+   bc424:	call   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   bc429:	mov    rcx,rdx
+   bc42c:	mov    QWORD PTR [rbp-0x50],rax
+   bc430:	mov    QWORD PTR [rbp-0x48],rcx
+   bc434:	mov    rdx,QWORD PTR [rbp-0x50]
+   bc438:	mov    QWORD PTR [rbp-0x60],rdx
+   bc43c:	mov    rsi,QWORD PTR [rbp-0x48]
+   bc440:	mov    QWORD PTR [rbp-0x58],rsi
+   bc444:	mov    QWORD PTR [rbp-0x10],0x0
+   bc44c:	lea    rsi,[rbp-0x10]
+   bc450:	lea    rdi,[rbp-0x60]
+   bc454:	call   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   bc459:	test   al,al
+   bc45b:	je     bc463 <r15FloatLong+0xc3>
+   bc45d:	mov    rax,QWORD PTR [rbp-0x10]
+   bc461:	jmp    bc46a <r15FloatLong+0xca>
+   bc463:	mov    rax,0xffffffffffffffff
+   bc46a:	mov    rbx,QWORD PTR [rbp-0x70]
+   bc46e:	mov    rsp,rbp
+   bc471:	pop    rbp
+   bc472:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatLong
+CODEGEN {"symbol": "r15DoubleLong", "instructions": 59, "calls": ["bc4da:\tcall   bf870 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTdZQBmFNaNbNiNfdbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "bc4f5:\tcall   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "bc502:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc539:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc544:\tcall   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "bc574:\tcall   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 12, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15DoubleLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000bc4c0 <r15DoubleLong>:
+   bc4c0:	push   rbp
+   bc4c1:	mov    rbp,rsp
+   bc4c4:	sub    rsp,0x70
+   bc4c8:	mov    QWORD PTR [rbp-0x70],rbx
+   bc4cc:	movsd  QWORD PTR [rbp-0x8],xmm0
+   bc4d1:	movsd  xmm0,QWORD PTR [rbp-0x8]
+   bc4d6:	xor    esi,esi
+   bc4d8:	mov    edi,esi
+   bc4da:	call   bf870 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTdZQBmFNaNbNiNfdbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   bc4df:	mov    QWORD PTR [rbp-0x40],rax
+   bc4e3:	mov    QWORD PTR [rbp-0x38],rdx
+   bc4e7:	xor    eax,eax
+   bc4e9:	mov    QWORD PTR [rbp-0x30],rax
+   bc4ed:	lea    rsi,[rbp-0x30]
+   bc4f1:	lea    rdi,[rbp-0x40]
+   bc4f5:	call   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   bc4fa:	xor    al,0x1
+   bc4fc:	je     bc52d <r15DoubleLong+0x6d>
+   bc4fe:	lea    rdi,[rbp-0x40]
+   bc502:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc507:	mov    ebx,eax
+   bc509:	mov    QWORD PTR [rbp-0x20],0x0
+   bc511:	cmp    ebx,0x2
+   bc514:	jne    bc51c <r15DoubleLong+0x5c>
+   bc516:	mov    BYTE PTR [rbp-0x20],0x3
+   bc51a:	jmp    bc525 <r15DoubleLong+0x65>
+   bc51c:	cmp    ebx,0x3
+   bc51f:	jne    bc525 <r15DoubleLong+0x65>
+   bc521:	mov    BYTE PTR [rbp-0x20],0x4
+   bc525:	mov    rax,QWORD PTR [rbp-0x20]
+   bc529:	xor    ecx,ecx
+   bc52b:	jmp    bc54c <r15DoubleLong+0x8c>
+   bc52d:	mov    rsi,QWORD PTR [rbp-0x30]
+   bc531:	mov    QWORD PTR [rbp-0x68],rsi
+   bc535:	lea    rdi,[rbp-0x40]
+   bc539:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc53e:	mov    edi,eax
+   bc540:	mov    rsi,QWORD PTR [rbp-0x68]
+   bc544:	call   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   bc549:	mov    rcx,rdx
+   bc54c:	mov    QWORD PTR [rbp-0x50],rax
+   bc550:	mov    QWORD PTR [rbp-0x48],rcx
+   bc554:	mov    rdx,QWORD PTR [rbp-0x50]
+   bc558:	mov    QWORD PTR [rbp-0x60],rdx
+   bc55c:	mov    rsi,QWORD PTR [rbp-0x48]
+   bc560:	mov    QWORD PTR [rbp-0x58],rsi
+   bc564:	mov    QWORD PTR [rbp-0x10],0x0
+   bc56c:	lea    rsi,[rbp-0x10]
+   bc570:	lea    rdi,[rbp-0x60]
+   bc574:	call   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   bc579:	test   al,al
+   bc57b:	je     bc583 <r15DoubleLong+0xc3>
+   bc57d:	mov    rax,QWORD PTR [rbp-0x10]
+   bc581:	jmp    bc58a <r15DoubleLong+0xca>
+   bc583:	mov    rax,0xffffffffffffffff
+   bc58a:	mov    rbx,QWORD PTR [rbp-0x70]
+   bc58e:	mov    rsp,rbp
+   bc591:	pop    rbp
+   bc592:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleLong
+CODEGEN {"symbol": "r15DoubleLongFloor", "instructions": 59, "calls": ["bc5fd:\tcall   bf870 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTdZQBmFNaNbNiNfdbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "bc618:\tcall   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "bc625:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc65c:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc667:\tcall   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "bc697:\tcall   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 12, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15DoubleLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000bc5e0 <r15DoubleLongFloor>:
+   bc5e0:	push   rbp
+   bc5e1:	mov    rbp,rsp
+   bc5e4:	sub    rsp,0x70
+   bc5e8:	mov    QWORD PTR [rbp-0x70],rbx
+   bc5ec:	movsd  QWORD PTR [rbp-0x8],xmm0
+   bc5f1:	movsd  xmm0,QWORD PTR [rbp-0x8]
+   bc5f6:	mov    esi,0x1
+   bc5fb:	mov    edi,esi
+   bc5fd:	call   bf870 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTdZQBmFNaNbNiNfdbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   bc602:	mov    QWORD PTR [rbp-0x40],rax
+   bc606:	mov    QWORD PTR [rbp-0x38],rdx
+   bc60a:	xor    eax,eax
+   bc60c:	mov    QWORD PTR [rbp-0x30],rax
+   bc610:	lea    rsi,[rbp-0x30]
+   bc614:	lea    rdi,[rbp-0x40]
+   bc618:	call   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   bc61d:	xor    al,0x1
+   bc61f:	je     bc650 <r15DoubleLongFloor+0x70>
+   bc621:	lea    rdi,[rbp-0x40]
+   bc625:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc62a:	mov    ebx,eax
+   bc62c:	mov    QWORD PTR [rbp-0x20],0x0
+   bc634:	cmp    ebx,0x2
+   bc637:	jne    bc63f <r15DoubleLongFloor+0x5f>
+   bc639:	mov    BYTE PTR [rbp-0x20],0x3
+   bc63d:	jmp    bc648 <r15DoubleLongFloor+0x68>
+   bc63f:	cmp    ebx,0x3
+   bc642:	jne    bc648 <r15DoubleLongFloor+0x68>
+   bc644:	mov    BYTE PTR [rbp-0x20],0x4
+   bc648:	mov    rax,QWORD PTR [rbp-0x20]
+   bc64c:	xor    ecx,ecx
+   bc64e:	jmp    bc66f <r15DoubleLongFloor+0x8f>
+   bc650:	mov    rsi,QWORD PTR [rbp-0x30]
+   bc654:	mov    QWORD PTR [rbp-0x68],rsi
+   bc658:	lea    rdi,[rbp-0x40]
+   bc65c:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc661:	mov    edi,eax
+   bc663:	mov    rsi,QWORD PTR [rbp-0x68]
+   bc667:	call   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   bc66c:	mov    rcx,rdx
+   bc66f:	mov    QWORD PTR [rbp-0x50],rax
+   bc673:	mov    QWORD PTR [rbp-0x48],rcx
+   bc677:	mov    rdx,QWORD PTR [rbp-0x50]
+   bc67b:	mov    QWORD PTR [rbp-0x60],rdx
+   bc67f:	mov    rsi,QWORD PTR [rbp-0x48]
+   bc683:	mov    QWORD PTR [rbp-0x58],rsi
+   bc687:	mov    QWORD PTR [rbp-0x10],0x0
+   bc68f:	lea    rsi,[rbp-0x10]
+   bc693:	lea    rdi,[rbp-0x60]
+   bc697:	call   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   bc69c:	test   al,al
+   bc69e:	je     bc6a6 <r15DoubleLongFloor+0xc6>
+   bc6a0:	mov    rax,QWORD PTR [rbp-0x10]
+   bc6a4:	jmp    bc6ad <r15DoubleLongFloor+0xcd>
+   bc6a6:	mov    rax,0xffffffffffffffff
+   bc6ad:	mov    rbx,QWORD PTR [rbp-0x70]
+   bc6b1:	mov    rsp,rbp
+   bc6b4:	pop    rbp
+   bc6b5:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleLongFloor
+CODEGEN {"symbol": "r15BaselineFloatLong", "instructions": 22, "calls": ["bc49a:\tcall   c10b0 <_D28r15_floating_integral_kernel__T19convertFloatingLongTfZQyFNaNbNiNffllllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 43, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineDoubleLong", "instructions": 22, "calls": ["bc5ba:\tcall   c119c <_D28r15_floating_integral_kernel__T19convertFloatingLongTdZQyFNaNbNiNfdllllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 43, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineDoubleLongFloor", "instructions": 22, "calls": ["bc6de:\tcall   c119c <_D28r15_floating_integral_kernel__T19convertFloatingLongTdZQyFNaNbNiNfdllllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 43, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15RealLong", "instructions": 59, "calls": ["bc71d:\tcall   bfb90 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTeZQBmFNaNbNiNfebEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "bc738:\tcall   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "bc745:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc77c:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc787:\tcall   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "bc7b7:\tcall   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 10, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15RealLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000bc704 <r15RealLong>:
+   bc704:	push   rbp
+   bc705:	mov    rbp,rsp
+   bc708:	sub    rsp,0x80
+   bc70f:	mov    QWORD PTR [rbp-0x70],rbx
+   bc713:	fld    TBYTE PTR [rbp+0x10]
+   bc716:	fstp   TBYTE PTR [rbp-0x80]
+   bc719:	xor    esi,esi
+   bc71b:	mov    edi,esi
+   bc71d:	call   bfb90 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTeZQBmFNaNbNiNfebEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   bc722:	mov    QWORD PTR [rbp-0x40],rax
+   bc726:	mov    QWORD PTR [rbp-0x38],rdx
+   bc72a:	xor    eax,eax
+   bc72c:	mov    QWORD PTR [rbp-0x30],rax
+   bc730:	lea    rsi,[rbp-0x30]
+   bc734:	lea    rdi,[rbp-0x40]
+   bc738:	call   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   bc73d:	xor    al,0x1
+   bc73f:	je     bc770 <r15RealLong+0x6c>
+   bc741:	lea    rdi,[rbp-0x40]
+   bc745:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc74a:	mov    ebx,eax
+   bc74c:	mov    QWORD PTR [rbp-0x20],0x0
+   bc754:	cmp    ebx,0x2
+   bc757:	jne    bc75f <r15RealLong+0x5b>
+   bc759:	mov    BYTE PTR [rbp-0x20],0x3
+   bc75d:	jmp    bc768 <r15RealLong+0x64>
+   bc75f:	cmp    ebx,0x3
+   bc762:	jne    bc768 <r15RealLong+0x64>
+   bc764:	mov    BYTE PTR [rbp-0x20],0x4
+   bc768:	mov    rax,QWORD PTR [rbp-0x20]
+   bc76c:	xor    ecx,ecx
+   bc76e:	jmp    bc78f <r15RealLong+0x8b>
+   bc770:	mov    rsi,QWORD PTR [rbp-0x30]
+   bc774:	mov    QWORD PTR [rbp-0x68],rsi
+   bc778:	lea    rdi,[rbp-0x40]
+   bc77c:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc781:	mov    edi,eax
+   bc783:	mov    rsi,QWORD PTR [rbp-0x68]
+   bc787:	call   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   bc78c:	mov    rcx,rdx
+   bc78f:	mov    QWORD PTR [rbp-0x50],rax
+   bc793:	mov    QWORD PTR [rbp-0x48],rcx
+   bc797:	mov    rdx,QWORD PTR [rbp-0x50]
+   bc79b:	mov    QWORD PTR [rbp-0x60],rdx
+   bc79f:	mov    rsi,QWORD PTR [rbp-0x48]
+   bc7a3:	mov    QWORD PTR [rbp-0x58],rsi
+   bc7a7:	mov    QWORD PTR [rbp-0x10],0x0
+   bc7af:	lea    rsi,[rbp-0x10]
+   bc7b3:	lea    rdi,[rbp-0x60]
+   bc7b7:	call   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   bc7bc:	test   al,al
+   bc7be:	je     bc7c6 <r15RealLong+0xc2>
+   bc7c0:	mov    rax,QWORD PTR [rbp-0x10]
+   bc7c4:	jmp    bc7cd <r15RealLong+0xc9>
+   bc7c6:	mov    rax,0xffffffffffffffff
+   bc7cd:	mov    rbx,QWORD PTR [rbp-0x70]
+   bc7d1:	mov    rsp,rbp
+   bc7d4:	pop    rbp
+   bc7d5:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15RealLong
+CODEGEN {"symbol": "r15RealLongFloor", "instructions": 60, "calls": ["bc83c:\tcall   bfb90 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTeZQBmFNaNbNiNfebEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "bc857:\tcall   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "bc864:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc89b:\tcall   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "bc8a6:\tcall   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "bc8d6:\tcall   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 10, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15RealLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000bc820 <r15RealLongFloor>:
+   bc820:	push   rbp
+   bc821:	mov    rbp,rsp
+   bc824:	sub    rsp,0x80
+   bc82b:	mov    QWORD PTR [rbp-0x70],rbx
+   bc82f:	fld    TBYTE PTR [rbp+0x10]
+   bc832:	fstp   TBYTE PTR [rbp-0x80]
+   bc835:	mov    esi,0x1
+   bc83a:	mov    edi,esi
+   bc83c:	call   bfb90 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTeZQBmFNaNbNiNfebEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   bc841:	mov    QWORD PTR [rbp-0x40],rax
+   bc845:	mov    QWORD PTR [rbp-0x38],rdx
+   bc849:	xor    eax,eax
+   bc84b:	mov    QWORD PTR [rbp-0x30],rax
+   bc84f:	lea    rsi,[rbp-0x30]
+   bc853:	lea    rdi,[rbp-0x40]
+   bc857:	call   bd5c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   bc85c:	xor    al,0x1
+   bc85e:	je     bc88f <r15RealLongFloor+0x6f>
+   bc860:	lea    rdi,[rbp-0x40]
+   bc864:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc869:	mov    ebx,eax
+   bc86b:	mov    QWORD PTR [rbp-0x20],0x0
+   bc873:	cmp    ebx,0x2
+   bc876:	jne    bc87e <r15RealLongFloor+0x5e>
+   bc878:	mov    BYTE PTR [rbp-0x20],0x3
+   bc87c:	jmp    bc887 <r15RealLongFloor+0x67>
+   bc87e:	cmp    ebx,0x3
+   bc881:	jne    bc887 <r15RealLongFloor+0x67>
+   bc883:	mov    BYTE PTR [rbp-0x20],0x4
+   bc887:	mov    rax,QWORD PTR [rbp-0x20]
+   bc88b:	xor    ecx,ecx
+   bc88d:	jmp    bc8ae <r15RealLongFloor+0x8e>
+   bc88f:	mov    rsi,QWORD PTR [rbp-0x30]
+   bc893:	mov    QWORD PTR [rbp-0x68],rsi
+   bc897:	lea    rdi,[rbp-0x40]
+   bc89b:	call   bd594 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   bc8a0:	mov    edi,eax
+   bc8a2:	mov    rsi,QWORD PTR [rbp-0x68]
+   bc8a6:	call   bf630 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   bc8ab:	mov    rcx,rdx
+   bc8ae:	mov    QWORD PTR [rbp-0x50],rax
+   bc8b2:	mov    QWORD PTR [rbp-0x48],rcx
+   bc8b6:	mov    rdx,QWORD PTR [rbp-0x50]
+   bc8ba:	mov    QWORD PTR [rbp-0x60],rdx
+   bc8be:	mov    rsi,QWORD PTR [rbp-0x48]
+   bc8c2:	mov    QWORD PTR [rbp-0x58],rsi
+   bc8c6:	mov    QWORD PTR [rbp-0x10],0x0
+   bc8ce:	lea    rsi,[rbp-0x10]
+   bc8d2:	lea    rdi,[rbp-0x60]
+   bc8d6:	call   bf710 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   bc8db:	test   al,al
+   bc8dd:	je     bc8e5 <r15RealLongFloor+0xc5>
+   bc8df:	mov    rax,QWORD PTR [rbp-0x10]
+   bc8e3:	jmp    bc8ec <r15RealLongFloor+0xcc>
+   bc8e5:	mov    rax,0xffffffffffffffff
+   bc8ec:	mov    rbx,QWORD PTR [rbp-0x70]
+   bc8f0:	mov    rsp,rbp
+   bc8f3:	pop    rbp
+   bc8f4:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15RealLongFloor
+CODEGEN {"symbol": "r15BaselineRealLong", "instructions": 22, "calls": ["bc7fa:\tcall   c1294 <_D28r15_floating_integral_kernel__T19convertFloatingLongTeZQyFNaNbNiNfellllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 42, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineRealLongFloor", "instructions": 22, "calls": ["bc91a:\tcall   c1294 <_D28r15_floating_integral_kernel__T19convertFloatingLongTeZQyFNaNbNiNfellllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 42, "wide_kernel_reachable": true}

@@ -1,0 +1,240 @@
+CODEGEN {"symbol": "r15FloatLong", "instructions": 9, "calls": ["2a531:\tcall   29f20 <_D10quantities10conversion__T17checkedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlZ__TQCfTfZQClFNaNbNiNffZSQEbQDs__T16ConversionResultTSQFe8quantity__T8QuantityTQEiTlZQqZQCc>"], "reachable_functions": 2, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15FloatLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+000000000002a530 <r15FloatLong>:
+   2a530:	push   rax
+   2a531:	call   29f20 <_D10quantities10conversion__T17checkedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlZ__TQCfTfZQClFNaNbNiNffZSQEbQDs__T16ConversionResultTSQFe8quantity__T8QuantityTQEiTlZQqZQCc>
+   2a536:	dec    al
+   2a538:	cmp    al,0x2
+   2a53a:	mov    rax,0xffffffffffffffff
+   2a541:	cmovb  rax,rdx
+   2a545:	pop    rcx
+   2a546:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatLong
+CODEGEN {"symbol": "r15DoubleLong", "instructions": 9, "calls": ["2a5e1:\tcall   2a090 <_D10quantities10conversion__T17checkedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlZ__TQCfTdZQClFNaNbNiNfdZSQEbQDs__T16ConversionResultTSQFe8quantity__T8QuantityTQEiTlZQqZQCc>"], "reachable_functions": 2, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15DoubleLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+000000000002a5e0 <r15DoubleLong>:
+   2a5e0:	push   rax
+   2a5e1:	call   2a090 <_D10quantities10conversion__T17checkedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlZ__TQCfTdZQClFNaNbNiNfdZSQEbQDs__T16ConversionResultTSQFe8quantity__T8QuantityTQEiTlZQqZQCc>
+   2a5e6:	dec    al
+   2a5e8:	cmp    al,0x2
+   2a5ea:	mov    rax,0xffffffffffffffff
+   2a5f1:	cmovb  rax,rdx
+   2a5f5:	pop    rcx
+   2a5f6:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleLong
+CODEGEN {"symbol": "r15DoubleLongFloor", "instructions": 9, "calls": ["2a6a1:\tcall   2a390 <_D10quantities10conversion__T17roundedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlVEQDeQCv12RoundingModei1Z__TQDdTdZQDjFNaNbNiNfdZSQEzQEq__T16ConversionResultTSQGc8quantity__T8QuantityTQFgTlZQqZQCc>"], "reachable_functions": 2, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15DoubleLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+000000000002a6a0 <r15DoubleLongFloor>:
+   2a6a0:	push   rax
+   2a6a1:	call   2a390 <_D10quantities10conversion__T17roundedQuantityAsTSQBw6length6LengthTSQCpQt5MetreTlVEQDeQCv12RoundingModei1Z__TQDdTdZQDjFNaNbNiNfdZSQEzQEq__T16ConversionResultTSQGc8quantity__T8QuantityTQFgTlZQqZQCc>
+   2a6a6:	dec    al
+   2a6a8:	cmp    al,0x2
+   2a6aa:	mov    rax,0xffffffffffffffff
+   2a6b1:	cmovb  rax,rdx
+   2a6b5:	pop    rcx
+   2a6b6:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleLongFloor
+CODEGEN {"symbol": "r15BaselineFloatLong", "instructions": 36, "calls": ["2a5be:\tcall   28d10 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineDoubleLong", "instructions": 38, "calls": ["2a67b:\tcall   28d10 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineDoubleLongFloor", "instructions": 38, "calls": ["2a73b:\tcall   28d10 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15RealLong", "instructions": 63, "calls": ["2a772:\tcall   29c20 <_D28r15_integral_identity_kernel__T22identityOrComposedLongTS10quantities6length5MetreTQBbTeZQCgFNaNbNiNfebE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 2, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15RealLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+000000000002a760 <r15RealLong>:
+   2a760:	push   rbx
+   2a761:	sub    rsp,0x10
+   2a765:	fld    TBYTE PTR [rsp+0x20]
+   2a769:	fstp   TBYTE PTR [rsp]
+   2a76c:	xor    ebx,ebx
+   2a76e:	xor    edi,edi
+   2a770:	xor    esi,esi
+   2a772:	call   29c20 <_D28r15_integral_identity_kernel__T22identityOrComposedLongTS10quantities6length5MetreTQBbTeZQCgFNaNbNiNfebE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>
+   2a777:	cmp    eax,0x3
+   2a77a:	ja     2a817 <r15RealLong+0xb7>
+   2a780:	mov    ecx,eax
+   2a782:	lea    rsi,[rip+0x6dc57]        # 983e0 <_fini+0x6e0>
+   2a789:	movsxd rcx,DWORD PTR [rsi+rcx*4]
+   2a78d:	add    rcx,rsi
+   2a790:	jmp    rcx
+   2a792:	mov    ecx,0x1
+   2a797:	mov    rbx,rdx
+   2a79a:	lea    eax,[rcx-0x1]
+   2a79d:	cmp    al,0x2
+   2a79f:	jb     2a7bf <r15RealLong+0x5f>
+   2a7a1:	jmp    2a7ea <r15RealLong+0x8a>
+   2a7a3:	mov    ecx,0x3
+   2a7a8:	lea    eax,[rcx-0x1]
+   2a7ab:	cmp    al,0x2
+   2a7ad:	jb     2a7bf <r15RealLong+0x5f>
+   2a7af:	jmp    2a7ea <r15RealLong+0x8a>
+   2a7b1:	mov    ecx,0x4
+   2a7b6:	xor    ebx,ebx
+   2a7b8:	lea    eax,[rcx-0x1]
+   2a7bb:	cmp    al,0x2
+   2a7bd:	jae    2a7ea <r15RealLong+0x8a>
+   2a7bf:	cmp    cl,0x1
+   2a7c2:	sete   cl
+   2a7c5:	mov    al,0x2
+   2a7c7:	sub    al,cl
+   2a7c9:	jmp    2a802 <r15RealLong+0xa2>
+   2a7cb:	mov    rcx,rax
+   2a7ce:	shr    rcx,0x1f
+   2a7d2:	shl    rax,0x1f
+   2a7d6:	sar    rax,0x3f
+   2a7da:	and    rax,rdx
+   2a7dd:	and    ecx,0x2
+   2a7e0:	mov    rbx,rax
+   2a7e3:	lea    eax,[rcx-0x1]
+   2a7e6:	cmp    al,0x2
+   2a7e8:	jb     2a7bf <r15RealLong+0x5f>
+   2a7ea:	xor    eax,eax
+   2a7ec:	cmp    cl,0x3
+   2a7ef:	sete   al
+   2a7f2:	lea    edx,[rax+rax*2]
+   2a7f5:	cmp    cl,0x4
+   2a7f8:	mov    eax,0x4
+   2a7fd:	cmovne eax,edx
+   2a800:	xor    ebx,ebx
+   2a802:	dec    al
+   2a804:	cmp    al,0x2
+   2a806:	mov    rax,0xffffffffffffffff
+   2a80d:	cmovb  rax,rbx
+   2a811:	add    rsp,0x10
+   2a815:	pop    rbx
+   2a816:	ret
+   2a817:	ud2
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15RealLong
+CODEGEN {"symbol": "r15RealLongFloor", "instructions": 55, "calls": ["2a885:\tcall   29c20 <_D28r15_integral_identity_kernel__T22identityOrComposedLongTS10quantities6length5MetreTQBbTeZQCgFNaNbNiNfebE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 2, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15RealLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+000000000002a870 <r15RealLongFloor>:
+   2a870:	sub    rsp,0x18
+   2a874:	fld    TBYTE PTR [rsp+0x20]
+   2a878:	fstp   TBYTE PTR [rsp]
+   2a87b:	mov    edi,0x1
+   2a880:	mov    esi,0x1
+   2a885:	call   29c20 <_D28r15_integral_identity_kernel__T22identityOrComposedLongTS10quantities6length5MetreTQBbTeZQCgFNaNbNiNfebE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>
+   2a88a:	cmp    eax,0x3
+   2a88d:	ja     2a91c <r15RealLongFloor+0xac>
+   2a893:	mov    ecx,eax
+   2a895:	lea    rsi,[rip+0x6db54]        # 983f0 <_fini+0x6f0>
+   2a89c:	movsxd rcx,DWORD PTR [rsi+rcx*4]
+   2a8a0:	add    rcx,rsi
+   2a8a3:	jmp    rcx
+   2a8a5:	mov    ecx,0x1
+   2a8aa:	lea    eax,[rcx-0x1]
+   2a8ad:	cmp    al,0x2
+   2a8af:	jb     2a8c8 <r15RealLongFloor+0x58>
+   2a8b1:	jmp    2a8f0 <r15RealLongFloor+0x80>
+   2a8b3:	mov    ecx,0x3
+   2a8b8:	jmp    2a8bf <r15RealLongFloor+0x4f>
+   2a8ba:	mov    ecx,0x4
+   2a8bf:	xor    edx,edx
+   2a8c1:	lea    eax,[rcx-0x1]
+   2a8c4:	cmp    al,0x2
+   2a8c6:	jae    2a8f0 <r15RealLongFloor+0x80>
+   2a8c8:	cmp    cl,0x1
+   2a8cb:	sete   cl
+   2a8ce:	mov    al,0x2
+   2a8d0:	sub    al,cl
+   2a8d2:	jmp    2a908 <r15RealLongFloor+0x98>
+   2a8d4:	mov    rcx,rax
+   2a8d7:	shr    rcx,0x1f
+   2a8db:	shl    rax,0x1f
+   2a8df:	sar    rax,0x3f
+   2a8e3:	and    rdx,rax
+   2a8e6:	and    ecx,0x2
+   2a8e9:	lea    eax,[rcx-0x1]
+   2a8ec:	cmp    al,0x2
+   2a8ee:	jb     2a8c8 <r15RealLongFloor+0x58>
+   2a8f0:	xor    eax,eax
+   2a8f2:	cmp    cl,0x3
+   2a8f5:	sete   al
+   2a8f8:	lea    edx,[rax+rax*2]
+   2a8fb:	cmp    cl,0x4
+   2a8fe:	mov    eax,0x4
+   2a903:	cmovne eax,edx
+   2a906:	xor    edx,edx
+   2a908:	dec    al
+   2a90a:	cmp    al,0x2
+   2a90c:	mov    rax,0xffffffffffffffff
+   2a913:	cmovb  rax,rdx
+   2a917:	add    rsp,0x18
+   2a91b:	ret
+   2a91c:	ud2
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15RealLongFloor
+CODEGEN {"symbol": "r15BaselineRealLong", "instructions": 17, "calls": ["2a848:\tcall   29830 <_D28r15_floating_integral_kernel__T19convertFloatingLongTeZQyFNaNbNiNfellllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 6, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineRealLongFloor", "instructions": 17, "calls": ["2a94b:\tcall   29830 <_D28r15_floating_integral_kernel__T19convertFloatingLongTeZQyFNaNbNiNfellllbE19r15_composed_kernel20IntegralRoundingModeZSQBt14IntegralResult>"], "reachable_functions": 6, "wide_kernel_reachable": true}

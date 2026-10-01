@@ -123,3 +123,7 @@ can determine whether targeted inlining changes are justified. Identity narrowin
 extraction are separate future candidates. Alternative real formats, broader
 Rep admission, controlled-host repetition, independent consumers, root exports,
 production Ddoc and selective production promotion remain outside this probe.
+
+## Follow-up: integral identity cost
+
+[Probe 19](../r15-integral-identity-fast-path/README.md) specializes floating-source → long for equal normalized Unit ratios. It preserves this request contract and the Probe 18 floating target paths; its independent oracle, success/failure benchmark corpora and codegen are qualified on DMD/LDC. No new Rep pair or production promotion is included.
