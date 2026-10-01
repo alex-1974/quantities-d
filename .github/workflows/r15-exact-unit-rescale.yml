@@ -106,7 +106,10 @@ jobs:
           done
           common=(-Iresearch/r15-api-contract -Isource -Iresearch/r15-floating-target-api -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral)
           kernels=(research/r15-api-contract/quantities/conversion.d research/r15-floating-target-api/kernel.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d)
-          flags=(-release -O -inline -boundscheck=on)
+          case "$DC" in
+            *ldc2) flags=(-release -O3 -boundscheck=on) ;;
+            *) flags=(-release -O -inline -boundscheck=on) ;;
+          esac
           echo "COST_FLAGS $DC ${flags[*]}"
           lscpu | head -20
           "$DC" "${flags[@]}" "${common[@]}" research/r15-api-cost/benchmark.d research/r15-floating-target-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-17
