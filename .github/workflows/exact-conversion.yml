@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [develop]
     paths:
-      - source/quantities/exact_conversion.d
+      - source/quantities/**
       - tests/exact-conversion/**
       - .github/workflows/exact-conversion.yml
   workflow_dispatch:

@@ -23,9 +23,10 @@ done
 cat > "$build/external.d" <<'D'
 module external;
 import quantities.exact_conversion;
+import quantities.conversion : RoundingMode;
 static assert(!__traits(compiles, { Wide workspace; }));
 static assert(!__traits(compiles, convertFloating!float(1L,1,1,1,1)));
-static assert(!__traits(compiles, convertIntegral(1L,1,1,1,1,false,0)));
+static assert(!__traits(compiles, convertIntegral(1L,1,1,1,1,false,RoundingMode.towardZero)));
 void main() {}
 D
 "$compiler" -Isource "$build/external.d" -of="$build/external"
