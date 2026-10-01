@@ -59,3 +59,7 @@ These reuse the Probe 17 build fixtures to keep prior consumer-cost observations
 Reproduction: the **Probe 20** step of [the research workflow](../../.github/workflows/r15-exact-unit-rescale.yml) fixes module lists, shadow import precedence, compiler flags and all runner/oracle/benchmark/codegen commands. The result-recording commit only updates documentation and retained evidence. Historical kernels and probes remain intact.
 
 Next: consolidate the R15 promotion contract and decide the qualified-real target boundary explicitly. The selected matrix now covers long/float/double targets with all five qualified Source families, but target real and further integral targets remain excluded; open issue #42 is not closed by this probe. Selective promotion still needs normal production module/API/consumer integration rather than a wholesale merge of this research branch.
+
+## Promotion readiness follow-up
+
+[Probe 21](../r15-promotion-readiness/README.md) adds package-root exports and an explicit CTFE rejection before every ordinary floating request, including real→long. It keeps integral CTFE and reruns the complete pair matrix. The durable proposed promotion contract is [ADR 0012 / PR #50](https://github.com/alex-1974/quantities-d/pull/50); target real is deferred and implementation remains selective.
