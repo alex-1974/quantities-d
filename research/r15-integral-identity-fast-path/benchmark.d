@@ -115,11 +115,15 @@ long timed(bool publicAPI,T,Spec,Unit,bool rounded,S)(S[] input,ulong expected)
     if(hash!=expected) throw new Exception("benchmark checksum changed");
     return sw.peek.total!"nsecs";
 }
-void measure(T,Spec,Unit,bool rounded,S)(string name)
+void measure(T,Spec,Unit,bool rounded,S,bool integerInputs=false)(string name)
 {
     enum count=8192,rounds=7;
     S[count] input;
-    foreach(i,ref value;input) value=sample!S(i);
+    foreach(i,ref value;input)
+    {
+        static if(integerInputs) value=cast(S)(cast(long)i-count/2);
+        else value=sample!S(i);
+    }
     foreach(value;input)
         if(api!(T,Spec,Unit,rounded)(value)!=kernel!(T,Spec,Unit,rounded)(value))
             throw new Exception("API/kernel semantic mismatch");
@@ -165,11 +169,14 @@ void main()
     measure!(double,WideSpec,WideFrom,false,double)("double_double_wide_composed");
     measure!(double,Length,Metre,false,ulong)("ulong_double_identity");
     measure!(double,Length,Metre,false,float)("float_double_identity");
+    measure!(long,Length,Metre,false,float,true)("float_long_checked_integer_success");
+    measure!(long,Length,Metre,false,double,true)("double_long_checked_integer_success");
     measure!(long,Length,Metre,false,float)("float_long_checked");
     measure!(long,Length,Metre,true,float)("float_long_floor_identity");
     measure!(long,Length,Metre,true,double)("double_long_floor_identity");
     static if(qualifiedReal)
     {
+        measure!(long,Length,Metre,false,real,true)("real_long_checked_integer_success");
         measure!(long,Length,Metre,false,real)("real_long_checked");
         measure!(long,Length,Metre,true,real)("real_long_floor_identity");
     }
