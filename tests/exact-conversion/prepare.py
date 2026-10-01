@@ -15,6 +15,8 @@ for name in ('r15-exact-unit-rescale', 'r15-composed-unit-rescale',
     oracle = (research / name / 'oracle.py').read_text()
     if name == 'r15-composed-unit-rescale':
         oracle = oracle.replace(' {nb} {db}', '')
+        oracle = '\n'.join(line for line in oracle.splitlines()
+                           if 'assert wanted[0].split()[-2:]' not in line) + '\n'
     (dest / 'oracle.py').write_text(oracle)
     if name == 'r15-exact-unit-rescale':
         continue
@@ -30,4 +32,26 @@ for name in ('r15-exact-unit-rescale', 'r15-composed-unit-rescale',
     runner = runner.replace('    int nb,db;\n    composedWidths(sig,fn,fd,tn,td,nb,db);\n', '')
     runner = runner.replace(',nb," ",db', '')
     runner = runner.replace('" - "', '" -"')
+    if name == 'r15-floating-integral':
+        runner = runner.replace('const r = convertComposedLong', 'auto r = convertComposedLong')
+        marker = '        if (r.hasValue) writeln'
+        adapter = """        // For source-representable exponent-zero tuples, exercise the real
+        // long/ulong adapter while preserving the independent oracle protocol.
+        const sig = f[2].to!ulong;
+        if (f[3].to!int == 0)
+        {
+            if (f[4] != "1")
+                r = convertIntegral(sig, f[5].to!long, f[6].to!long,
+                    f[7].to!long, f[8].to!long, f[0] == "R",
+                    cast(IntegralRoundingMode)f[1].to!int);
+            else if (sig <= (1UL << 63))
+            {
+                const value = sig == (1UL << 63) ? long.min : -cast(long)sig;
+                r = convertIntegral(value, f[5].to!long, f[6].to!long,
+                    f[7].to!long, f[8].to!long, f[0] == "R",
+                    cast(IntegralRoundingMode)f[1].to!int);
+            }
+        }
+"""
+        runner = runner.replace(marker, adapter + marker)
     (dest / 'runner.d').write_text(runner)
