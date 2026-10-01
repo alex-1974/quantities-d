@@ -1,0 +1,297 @@
+{
+  "code_sha": "de8e8ad0014c0f330e3a9b02ff1f8c770931749f",
+  "run_id": 36828111936,
+  "run_url": "https://github.com/alex-1974/quantities-d/actions/runs/36828111936",
+  "inputs": 8192,
+  "rounds": 7,
+  "benchmarks": {
+    "oracle (dmd-2.111.0)": {
+      "job_id": 110258271531,
+      "cpu": "AMD EPYC 7763 64-Core Processor",
+      "flags": "COST_FLAGS /opt/hostedtoolcache/dmd/2.111.0/x64/dmd2/linux/bin64/dmd -release -O -inline -boundscheck=on",
+      "runtime": [
+        {
+          "case": "double_float_identity",
+          "api_median_ns": 1617.7,
+          "kernel_median_ns": 1580.58,
+          "ratio": 1.023,
+          "api_min_ns": 1613.7,
+          "api_max_ns": 1640.44,
+          "kernel_min_ns": 1577.92,
+          "kernel_max_ns": 1589.76,
+          "checksum": "3492792906228130212"
+        },
+        {
+          "case": "double_float_direct_rounding",
+          "api_median_ns": 1723.52,
+          "kernel_median_ns": 1683.25,
+          "ratio": 1.024,
+          "api_min_ns": 1718.55,
+          "api_max_ns": 1733.12,
+          "kernel_min_ns": 1673.19,
+          "kernel_max_ns": 1700.5,
+          "checksum": "11474143966447840055"
+        },
+        {
+          "case": "double_double_foot",
+          "api_median_ns": 2870.32,
+          "kernel_median_ns": 2834.09,
+          "ratio": 1.013,
+          "api_min_ns": 2865.14,
+          "api_max_ns": 3529.36,
+          "kernel_min_ns": 2829.93,
+          "kernel_max_ns": 2839.53,
+          "checksum": "8586058742625365342"
+        },
+        {
+          "case": "double_double_wide_composed",
+          "api_median_ns": 3171.7,
+          "kernel_median_ns": 3146.29,
+          "ratio": 1.008,
+          "api_min_ns": 3165.49,
+          "api_max_ns": 3190.15,
+          "kernel_min_ns": 3140.5,
+          "kernel_max_ns": 3179.15,
+          "checksum": "14843738431121568840"
+        },
+        {
+          "case": "ulong_double_identity",
+          "api_median_ns": 2762.06,
+          "kernel_median_ns": 2739.12,
+          "ratio": 1.008,
+          "api_min_ns": 2756.07,
+          "api_max_ns": 2814.2,
+          "kernel_min_ns": 2732.57,
+          "kernel_max_ns": 2751.99,
+          "checksum": "6687254693822698371"
+        },
+        {
+          "case": "float_double_identity",
+          "api_median_ns": 2117.4,
+          "kernel_median_ns": 2072.74,
+          "ratio": 1.022,
+          "api_min_ns": 2111.96,
+          "api_max_ns": 2125,
+          "kernel_min_ns": 2071.79,
+          "kernel_max_ns": 2084.05,
+          "checksum": "4457799259671720849"
+        },
+        {
+          "case": "double_long_checked",
+          "api_median_ns": 5976.37,
+          "kernel_median_ns": 5925.73,
+          "ratio": 1.009,
+          "api_min_ns": 5892.49,
+          "api_max_ns": 6055.07,
+          "kernel_min_ns": 5747.63,
+          "kernel_max_ns": 6076.51,
+          "checksum": "18416252632679891579"
+        },
+        {
+          "case": "double_long_floor_foot",
+          "api_median_ns": 5386.18,
+          "kernel_median_ns": 5318.9,
+          "ratio": 1.013,
+          "api_min_ns": 5362.46,
+          "api_max_ns": 5395.07,
+          "kernel_min_ns": 5283.14,
+          "kernel_max_ns": 5492.13,
+          "checksum": "6344658758123729727"
+        },
+        {
+          "case": "real_double_wide_composed",
+          "api_median_ns": 3427.2,
+          "kernel_median_ns": 3380.74,
+          "ratio": 1.014,
+          "api_min_ns": 3411.61,
+          "api_max_ns": 3441.76,
+          "kernel_min_ns": 3373.47,
+          "kernel_max_ns": 3390.17,
+          "checksum": "15197151926951197231"
+        }
+      ],
+      "build": [
+        {
+          "round": 1,
+          "kind": "baseline",
+          "wall_seconds": 0.33,
+          "peak_rss_kib": 82468
+        },
+        {
+          "round": 1,
+          "kind": "consumer",
+          "wall_seconds": 0.35,
+          "peak_rss_kib": 82628
+        },
+        {
+          "round": 2,
+          "kind": "baseline",
+          "wall_seconds": 0.33,
+          "peak_rss_kib": 82376
+        },
+        {
+          "round": 2,
+          "kind": "consumer",
+          "wall_seconds": 0.36,
+          "peak_rss_kib": 82644
+        },
+        {
+          "round": 3,
+          "kind": "baseline",
+          "wall_seconds": 0.33,
+          "peak_rss_kib": 82424
+        },
+        {
+          "round": 3,
+          "kind": "consumer",
+          "wall_seconds": 0.35,
+          "peak_rss_kib": 82848
+        }
+      ]
+    },
+    "oracle (ldc-1.41.0)": {
+      "job_id": 110258271799,
+      "cpu": "AMD EPYC 7763 64-Core Processor",
+      "flags": "COST_FLAGS /opt/hostedtoolcache/ldc2/1.41.0/x64/ldc2-1.41.0-linux-x86_64/bin/ldc2 -release -O3 -boundscheck=on",
+      "runtime": [
+        {
+          "case": "double_float_identity",
+          "api_median_ns": 416.19,
+          "kernel_median_ns": 415.83,
+          "ratio": 1.001,
+          "api_min_ns": 415.33,
+          "api_max_ns": 417.93,
+          "kernel_min_ns": 415.53,
+          "kernel_max_ns": 417.26,
+          "checksum": "3492792906228130212"
+        },
+        {
+          "case": "double_float_direct_rounding",
+          "api_median_ns": 536.43,
+          "kernel_median_ns": 536.12,
+          "ratio": 1.001,
+          "api_min_ns": 535.05,
+          "api_max_ns": 539.95,
+          "kernel_min_ns": 535.6,
+          "kernel_max_ns": 540.34,
+          "checksum": "11474143966447840055"
+        },
+        {
+          "case": "double_double_foot",
+          "api_median_ns": 760.03,
+          "kernel_median_ns": 760.71,
+          "ratio": 0.999,
+          "api_min_ns": 759.06,
+          "api_max_ns": 761.68,
+          "kernel_min_ns": 758.76,
+          "kernel_max_ns": 764.58,
+          "checksum": "8586058742625365342"
+        },
+        {
+          "case": "double_double_wide_composed",
+          "api_median_ns": 981.92,
+          "kernel_median_ns": 978.45,
+          "ratio": 1.004,
+          "api_min_ns": 979.04,
+          "api_max_ns": 1207.64,
+          "kernel_min_ns": 977.36,
+          "kernel_max_ns": 990.01,
+          "checksum": "14843738431121568840"
+        },
+        {
+          "case": "ulong_double_identity",
+          "api_median_ns": 551.88,
+          "kernel_median_ns": 551.44,
+          "ratio": 1.001,
+          "api_min_ns": 551.23,
+          "api_max_ns": 581.02,
+          "kernel_min_ns": 548.78,
+          "kernel_max_ns": 588.12,
+          "checksum": "6687254693822698371"
+        },
+        {
+          "case": "float_double_identity",
+          "api_median_ns": 461.07,
+          "kernel_median_ns": 460.03,
+          "ratio": 1.002,
+          "api_min_ns": 460.72,
+          "api_max_ns": 464.99,
+          "kernel_min_ns": 458.69,
+          "kernel_max_ns": 460.55,
+          "checksum": "4457799259671720849"
+        },
+        {
+          "case": "double_long_checked",
+          "api_median_ns": 1818.07,
+          "kernel_median_ns": 1816.11,
+          "ratio": 1.001,
+          "api_min_ns": 1814.59,
+          "api_max_ns": 1825.16,
+          "kernel_min_ns": 1810.88,
+          "kernel_max_ns": 1822.42,
+          "checksum": "18416252632679891579"
+        },
+        {
+          "case": "double_long_floor_foot",
+          "api_median_ns": 1749.4,
+          "kernel_median_ns": 1750.11,
+          "ratio": 1,
+          "api_min_ns": 1747.73,
+          "api_max_ns": 1755.98,
+          "kernel_min_ns": 1745.76,
+          "kernel_max_ns": 1755.04,
+          "checksum": "6344658758123729727"
+        },
+        {
+          "case": "real_double_wide_composed",
+          "api_median_ns": 1179.19,
+          "kernel_median_ns": 1178.59,
+          "ratio": 1.001,
+          "api_min_ns": 1177.86,
+          "api_max_ns": 1184.22,
+          "kernel_min_ns": 1177.8,
+          "kernel_max_ns": 1182.39,
+          "checksum": "15197151926951197231"
+        }
+      ],
+      "build": [
+        {
+          "round": 1,
+          "kind": "baseline",
+          "wall_seconds": 0.94,
+          "peak_rss_kib": 166660
+        },
+        {
+          "round": 1,
+          "kind": "consumer",
+          "wall_seconds": 1.06,
+          "peak_rss_kib": 171272
+        },
+        {
+          "round": 2,
+          "kind": "baseline",
+          "wall_seconds": 0.94,
+          "peak_rss_kib": 166312
+        },
+        {
+          "round": 2,
+          "kind": "consumer",
+          "wall_seconds": 1.1,
+          "peak_rss_kib": 171344
+        },
+        {
+          "round": 3,
+          "kind": "baseline",
+          "wall_seconds": 0.94,
+          "peak_rss_kib": 166108
+        },
+        {
+          "round": 3,
+          "kind": "consumer",
+          "wall_seconds": 1.08,
+          "peak_rss_kib": 171556
+        }
+      ]
+    }
+  }
+}

@@ -148,3 +148,23 @@ this probe's 27,240 integral-target directions against the extended API.
 Direct target rounding, signed zero, mathematical range-first behavior and
 checked/exact payload rules are covered. API names, mixed-Rep policy and
 implementation cost still require decisions/qualification before promotion.
+
+
+## Selected request surface and cost qualification
+
+[Probe 16](r15-api-contract/README.md) reconciles the earlier provisional R15
+names with the `As` request vocabulary, restricts the outer template arguments
+to the explicit request and selects range-before-rounding for the admitted
+mixed-Rep slice. Its consumer exercises all six free/UFCS forms and exact-rational
+boundary witnesses, including out-of-range values that truncate to valid long
+endpoints. [Probe 17](r15-api-cost/README.md) measures equal-semantics API/kernel
+runtime and whole-consumer compile/link cost with bounds checks enabled.
+
+Tested code `de8e8ad0014c0f330e3a9b02ff1f8c770931749f`,
+[CI 36828111936](https://github.com/alex-1974/quantities-d/actions/runs/36828111936),
+passes on both compilers: contract and independent 44,352/27,240-direction
+oracles in debug, release and optimized cost profiles, plus per-input benchmark
+agreement. [Raw measurements](r15-api-cost/results.json) preserve CPU, flags,
+medians, ranges, checksums and build samples. No production/API freeze or whole
+research-branch promotion follows. Issue #42 remains open; codegen/fast-path
+work and the documented pair/CTFE/promotion limits remain explicit.

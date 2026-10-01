@@ -51,7 +51,7 @@ overflow even if quantization/truncation could return an in-range endpoint.
 This extends ADR 0007's promoted binary64 conversion rule consistently to the
 research target matrix; it does not redefine arithmetic overflow semantics.
 
-| In-range mathematical value | Checked integral | Rounded integral | Checked floating | Exact-required |
+| Mathematical outcome | Checked integral | Rounded integral | Checked floating | Exact-required |
 | --- | --- | --- | --- | --- |
 | Exactly representable | `exact`, value | `exact`, value | `exact`, value | value |
 | Not exactly representable | `inexact`, no value | `inexact`, policy value | `inexact`, nearest-even value | `inexact` failure |
@@ -105,6 +105,22 @@ The workflow reruns Probe 15's 44,352 floating-target directions and Probe 14's
 27,240 integral-target directions against this shadow module for both compilers
 and both builds. Historical Probe 15's tested module remains unchanged.
 
-Results pending. Performance/compiler cost, root exports, production Ddoc,
+## Results and continuation
+
+Final tested code: `de8e8ad0014c0f330e3a9b02ff1f8c770931749f`.
+[CI 36828111936](https://github.com/alex-1974/quantities-d/actions/runs/36828111936)
+passes on DMD 2.111.0 and LDC 1.41.0. The request/contract consumer and the
+44,352 floating plus 27,240 integral oracle directions pass in debug, release
+and each compiler's optimized bounds-on cost profile. All comparisons have
+zero mismatches. The independent Fraction witnesses pass; the historical flat
+signature observation is reproduced in isolation. Earlier Probes 10–15 remain
+green. Real traits are binary80 `(64, -16381, 16384)`.
+
+[Probe 17](../r15-api-cost/README.md) records runtime and consumer build cost.
+Its measured wrapper ratios reveal no need to restructure the selected request
+vocabulary. Absolute kernel costs identify follow-up optimization candidates;
+the results are not a release performance guarantee.
+
+Root exports, production Ddoc,
 independent consumer adoption, broader Rep admission and production promotion
 remain separate work. Cost qualification precedes a final public API freeze.
