@@ -33,6 +33,8 @@ enum RoundingMode
 struct ConversionResult(T)
 {
 private:
+    // Probe 14 hardening: private fields alone do not suppress D struct literals.
+    @disable this(bool, T, ConversionStatus);
     bool hasValue_;
     T value_;
     ConversionStatus status_ = ConversionStatus.inexact;
@@ -87,6 +89,7 @@ public:
 struct ExactResult(T)
 {
 private:
+    @disable this(bool, T, ExactFailure);
     bool hasValue_;
     T value_;
     ExactFailure failure_ = ExactFailure.inexact;
