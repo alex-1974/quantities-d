@@ -30,6 +30,7 @@ for name in ('r15-exact-unit-rescale', 'r15-composed-unit-rescale',
     # The production source adapter additionally accepts long and ulong.
     runner = re.sub(r'static assert\(!__traits\(compiles, convertIntegral\((?:1L|ulong.max),.*?\)\);', '', runner, flags=re.S)
     runner = runner.replace('    int nb,db;\n    composedWidths(sig,fn,fd,tn,td,nb,db);\n', '')
+    runner = runner.replace('," ",nb," ",db', '')
     runner = runner.replace(',nb," ",db', '')
     runner = runner.replace('" - "', '" -"')
     if name == 'r15-floating-integral':
