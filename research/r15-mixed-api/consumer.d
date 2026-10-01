@@ -19,12 +19,15 @@ struct FractionalMetadata
 static assert(Quantity!(Length,long).sizeof == long.sizeof);
 static assert(!__traits(compiles, ConversionResult!long(true,1,ConversionStatus.exact)));
 static assert(!__traits(compiles, { ConversionResult!long r={true,1,ConversionStatus.overflow}; }));
+static assert(!__traits(compiles, { ConversionResult!long r={1,123}; }));
+static assert(!__traits(compiles, ConversionResult!long.State.exactValue));
 static assert(!__traits(compiles, ConversionResult!long.withValue(1,ConversionStatus.exact)));
 static assert(!__traits(compiles, ConversionResult!long.withoutValue(ConversionStatus.exact)));
 static assert(!__traits(compiles, { ConversionResult!long r; r.status_ = ConversionStatus.exact; }));
 static assert(!__traits(compiles, { ConversionResult!long r; return r.value_; }));
 static assert(!__traits(compiles, ExactResult!long(true,1,ExactFailure.inexact)));
 static assert(!__traits(compiles, { ExactResult!long r={true,1,ExactFailure.overflow}; }));
+static assert(!__traits(compiles, { ExactResult!long r={3,123}; }));
 static assert(!__traits(compiles, { ExactResult!long r; r.hasValue_ = true; }));
 static assert(!__traits(compiles, Quantity!(Length,long).fromCanonical(1)));
 
