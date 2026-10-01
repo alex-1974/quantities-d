@@ -120,3 +120,15 @@ The production OBSERVE runner confirmed the contradictory carrier behavior in
 both debug and release against the unchanged baseline. Next is the isolated #48
 fix, then broader target Rep integration and reconciliation of the candidate
 names with earlier R15 API research. No whole research branch promotion is intended.
+
+## Isolated production fix
+
+[PR #49](https://github.com/alex-1974/quantities-d/pull/49) selectively promotes only carrier
+hardening from fresh develop b59285885bb72e4dbc7250ea8b876017e87f3fd7.
+Head `962d42dcafa1b56ced98e82eca0982b1cedd7ddb` passes production CI
+[36823405981](https://github.com/alex-1974/quantities-d/actions/runs/36823405981) on both baseline
+compilers: 12 unit-test modules in debug/release, compile-negative tests, debug/
+release external consumers and release build. The private representation and
+required consumer rebuild are documented in ADR 0007 and the changelog. No mixed-
+Rep API/kernel or research files are included in that PR. It remains unmerged
+pending explicit user merge instruction.
