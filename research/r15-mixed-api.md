@@ -134,3 +134,17 @@ Rep API/kernel or research files are included in that PR. It was squash-merged a
 `73e8401c5ac7b1cedbaacf33dab1814acda98bbb` on develop. Issue #48 is closed completed; develop CI
 [36824495178](https://github.com/alex-1974/quantities-d/actions/runs/36824495178)
 passed on both baseline compilers.
+
+
+## Floating-target continuation
+
+[Probe 15](r15-floating-target-api/README.md) extends the same candidate API to
+long/ulong/float/double/qualified-real sources and float/double targets, using
+the hardened production carrier baseline from #49. Tested code
+`d526ce38a858605b5899878f784377e31827844f`,
+[CI 36825924441](https://github.com/alex-1974/quantities-d/actions/runs/36825924441),
+passes 44,352 floating-target directions per DMD/LDC debug/release build, plus
+this probe's 27,240 integral-target directions against the extended API.
+Direct target rounding, signed zero, mathematical range-first behavior and
+checked/exact payload rules are covered. API names, mixed-Rep policy and
+implementation cost still require decisions/qualification before promotion.

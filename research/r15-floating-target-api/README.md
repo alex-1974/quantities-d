@@ -37,7 +37,24 @@ Probe 14's oracle against this extended shadow API. The consumer also checks
 const/immutable deduction, `@safe pure nothrow @nogc`, rejected types/modes and
 rejected ordinary CTFE use of this runtime floating path.
 
-Validation results are pending. This probe does not qualify performance, compiler
+## Results
+
+Tested code: `d526ce38a858605b5899878f784377e31827844f`.
+[CI run 36825924441](https://github.com/alex-1974/quantities-d/actions/runs/36825924441)
+passed on DMD 2.111.0 and LDC 1.41.0, each in debug and release.
+Every build compared 22,176 API pairs / 44,352 directions with zero mismatches:
+1,080 checked exact, 18,614 checked inexact, 1,117 exact-required values,
+21,293 exact-required failures, 1,876 checked overflow and 372 checked nonFinite.
+The consumer's direct-rounding negative control and compile-negative gates passed.
+Probe 14 also passed against this extended API in every build: 13,620 pairs /
+27,240 directions. Probes 10–14's existing workflow steps remained green.
+The evidenced real format is binary80 `(64, -16381, 16384)`.
+
+This probe does not qualify performance, compiler
 cost, general CTFE support, alternative real formats, final API naming, or
 production promotion. The supported real trait alternatives are binary80 and
 binary64-like; only the actual CI format is evidenced by its reported traits.
+
+Next: reconcile candidate names with earlier R15 API research and explicitly
+decide the mixed-Rep range/rounding contract. Then qualify implementation cost
+before selective production promotion; this research branch is not a merge unit.
