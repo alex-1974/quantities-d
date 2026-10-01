@@ -48,7 +48,13 @@ public import quantities.conversion :
     exactIn,
     exactQuantity,
     roundedIn,
-    roundedQuantity;
+    roundedQuantity,
+    checkedQuantityAs,
+    exactQuantityAs,
+    roundedQuantityAs,
+    checkedInAs,
+    exactInAs,
+    roundedInAs;
 public import quantities.quantity : Quantity, inUnit, quantity;
 public import quantities.length :
     InternationalFoot,
@@ -84,3 +90,4 @@ public import quantities.traits : isQuantitySpec, isUnit;
     static assert(Quantity!(Length, double).sizeof == double.sizeof);
     static assert(Quantity!(Length, long).sizeof == long.sizeof);
 }
+
