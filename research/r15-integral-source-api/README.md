@@ -1,0 +1,13 @@
+# R15 Probe 20 — integral sources for explicit target long
+
+Research-only extension of the selected Probe 16 API and Probe 19 optimized dispatch. Newly admitted sources: long/ulong (including const/immutable), target long, all six checked/exact/rounded construction/extraction forms. Other unsupported Reps stay excluded. Floating paths and their runtime CTFE boundary remain unchanged.
+
+Semantics: magnitude of long.min is extracted as -(value+1) then unsigned +1, avoiding signed overflow. Source ulong is retained in full 64 bits. Equal normalized Unit ratios specialize long identity and guarded ulong narrowing; nonidentity ratios use the unchanged exact composed kernel at binary exponent zero. Check the exact rational against long endpoints before every rounded policy; checked inexact has no payload, rounded inexact has payload, exact requires exact. Overflow carries no payload. No nonFinite state can arise from integral sources.
+
+Integral sources are CTFE-capable through the same public request surface and carrier contract. The consumer evaluates its full checks both at CTFE and runtime with @safe pure nothrow @nogc. Includes long.min, ulong.max, negative minimum Scale, inverse extraction, ±1.5 represented as integral source plus Unit factor, all policies, free forms and UFCS, qualified sources, default out reset, wrong-target/source and outer Source-override gates. Range-first witnesses include ulong.max/2 = long.max+0.5 and composed near-endpoint ratios.
+
+The Fraction oracle covers both directions of 12 Unit/canonical pairs, signed minima, 64 bit-position boundaries, full-width ulong, fractions, negative scales, extreme composed numerator/denominator products and seeded random values. A copied compatibility consumer changes only three old pair-rejection assertions into admission assertions; historical Probes 14–19 remain untouched. Their oracles and the Probe 16 contract run under the new shadow API in debug, release and optimized modes.
+
+Performance uses the Probe 19 normalized harness: 8192 precomputed inputs, 7 alternating rounds, warmup, per-input equality and checksums, bounds on. New identity success and overflow corpora are separate; foot/quarter nonidentity floor requests compare against the unchanged composed kernel with equivalent observations. Full benchmark corpus/source and compiler commands are in the Probe 20 workflow step. Codegen follows direct calls and tail jumps, checking identity paths avoid the wide kernel while the nonidentity path and generic controls retain it. No C++ parity or release claim.
+
+Results pending DMD/LDC CI. No production promotion or API freeze.
