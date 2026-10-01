@@ -37,3 +37,19 @@ jobs:
         run: |
           "$DC" -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral research/r15-floating-source-integral/runner.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d -of=/tmp/r15-probe-13
           python3 research/r15-floating-source-integral/oracle.py /tmp/r15-probe-13
+      - name: Probe 14 actual Unit API and result invariants in debug and release
+        shell: bash
+        run: |
+          sources=()
+          for source in source/quantities/*.d; do
+            if [[ "$source" != source/quantities/conversion.d ]]; then
+              sources+=("$source")
+            fi
+          done
+          for build in debug release; do
+            flags=()
+            if [[ "$build" == release ]]; then flags+=(-release); fi
+            "$DC" "${flags[@]}" -Iresearch/r15-mixed-api -Isource -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral research/r15-mixed-api/runner.d research/r15-mixed-api/consumer.d research/r15-mixed-api/quantities/conversion.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d "${sources[@]}" -of=/tmp/r15-probe-14
+            echo "Probe 14 $build"
+            python3 research/r15-mixed-api/oracle.py /tmp/r15-probe-14
+          done
