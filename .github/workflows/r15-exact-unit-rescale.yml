@@ -83,7 +83,7 @@ jobs:
           common=(-Iresearch/r15-api-contract -Isource -Iresearch/r15-floating-target-api -Iresearch/r15-mixed-api -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral)
           kernels=(research/r15-floating-target-api/kernel.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d)
           consumers=(research/r15-mixed-api/consumer.d research/r15-floating-target-api/consumer.d)
-          "$DC" "${common[@]}" research/r15-api-contract/source-override-observation.d research/r15-floating-target-api/quantities/conversion.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-source-override-observation
+          "$DC" -Iresearch/r15-floating-target-api -Isource -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral research/r15-api-contract/source-override-observation.d research/r15-floating-target-api/quantities/conversion.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-source-override-observation
           /tmp/r15-source-override-observation
           for build in debug release; do
             flags=()
