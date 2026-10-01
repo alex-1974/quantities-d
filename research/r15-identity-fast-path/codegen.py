@@ -7,13 +7,39 @@ import sys
 
 symbols=["r15FloatFloat","r15FloatDouble","r15DoubleDouble",
          "r15BaselineFloatFloat","r15BaselineFloatDouble","r15BaselineDoubleDouble"]
+full=subprocess.check_output(["objdump","-d","-Mintel","--no-show-raw-insn",sys.argv[1]],text=True)
+functions={}
+current=None
+for line in full.splitlines():
+    match=re.match(r"^[0-9a-f]+ <([^>]+)>:",line)
+    if match:
+        current=match.group(1)
+        functions[current]=[]
+    elif current and re.match(r"\s*[0-9a-f]+:\s",line):
+        functions[current].append(line)
+
+def reachable(symbol):
+    found=set()
+    pending=[symbol]
+    while pending:
+        name=pending.pop()
+        if name in found: continue
+        found.add(name)
+        for line in functions.get(name,[]):
+            match=re.search(r"\bcall\s+[0-9a-f]+ <([^>]+)>",line)
+            if match: pending.append(re.sub(r"\+0x[0-9a-f]+$","",match.group(1)))
+    return found
+
 for symbol in symbols:
-    text=subprocess.check_output(["objdump","-d","-Mintel",f"--disassemble={symbol}",sys.argv[1]],text=True)
-    lines=text.splitlines()
-    instructions=[line for line in lines if re.match(r"\s*[0-9a-f]+:\s",line)]
+    text=subprocess.check_output(["objdump","-d","-Mintel","--no-show-raw-insn",f"--disassemble={symbol}",sys.argv[1]],text=True)
+    instructions=functions.get(symbol,[])
     assert instructions,f"missing codegen symbol {symbol}"
     calls=[line.strip() for line in instructions if re.search(r"\bcall\b",line)]
-    print("CODEGEN "+json.dumps({"symbol":symbol,"instructions":len(instructions),"calls":calls}))
+    targets=reachable(symbol)
+    wide=[name for name in sorted(targets) if "r15_composed_kernel" in name or "r15_floating_target_kernel" in name]
+    assert bool(wide)==symbol.startswith("r15Baseline"),(symbol,wide)
+    print("CODEGEN "+json.dumps({"symbol":symbol,"instructions":len(instructions),"calls":calls,
+        "reachable_functions":len(targets),"wide_kernel_reachable":bool(wide)}))
     if not symbol.startswith("r15Baseline"):
         print("ASSEMBLY_BEGIN "+symbol)
         print(text)
