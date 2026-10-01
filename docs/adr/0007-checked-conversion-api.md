@@ -78,6 +78,14 @@ The result type:
 
 M1 does not require an overlapping union representation.
 
+ConversionResult and ExactResult encode payload presence and status/failure in
+one private typed state discriminant. Private independent fields alone do not
+prevent external D aggregate initialization. Supported public operations must
+preserve valid states in release builds without depending on assertions; external
+positional and brace construction cannot supply ordinary presence/status fields.
+The private result layout is not an ABI promise, and consumers must rebuild when
+that representation changes.
+
 ### 4. Integral conversion
 
 Integral unit conversion:

@@ -1,9 +1,12 @@
 module app;
 
 import quantities;
+import result_carrier_regression : resultCarrierRegression;
 
 void main()
 {
+    if (!resultCarrierRegression())
+        throw new Exception("Conversion result carrier regression failed");
     mathematicalRangeRegression();
     enum canonical = 1.25.quantity!(Length, Metre);
     static assert(canonical.canonicalValue == 1.25);

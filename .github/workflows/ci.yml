@@ -44,6 +44,12 @@ jobs:
         shell: bash
         run: dub test --compiler="$DC" --force
 
+      - name: Run release unit tests
+        shell: bash
+        run: |
+          "$DC" -unittest -release -main -Isource source/quantities/*.d -of=/tmp/quantities-unit-release
+          /tmp/quantities-unit-release
+
       - name: Run compile-negative tests
         shell: bash
         run: bash tests/negative/run.sh "$DC"
@@ -53,6 +59,7 @@ jobs:
         run: |
           cd tests/consumer
           dub run --compiler="$DC" --force
+          dub run --build=release --compiler="$DC" --force
 
       - name: Build release configuration
         shell: bash

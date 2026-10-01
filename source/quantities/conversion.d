@@ -33,30 +33,30 @@ enum RoundingMode
 struct ConversionResult(T)
 {
 private:
-    bool hasValue_;
+    // Keep payload presence and status in one typed state. Private independent
+    // fields can still be initialized externally through D struct literals.
+    enum State : ubyte { inexactEmpty, exactValue, inexactValue, overflow, nonFinite }
+    State state_ = State.inexactEmpty;
     T value_;
-    ConversionStatus status_ = ConversionStatus.inexact;
+    @disable this(State, T);
 
     @safe pure nothrow @nogc
     static ConversionResult withValue(T value, ConversionStatus status)
     {
-        assert(status == ConversionStatus.exact
-            || status == ConversionStatus.inexact);
-
         ConversionResult result;
-        result.hasValue_ = true;
+        if (status == ConversionStatus.exact) result.state_ = State.exactValue;
+        else if (status == ConversionStatus.inexact) result.state_ = State.inexactValue;
+        else return withoutValue(status);
         result.value_ = value;
-        result.status_ = status;
         return result;
     }
 
     @safe pure nothrow @nogc
     static ConversionResult withoutValue(ConversionStatus status)
     {
-        assert(status != ConversionStatus.exact);
-
         ConversionResult result;
-        result.status_ = status;
+        if (status == ConversionStatus.overflow) result.state_ = State.overflow;
+        else if (status == ConversionStatus.nonFinite) result.state_ = State.nonFinite;
         return result;
     }
 
@@ -64,21 +64,25 @@ public:
     @safe pure nothrow @nogc
     bool hasValue() const
     {
-        return hasValue_;
+        return state_ == State.exactValue || state_ == State.inexactValue;
     }
 
     @safe pure nothrow @nogc
     ConversionStatus status() const
     {
-        return status_;
+        switch (state_)
+        {
+            case State.exactValue: return ConversionStatus.exact;
+            case State.overflow: return ConversionStatus.overflow;
+            case State.nonFinite: return ConversionStatus.nonFinite;
+            default: return ConversionStatus.inexact;
+        }
     }
 
     @safe pure nothrow @nogc
     bool tryValue(out T value) const
     {
-        if (!hasValue_)
-            return false;
-
+        if (!hasValue) return false;
         value = value_;
         return true;
     }
@@ -87,16 +91,17 @@ public:
 struct ExactResult(T)
 {
 private:
-    bool hasValue_;
+    enum State : ubyte { inexact, overflow, nonFinite, value }
+    State state_ = State.inexact;
     T value_;
-    ExactFailure failure_ = ExactFailure.inexact;
+    @disable this(State, T);
 
 public:
     @safe pure nothrow @nogc
     static ExactResult success(T value)
     {
         ExactResult result;
-        result.hasValue_ = true;
+        result.state_ = State.value;
         result.value_ = value;
         return result;
     }
@@ -105,22 +110,21 @@ public:
     static ExactResult failed(ExactFailure failure)
     {
         ExactResult result;
-        result.failure_ = failure;
+        if (failure == ExactFailure.overflow) result.state_ = State.overflow;
+        else if (failure == ExactFailure.nonFinite) result.state_ = State.nonFinite;
         return result;
     }
 
     @safe pure nothrow @nogc
     bool hasValue() const
     {
-        return hasValue_;
+        return state_ == State.value;
     }
 
     @safe pure nothrow @nogc
     bool tryValue(out T value) const
     {
-        if (!hasValue_)
-            return false;
-
+        if (!hasValue) return false;
         value = value_;
         return true;
     }
@@ -128,10 +132,10 @@ public:
     @safe pure nothrow @nogc
     bool tryFailure(out ExactFailure failure) const
     {
-        if (hasValue_)
-            return false;
-
-        failure = failure_;
+        if (hasValue) return false;
+        if (state_ == State.overflow) failure = ExactFailure.overflow;
+        else if (state_ == State.nonFinite) failure = ExactFailure.nonFinite;
+        else failure = ExactFailure.inexact;
         return true;
     }
 }
