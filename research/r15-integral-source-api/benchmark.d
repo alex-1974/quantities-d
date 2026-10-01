@@ -170,6 +170,13 @@ void measure(T,Spec,Unit,bool rounded,S,bool integerInputs=false)(string name)
 }
 void main()
 {
+    // Materialize every callable witness address so linker GC cannot remove
+    // a trivial identity whose constant-argument sanity call was folded away.
+    writeln("INTEGRAL_SOURCE_CODEGEN_ROOTS ",cast(void*)&r15LongLong," ",
+        cast(void*)&r15UlongLong," ",cast(void*)&r15UlongLongFloor," ",cast(void*)&r15LongFootFloor," ",
+        cast(void*)&r15BaselineLongLong," ",cast(void*)&r15BaselineUlongLong," ",
+        cast(void*)&r15BaselineUlongLongFloor," ",cast(void*)&r15BaselineLongFootFloor);
+
     if(r15LongLong(1L)!=r15BaselineLongLong(1L) ||
         r15UlongLong(ulong.max)!=r15BaselineUlongLong(ulong.max) ||
         r15UlongLongFloor(1UL)!=r15BaselineUlongLongFloor(1UL) ||
