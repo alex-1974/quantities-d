@@ -52,14 +52,14 @@ void emit(Spec,Unit,S)(S source,string intent,int mode)
     }
     else
     {
-        final switch(cast(RoundingMode)mode)
+        modeSwitch: final switch(cast(RoundingMode)mode)
         {
             static foreach (m; [RoundingMode.towardZero,RoundingMode.floor,
                                RoundingMode.ceiling,RoundingMode.nearestTiesAway])
             {
                 case m:
                     output(source.roundedQuantityAs!(Spec,Unit,long,m)); write(" | ");
-                    output(q.roundedInAs!(Unit,long,m)); break;
+                    output(q.roundedInAs!(Unit,long,m)); break modeSwitch;
             }
         }
     }
