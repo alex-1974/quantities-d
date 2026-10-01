@@ -13,3 +13,9 @@ Suggested numbering:
 0001-<decision>.md
 0002-<decision>.md
 ```
+
+## Proposed decisions
+
+[ADR 0012 — Explicit TargetRep conversion](0012-explicit-target-rep-conversion.md)
+records the proposed R15 promotion boundary. Production implementation and
+acceptance remain pending; existing APIs remain authoritative.
