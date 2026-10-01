@@ -3,8 +3,14 @@ module app;
 import quantities;
 import result_carrier_regression : resultCarrierRegression;
 
+import conversion_as_contract : consumerChecks;
+import conversion_as_integral : integralConsumerChecks;
+import conversion_as_floating : floatingConsumerChecks;
+
 void main()
 {
+    if (!consumerChecks() || !integralConsumerChecks() || !floatingConsumerChecks())
+        throw new Exception("explicit target conversion consumer failed");
     if (!resultCarrierRegression())
         throw new Exception("Conversion result carrier regression failed");
     mathematicalRangeRegression();
@@ -639,3 +645,4 @@ void mathematicalRangeRegression()
         assert(exactRead.tryFailure(failure) && failure == ExactFailure.overflow);
     }
 }
+

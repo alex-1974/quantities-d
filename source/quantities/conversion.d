@@ -952,3 +952,175 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
         assert(quantityOutput.canonicalValue == source);
     }
 }
+
+
+
+private:
+import quantities.exact_conversion : supportedSource, qualifiedReal,
+    convertIntegralUnits, convertFloatingUnits;
+
+enum targetRepPair(T,S) = supportedSource!S &&
+    (is(T == long) || is(T == float) || is(T == double));
+
+template validConversionUnits(Spec, Unit)
+{
+    static assert(isQuantitySpec!Spec, "quantities-d: explicit target conversion requires a valid Spec.");
+    static assert(isUnit!Unit, "quantities-d: explicit target conversion requires a valid Unit.");
+    static assert(is(Spec.Dimension == Unit.Dimension), "quantities-d: explicit target conversion dimension mismatch.");
+    static assert(Unit.Scale.numerator != 0 && Spec.CanonicalUnit.Scale.numerator != 0,
+        "quantities-d: explicit target conversion Unit scales must be nonzero.");
+    static assert(is(typeof(Unit.Scale.numerator) == long) &&
+        is(typeof(Unit.Scale.denominator) == long) &&
+        is(typeof(Spec.CanonicalUnit.Scale.numerator) == long) &&
+        is(typeof(Spec.CanonicalUnit.Scale.denominator) == long),
+        "quantities-d: explicit target conversion requires signed-long exact Scale metadata.");
+    enum validConversionUnits = true;
+}
+
+ConversionResult!T convertTargetRep(T,From,To,S)(S value,bool rounded,RoundingMode mode)
+    @safe pure nothrow @nogc
+{
+    static if (is(T == long))
+        const converted = convertIntegralUnits!(From,To)(value,rounded,mode);
+    else
+        const converted = convertFloatingUnits!(T,From,To)(value);
+    final switch (converted.status)
+    {
+        case ConversionStatus.exact:
+            return ConversionResult!T.withValue(converted.value,ConversionStatus.exact);
+        case ConversionStatus.inexact:
+            static if (is(T == long))
+                if (!converted.hasValue)
+                    return ConversionResult!T.withoutValue(ConversionStatus.inexact);
+            return ConversionResult!T.withValue(converted.value,ConversionStatus.inexact);
+        case ConversionStatus.overflow:
+            return ConversionResult!T.withoutValue(ConversionStatus.overflow);
+        case ConversionStatus.nonFinite:
+            return ConversionResult!T.withoutValue(ConversionStatus.nonFinite);
+    }
+}
+
+auto constructTargetRep(Spec,Unit,T,S)(S value,bool rounded,RoundingMode mode)
+    @safe pure nothrow @nogc
+{
+    static assert(validConversionUnits!(Spec,Unit));
+    const converted = convertTargetRep!(T,Unit,Spec.CanonicalUnit)(value,rounded,mode);
+    T canonical;
+    if (!converted.tryValue(canonical))
+        return ConversionResult!(Quantity!(Spec,T)).withoutValue(converted.status);
+    return ConversionResult!(Quantity!(Spec,T)).withValue(
+        Quantity!(Spec,T).fromCanonical(canonical),converted.status);
+}
+
+public:
+/** Convert a represented Source in Unit to Quantity!(Spec, TargetRep).
+ * Source is deduced: long, ulong, float, double, or qualified real. TargetRep
+ * is long, float, or double. The exact composed rational is range-checked
+ * before one target quantization. Checked long inexactness has no payload;
+ * checked floating inexactness carries the nearest-even result. Overflow and
+ * nonFinite have no payload. Floating Source or Target requests are runtime
+ * only; integral Source to long supports CTFE. Legacy inferred APIs are unchanged.
+ */
+template checkedQuantityAs(Spec,Unit,TargetRep)
+{
+    auto checkedQuantityAs(Source)(Source value)
+        @safe pure nothrow @nogc if (targetRepPair!(TargetRep,Source))
+    {
+        return constructTargetRep!(Spec,Unit,TargetRep)(value,false,RoundingMode.towardZero);
+    }
+}
+/** As checkedQuantityAs, but require exact representation in TargetRep.
+ * Return ExactResult!(Quantity!(Spec, TargetRep)); inexact, overflow, and
+ * nonFinite report the corresponding ExactFailure without a payload.
+ */
+template exactQuantityAs(Spec,Unit,TargetRep)
+{
+    auto exactQuantityAs(Source)(Source value)
+        @safe pure nothrow @nogc if (targetRepPair!(TargetRep,Source))
+    {
+        return exactResult(value.checkedQuantityAs!(Spec,Unit,TargetRep));
+    }
+}
+/** Convert to a long Quantity with an explicit integral rounding mode.
+ * Range-check the exact rational before rounding. An inexact in-range result
+ * carries the selected rounded value. Floating Source is runtime only.
+ */
+template roundedQuantityAs(Spec,Unit,TargetRep,RoundingMode mode)
+{
+    auto roundedQuantityAs(Source)(Source value)
+        @safe pure nothrow @nogc if (is(TargetRep == long) && supportedSource!Source)
+    {
+        static assert(mode == RoundingMode.towardZero || mode == RoundingMode.floor ||
+            mode == RoundingMode.ceiling || mode == RoundingMode.nearestTiesAway,
+            "quantities-d: explicit target conversion requires a supported rounding mode.");
+        return constructTargetRep!(Spec,Unit,TargetRep)(value,true,mode);
+    }
+}
+/** Extract a represented Quantity into Unit with explicit TargetRep.
+ * Return ConversionResult!TargetRep. Range, rounding, Source admission, and
+ * CTFE semantics match checkedQuantityAs. The Source Rep is deduced from value.
+ */
+template checkedInAs(Unit,TargetRep)
+{
+    auto checkedInAs(Spec,Source)(const(Quantity!(Spec,Source)) value)
+        @safe pure nothrow @nogc if (targetRepPair!(TargetRep,Source))
+    {
+        static assert(validConversionUnits!(Spec,Unit));
+        return convertTargetRep!(TargetRep,Spec.CanonicalUnit,Unit)(value.canonicalValue,false,
+            RoundingMode.towardZero);
+    }
+}
+/** Extract into Unit only when exactly representable in TargetRep.
+ * Return ExactResult!TargetRep with the same failure classes as exactQuantityAs.
+ */
+template exactInAs(Unit,TargetRep)
+{
+    auto exactInAs(Spec,Source)(const(Quantity!(Spec,Source)) value)
+        @safe pure nothrow @nogc if (targetRepPair!(TargetRep,Source))
+    {
+        return exactResult(value.checkedInAs!(Unit,TargetRep));
+    }
+}
+/** Extract into Unit as long using the selected integral rounding mode.
+ * The exact rational must lie in the closed long range before rounding.
+ * Return ConversionResult!long; floating Source requests are runtime only.
+ */
+template roundedInAs(Unit,TargetRep,RoundingMode mode)
+{
+    auto roundedInAs(Spec,Source)(
+        const(Quantity!(Spec,Source)) value)
+        @safe pure nothrow @nogc if (is(TargetRep == long) && supportedSource!Source)
+    {
+        static assert(validConversionUnits!(Spec,Unit));
+        static assert(mode == RoundingMode.towardZero || mode == RoundingMode.floor ||
+            mode == RoundingMode.ceiling || mode == RoundingMode.nearestTiesAway,
+            "quantities-d: explicit target conversion requires a supported rounding mode.");
+        return convertTargetRep!(TargetRep,Spec.CanonicalUnit,Unit)(value.canonicalValue,true,mode);
+    }
+}
+
+///
+@safe unittest
+{
+    import quantities : Length, Metre, InternationalFoot;
+    // All six request forms participate in the supported integral CTFE slice.
+    enum made = checkedQuantityAs!(Length,Metre,long)(2UL);
+    enum exact = 2L.exactQuantityAs!(Length,Metre,long);
+    enum rounded = roundedQuantityAs!(Length,Metre,long,RoundingMode.floor)(2L);
+    enum q = ({ Quantity!(Length,long) v; made.tryValue(v); return v; }());
+    enum read = q.checkedInAs!(Metre,long);
+    enum exactRead = exactInAs!(Metre,long)(q);
+    enum roundedRead = roundedInAs!(Metre,long,RoundingMode.floor)(q);
+    static assert(made.hasValue && exact.hasValue && rounded.hasValue);
+    static assert(read.hasValue && exactRead.hasValue && roundedRead.hasValue);
+
+    // Documentation example: represented double input, explicit long storage.
+    const example = 1.5.roundedQuantityAs!(Length,Metre,long,RoundingMode.floor);
+    Quantity!(Length,long) value;
+    const available = example.tryValue(value);
+    assert(available && value.canonicalValue == 1);
+    const feet = value.checkedInAs!(InternationalFoot,double);
+    double scalar;
+    const extracted = feet.tryValue(scalar);
+    assert(extracted && feet.status == ConversionStatus.inexact);
+}
