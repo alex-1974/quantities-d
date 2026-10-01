@@ -13,7 +13,7 @@ void emit(T,S)(S source,long fn,long fd,long tn,long td)
     else writeln(result.status," ",storedBits(result.value));
 }
 
-void source(T)(string[] f)
+void source(T)(const(string)[] f)
 {
     const fn=f[$-4].to!long,fd=f[$-3].to!long,tn=f[$-2].to!long,td=f[$-1].to!long;
     switch (f[1])
