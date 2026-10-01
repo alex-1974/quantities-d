@@ -114,6 +114,13 @@ jobs:
           lscpu | head -20
           "$DC" "${flags[@]}" "${common[@]}" research/r15-api-cost/benchmark.d research/r15-floating-target-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-17
           /tmp/r15-probe-17
+          consumers=(research/r15-mixed-api/consumer.d research/r15-floating-target-api/consumer.d)
+          "$DC" "${flags[@]}" "${common[@]}" research/r15-api-contract/consumer.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-contract-optimized
+          /tmp/r15-contract-optimized
+          "$DC" "${flags[@]}" "${common[@]}" research/r15-floating-target-api/runner.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-floating-optimized
+          python3 research/r15-floating-target-api/oracle.py /tmp/r15-floating-optimized
+          "$DC" "${flags[@]}" "${common[@]}" research/r15-mixed-api/runner.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-integral-optimized
+          python3 research/r15-mixed-api/oracle.py /tmp/r15-integral-optimized
           for round in 1 2 3; do
             for kind in baseline consumer; do
               /usr/bin/time -f "BUILD_COST,$round,$kind,%e,%M" -o /tmp/r15-build-time "$DC" "${flags[@]}" "${common[@]}" "research/r15-api-cost/build-$kind.d" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-build-$kind
