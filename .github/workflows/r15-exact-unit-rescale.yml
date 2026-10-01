@@ -251,3 +251,37 @@ jobs:
               /tmp/r15-identity-build-$kind
             done
           done
+      - name: Probe 21 promotion contract, root imports and floating CTFE boundary
+        shell: bash
+        run: |
+          sources=()
+          for source in source/quantities/*.d; do
+            if [[ "$source" != source/quantities/conversion.d && "$source" != source/quantities/package.d ]]; then sources+=("$source"); fi
+          done
+          common=(-Iresearch/r15-promotion-readiness -Iresearch/r15-integral-source-api -Iresearch/r15-integral-identity-fast-path -Iresearch/r15-identity-fast-path -Isource -Iresearch/r15-floating-target-api -Iresearch/r15-mixed-api -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral)
+          kernels=(research/r15-promotion-readiness/quantities/conversion.d research/r15-promotion-readiness/quantities/package.d research/r15-integral-source-api/kernel.d research/r15-integral-identity-fast-path/kernel.d research/r15-identity-fast-path/kernel.d research/r15-floating-target-api/kernel.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d)
+          consumers=(research/r15-integral-source-api/compat-consumer-14.d research/r15-floating-target-api/consumer.d)
+          case "$DC" in
+            *ldc2) optimized=(-release -O3 -boundscheck=on) ;;
+            *) optimized=(-release -O -inline -boundscheck=on) ;;
+          esac
+          for build in debug release optimized; do
+            flags=()
+            if [[ "$build" == release ]]; then flags+=(-release); fi
+            if [[ "$build" == optimized ]]; then flags=("${optimized[@]}"); fi
+            echo "Probe 21 $build"
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-promotion-readiness/consumer.d research/r15-integral-source-api/consumer.d research/r15-integral-source-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-promotion-consumer
+            /tmp/r15-promotion-consumer
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-integral-source-api/runner.d research/r15-integral-source-api/consumer.d research/r15-integral-source-api/fixtures.d research/r15-integral-source-api/compat-consumer-14.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-integral-source-oracle
+            python3 research/r15-integral-source-api/oracle.py /tmp/r15-integral-source-oracle
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-identity-fast-path/runner.d research/r15-identity-fast-path/consumer.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-floating-identity-under-19
+            python3 research/r15-identity-fast-path/oracle.py /tmp/r15-floating-identity-under-19
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-integral-identity-fast-path/runner.d research/r15-integral-identity-fast-path/consumer.d research/r15-integral-source-api/compat-consumer-14.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-identity-oracle
+            python3 research/r15-integral-identity-fast-path/oracle.py /tmp/r15-identity-oracle
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-api-contract/consumer.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-identity-contract
+            /tmp/r15-identity-contract
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-floating-target-api/runner.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-floating-under-18
+            python3 research/r15-floating-target-api/oracle.py /tmp/r15-floating-under-18
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-mixed-api/runner.d research/r15-floating-target-api/fixtures.d "${consumers[@]}" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-integral-under-18
+            python3 research/r15-mixed-api/oracle.py /tmp/r15-integral-under-18
+          done
