@@ -1,0 +1,5 @@
+name "quantities-r01-static-representation"
+description "R01 probe: compare candidate static quantity representation models"
+targetType "executable"
+sourcePaths "source"
+toolchainRequirements frontend=">=2.111.0"
