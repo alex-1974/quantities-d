@@ -97,3 +97,24 @@ jobs:
             "$DC" "${flags[@]}" "${common[@]}" research/r15-mixed-api/runner.d research/r15-api-contract/quantities/conversion.d "${consumers[@]}" research/r15-floating-target-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-14-under-16
             python3 research/r15-mixed-api/oracle.py /tmp/r15-probe-14-under-16
           done
+      - name: Probe 17 equivalent-semantics API and compiler cost (bounds on)
+        shell: bash
+        run: |
+          sources=()
+          for source in source/quantities/*.d; do
+            if [[ "$source" != source/quantities/conversion.d ]]; then sources+=("$source"); fi
+          done
+          common=(-Iresearch/r15-api-contract -Isource -Iresearch/r15-floating-target-api -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral)
+          kernels=(research/r15-api-contract/quantities/conversion.d research/r15-floating-target-api/kernel.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d)
+          flags=(-release -O -inline -boundscheck=on)
+          echo "COST_FLAGS $DC ${flags[*]}"
+          lscpu | head -20
+          "$DC" "${flags[@]}" "${common[@]}" research/r15-api-cost/benchmark.d research/r15-floating-target-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-17
+          /tmp/r15-probe-17
+          for round in 1 2 3; do
+            for kind in baseline consumer; do
+              /usr/bin/time -f "BUILD_COST,$round,$kind,%e,%M" -o /tmp/r15-build-time "$DC" "${flags[@]}" "${common[@]}" "research/r15-api-cost/build-$kind.d" "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-build-$kind
+              cat /tmp/r15-build-time
+              /tmp/r15-build-$kind
+            done
+          done

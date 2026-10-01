@@ -10,7 +10,7 @@ import std.math : ldexp;
 import std.stdio : writeln;
 
 // Only the request belongs in the public outer template argument list.
-static assert(!__traits(compiles, ulong.max.checkedQuantityAs!(Length,Metre,long,double)));
+static assert(!__traits(compiles, { ulong source; return source.checkedQuantityAs!(Length,Metre,long,double); }));
 static assert(!__traits(compiles, 1.checkedQuantityAs!(Length,Metre,float,long)));
 static assert(!__traits(compiles, 1.exactQuantityAs!(Length,Metre,float,long)));
 static assert(!__traits(compiles, 1.roundedQuantityAs!(Length,Metre,long,RoundingMode.floor,double)));
