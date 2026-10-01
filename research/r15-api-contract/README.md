@@ -124,3 +124,18 @@ the results are not a release performance guarantee.
 Root exports, production Ddoc,
 independent consumer adoption, broader Rep admission and production promotion
 remain separate work. Cost qualification precedes a final public API freeze.
+
+
+## Identity-path continuation
+
+[Probe 18](../r15-identity-fast-path/README.md) specializes identity float/float,
+double/double and float/double conversions without changing request or result
+semantics. Tested code `05cc790e5fcb0a869ef8ae02ef3597c14d1221b5`,
+[CI 36829926170](https://github.com/alex-1974/quantities-d/actions/runs/36829926170),
+passes the focused 157,366-comparison identity oracle and the existing 44,352 /
+27,240-direction oracles in debug, release and optimized builds on both baseline
+compilers. Per-input benchmark equality, timed checksums and codegen call-chain
+checks pass. [Measurements and assembly](../r15-identity-fast-path/results.json)
+record the same-executable general-kernel control and compiler-specific limits.
+All other paths keep the original composed kernel. Selective promotion and the
+remaining R15 pair/CTFE/consumer scope are still separate work.

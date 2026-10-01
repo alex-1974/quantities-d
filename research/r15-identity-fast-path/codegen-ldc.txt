@@ -1,0 +1,160 @@
+ASSEMBLY_BEGIN r15FloatFloat
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+0000000000029a10 <r15FloatFloat>:
+   29a10:	movd   eax,xmm0
+   29a14:	mov    ecx,eax
+   29a16:	not    ecx
+   29a18:	shl    rax,0x20
+   29a1c:	test   ecx,0x7f800000
+   29a22:	movabs rcx,0x7fc0000000000003
+   29a2c:	cmovne rcx,rax
+   29a30:	mov    edx,ecx
+   29a32:	and    edx,0xfffffffe
+   29a35:	shr    rcx,0x20
+   29a39:	xor    eax,eax
+   29a3b:	neg    rdx
+   29a3e:	sbb    rax,rax
+   29a41:	or     rax,rcx
+   29a44:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatFloat
+
+ASSEMBLY_BEGIN r15FloatDouble
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+0000000000029a50 <r15FloatDouble>:
+   29a50:	movd   esi,xmm0
+   29a54:	mov    eax,esi
+   29a56:	shr    eax,0x17
+   29a59:	movzx  eax,al
+   29a5c:	movq   xmm0,QWORD PTR [rip+0x69644]        # 930a8 <_fini+0x558>
+   29a64:	mov    edx,0x3
+   29a69:	mov    ecx,0x3
+   29a6e:	movdqa xmm1,xmm0
+   29a72:	cmp    eax,0xff
+   29a77:	je     29af4 <r15FloatDouble+0xa4>
+   29a79:	mov    edi,esi
+   29a7b:	and    edi,0x80000000
+   29a81:	shl    rdi,0x20
+   29a85:	and    esi,0x7fffff
+   29a8b:	test   rax,rax
+   29a8e:	je     29aad <r15FloatDouble+0x5d>
+   29a90:	shl    rax,0x34
+   29a94:	shl    rsi,0x1d
+   29a98:	or     rsi,rax
+   29a9b:	movabs rax,0x3800000000000000
+   29aa5:	add    rdi,rax
+   29aa8:	add    rdi,rsi
+   29aab:	jmp    29aed <r15FloatDouble+0x9d>
+   29aad:	test   rsi,rsi
+   29ab0:	je     29aed <r15FloatDouble+0x9d>
+   29ab2:	bsr    rcx,rsi
+   29ab6:	mov    r8,0xffffffffffffffff
+   29abd:	shl    r8,cl
+   29ac0:	mov    al,0x34
+   29ac2:	sub    al,cl
+   29ac4:	mov    r9d,ecx
+   29ac7:	xor    r9d,0x3f
+   29acb:	shl    r9,0x34
+   29acf:	movabs r10,0x3a90000000000000
+   29ad9:	add    r8,rsi
+   29adc:	mov    ecx,eax
+   29ade:	shl    r8,cl
+   29ae1:	sub    r10,r9
+   29ae4:	or     r10,rdi
+   29ae7:	or     r10,r8
+   29aea:	mov    rdi,r10
+   29aed:	movq   xmm1,rdi
+   29af2:	xor    ecx,ecx
+   29af4:	cmp    ecx,0x3
+   29af7:	ja     29b6f <r15FloatDouble+0x11f>
+   29af9:	mov    eax,ecx
+   29afb:	lea    rcx,[rip+0x6982e]        # 93330 <_fini+0x7e0>
+   29b02:	movsxd rax,DWORD PTR [rcx+rax*4]
+   29b06:	add    rax,rcx
+   29b09:	jmp    rax
+   29b0b:	mov    edx,0x1
+   29b10:	jmp    29b17 <r15FloatDouble+0xc7>
+   29b12:	mov    edx,0x2
+   29b17:	movdqa xmm0,xmm1
+   29b1b:	lea    eax,[rdx-0x1]
+   29b1e:	cmp    al,0x2
+   29b20:	jae    29b3f <r15FloatDouble+0xef>
+   29b22:	cmp    dl,0x1
+   29b25:	sete   cl
+   29b28:	mov    al,0x2
+   29b2a:	sub    al,cl
+   29b2c:	movq   rcx,xmm0
+   29b31:	jmp    29b5f <r15FloatDouble+0x10f>
+   29b33:	mov    edx,0x4
+   29b38:	lea    eax,[rdx-0x1]
+   29b3b:	cmp    al,0x2
+   29b3d:	jb     29b22 <r15FloatDouble+0xd2>
+   29b3f:	xor    eax,eax
+   29b41:	cmp    dl,0x3
+   29b44:	sete   al
+   29b47:	lea    ecx,[rax+rax*2]
+   29b4a:	cmp    dl,0x4
+   29b4d:	mov    eax,0x4
+   29b52:	cmovne eax,ecx
+   29b55:	movabs rcx,0x7ff8000000000000
+   29b5f:	dec    al
+   29b61:	cmp    al,0x2
+   29b63:	mov    rax,0xffffffffffffffff
+   29b6a:	cmovb  rax,rcx
+   29b6e:	ret
+   29b6f:	ud2
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatDouble
+
+ASSEMBLY_BEGIN r15DoubleDouble
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+0000000000029b80 <r15DoubleDouble>:
+   29b80:	movq   rcx,xmm0
+   29b85:	movabs rax,0x7fffffffffffffff
+   29b8f:	and    rax,rcx
+   29b92:	movabs rdx,0x7ff0000000000000
+   29b9c:	cmp    rax,rdx
+   29b9f:	mov    rax,0xffffffffffffffff
+   29ba6:	cmovl  rax,rcx
+   29baa:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleDouble

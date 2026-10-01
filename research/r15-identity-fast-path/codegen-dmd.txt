@@ -1,0 +1,261 @@
+ASSEMBLY_BEGIN r15FloatFloat
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000b3810 <r15FloatFloat>:
+   b3810:	push   rbp
+   b3811:	mov    rbp,rsp
+   b3814:	sub    rsp,0x50
+   b3818:	mov    QWORD PTR [rbp-0x48],rbx
+   b381c:	movss  DWORD PTR [rbp-0x8],xmm0
+   b3821:	movss  xmm0,DWORD PTR [rbp-0x8]
+   b3826:	xor    esi,esi
+   b3828:	mov    edi,esi
+   b382a:	call   b4ab0 <_D10quantities10conversion__T10r15ConvertTfTSQBr6length5MetreTQsTfZQBmFNaNbNiNffbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTfZQv>
+   b382f:	mov    QWORD PTR [rbp-0x28],rax
+   b3833:	movss  xmm1,DWORD PTR [rip+0x507e5]        # 104020 <_IO_stdin_used+0x20>
+   b383b:	movss  DWORD PTR [rbp-0x20],xmm1
+   b3840:	lea    rsi,[rbp-0x20]
+   b3844:	lea    rdi,[rbp-0x28]
+   b3848:	call   b4c88 <_D10quantities10conversion__T16ConversionResultTfZQv8tryValueMxFNaNbNiNfJfZb>
+   b384d:	xor    al,0x1
+   b384f:	je     b3884 <r15FloatFloat+0x74>
+   b3851:	lea    rdi,[rbp-0x28]
+   b3855:	call   b4c5c <_D10quantities10conversion__T16ConversionResultTfZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b385a:	mov    ebx,eax
+   b385c:	lea    rax,[rip+0x7582d]        # 129090 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTfZQBfZQCs6__initZ>
+   b3863:	mov    rcx,QWORD PTR [rax]
+   b3866:	mov    QWORD PTR [rbp-0x18],rcx
+   b386a:	cmp    ebx,0x2
+   b386d:	jne    b3875 <r15FloatFloat+0x65>
+   b386f:	mov    BYTE PTR [rbp-0x18],0x3
+   b3873:	jmp    b387e <r15FloatFloat+0x6e>
+   b3875:	cmp    ebx,0x3
+   b3878:	jne    b387e <r15FloatFloat+0x6e>
+   b387a:	mov    BYTE PTR [rbp-0x18],0x4
+   b387e:	mov    rdx,QWORD PTR [rbp-0x18]
+   b3882:	jmp    b38b2 <r15FloatFloat+0xa2>
+   b3884:	movss  xmm0,DWORD PTR [rip+0x50794]        # 104020 <_IO_stdin_used+0x20>
+   b388c:	movss  xmm1,DWORD PTR [rbp-0x20]
+   b3891:	movss  xmm0,xmm1
+   b3895:	movapd XMMWORD PTR [rbp-0x40],xmm0
+   b389a:	lea    rdi,[rbp-0x28]
+   b389e:	call   b4c5c <_D10quantities10conversion__T16ConversionResultTfZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b38a3:	mov    edi,eax
+   b38a5:	movapd xmm0,XMMWORD PTR [rbp-0x40]
+   b38aa:	call   b4d38 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTfZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   b38af:	mov    rdx,rax
+   b38b2:	mov    QWORD PTR [rbp-0x30],rdx
+   b38b6:	lea    rax,[rip+0x78743]        # 12c000 <_D10quantities8quantity__T8QuantityTSQBj6length6LengthTfZQBf6__initZ>
+   b38bd:	movss  xmm0,DWORD PTR [rax]
+   b38c1:	movss  DWORD PTR [rbp-0x10],xmm0
+   b38c6:	lea    rsi,[rbp-0x10]
+   b38ca:	lea    rdi,[rbp-0x30]
+   b38ce:	call   b4e20 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTfZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   b38d3:	test   al,al
+   b38d5:	je     b38e3 <r15FloatFloat+0xd3>
+   b38d7:	movss  xmm0,DWORD PTR [rbp-0x10]
+   b38dc:	call   b9b20 <_D18r15_rescale_kernel__T10storedBitsTfZQpFNaNbNiNffZm>
+   b38e1:	jmp    b38ea <r15FloatFloat+0xda>
+   b38e3:	mov    rax,0xffffffffffffffff
+   b38ea:	mov    rbx,QWORD PTR [rbp-0x48]
+   b38ee:	mov    rsp,rbp
+   b38f1:	pop    rbp
+   b38f2:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatFloat
+
+ASSEMBLY_BEGIN r15FloatDouble
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000b38f4 <r15FloatDouble>:
+   b38f4:	push   rbp
+   b38f5:	mov    rbp,rsp
+   b38f8:	sub    rsp,0x90
+   b38ff:	mov    QWORD PTR [rbp-0x88],rbx
+   b3906:	movss  DWORD PTR [rbp-0x8],xmm0
+   b390b:	movss  xmm0,DWORD PTR [rbp-0x8]
+   b3910:	xor    esi,esi
+   b3912:	mov    edi,esi
+   b3914:	call   b64cc <_D10quantities10conversion__T10r15ConvertTdTSQBr6length5MetreTQsTfZQBmFNaNbNiNffbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTdZQv>
+   b3919:	movq   rdx,xmm0
+   b391e:	mov    QWORD PTR [rbp-0x50],rax
+   b3922:	mov    QWORD PTR [rbp-0x48],rdx
+   b3926:	movsd  xmm1,QWORD PTR [rip+0x5074a]        # 104078 <_TMP761+0x48>
+   b392e:	rex.W movsd QWORD PTR [rbp-0x40],xmm1
+   b3934:	lea    rsi,[rbp-0x40]
+   b3938:	lea    rdi,[rbp-0x50]
+   b393c:	call   b48b0 <_D10quantities10conversion__T16ConversionResultTdZQv8tryValueMxFNaNbNiNfJdZb>
+   b3941:	xor    al,0x1
+   b3943:	je     b3994 <r15FloatDouble+0xa0>
+   b3945:	lea    rdi,[rbp-0x50]
+   b3949:	call   b4884 <_D10quantities10conversion__T16ConversionResultTdZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b394e:	mov    ebx,eax
+   b3950:	lea    rax,[rip+0x75a29]        # 129380 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs6__initZ>
+   b3957:	mov    rdx,QWORD PTR [rax+0x8]
+   b395b:	mov    rax,QWORD PTR [rax]
+   b395e:	mov    QWORD PTR [rbp-0x20],rax
+   b3962:	mov    QWORD PTR [rbp-0x18],rdx
+   b3966:	cmp    ebx,0x2
+   b3969:	jne    b3971 <r15FloatDouble+0x7d>
+   b396b:	mov    BYTE PTR [rbp-0x20],0x3
+   b396f:	jmp    b397a <r15FloatDouble+0x86>
+   b3971:	cmp    ebx,0x3
+   b3974:	jne    b397a <r15FloatDouble+0x86>
+   b3976:	mov    BYTE PTR [rbp-0x20],0x4
+   b397a:	mov    rcx,QWORD PTR [rbp-0x20]
+   b397e:	mov    QWORD PTR [rbp-0x30],rcx
+   b3982:	mov    rsi,QWORD PTR [rbp-0x18]
+   b3986:	mov    QWORD PTR [rbp-0x28],rsi
+   b398a:	mov    rdx,QWORD PTR [rbp-0x28]
+   b398e:	mov    rax,QWORD PTR [rbp-0x30]
+   b3992:	jmp    b39c4 <r15FloatDouble+0xd0>
+   b3994:	movsd  xmm0,QWORD PTR [rip+0x506dc]        # 104078 <_TMP761+0x48>
+   b399c:	movsd  xmm1,QWORD PTR [rbp-0x40]
+   b39a1:	movsd  xmm0,xmm1
+   b39a5:	movapd XMMWORD PTR [rbp-0x80],xmm0
+   b39aa:	lea    rdi,[rbp-0x50]
+   b39ae:	call   b4884 <_D10quantities10conversion__T16ConversionResultTdZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b39b3:	mov    edi,eax
+   b39b5:	movapd xmm0,XMMWORD PTR [rbp-0x80]
+   b39ba:	call   b5234 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   b39bf:	movq   rdx,xmm0
+   b39c4:	mov    QWORD PTR [rbp-0x60],rax
+   b39c8:	mov    QWORD PTR [rbp-0x58],rdx
+   b39cc:	mov    rax,QWORD PTR [rbp-0x60]
+   b39d0:	mov    QWORD PTR [rbp-0x70],rax
+   b39d4:	mov    rcx,QWORD PTR [rbp-0x58]
+   b39d8:	mov    QWORD PTR [rbp-0x68],rcx
+   b39dc:	lea    rdx,[rip+0x7862d]        # 12c010 <_D10quantities8quantity__T8QuantityTSQBj6length6LengthTdZQBf6__initZ>
+   b39e3:	movsd  xmm0,QWORD PTR [rdx]
+   b39e7:	rex.W movsd QWORD PTR [rbp-0x10],xmm0
+   b39ed:	lea    rsi,[rbp-0x10]
+   b39f1:	lea    rdi,[rbp-0x70]
+   b39f5:	call   b5348 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   b39fa:	test   al,al
+   b39fc:	je     b3a0a <r15FloatDouble+0x116>
+   b39fe:	movsd  xmm0,QWORD PTR [rbp-0x10]
+   b3a03:	call   b9c2c <_D18r15_rescale_kernel__T10storedBitsTdZQpFNaNbNiNfdZm>
+   b3a08:	jmp    b3a11 <r15FloatDouble+0x11d>
+   b3a0a:	mov    rax,0xffffffffffffffff
+   b3a11:	mov    rbx,QWORD PTR [rbp-0x88]
+   b3a18:	mov    rsp,rbp
+   b3a1b:	pop    rbp
+   b3a1c:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15FloatDouble
+
+ASSEMBLY_BEGIN r15DoubleDouble
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+00000000000b3a20 <r15DoubleDouble>:
+   b3a20:	push   rbp
+   b3a21:	mov    rbp,rsp
+   b3a24:	sub    rsp,0x90
+   b3a2b:	mov    QWORD PTR [rbp-0x88],rbx
+   b3a32:	movsd  QWORD PTR [rbp-0x8],xmm0
+   b3a37:	movsd  xmm0,QWORD PTR [rbp-0x8]
+   b3a3c:	xor    esi,esi
+   b3a3e:	mov    edi,esi
+   b3a40:	call   b5098 <_D10quantities10conversion__T10r15ConvertTdTSQBr6length5MetreTQsTdZQBmFNaNbNiNfdbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTdZQv>
+   b3a45:	movq   rdx,xmm0
+   b3a4a:	mov    QWORD PTR [rbp-0x50],rax
+   b3a4e:	mov    QWORD PTR [rbp-0x48],rdx
+   b3a52:	movsd  xmm1,QWORD PTR [rip+0x5061e]        # 104078 <_TMP761+0x48>
+   b3a5a:	rex.W movsd QWORD PTR [rbp-0x40],xmm1
+   b3a60:	lea    rsi,[rbp-0x40]
+   b3a64:	lea    rdi,[rbp-0x50]
+   b3a68:	call   b48b0 <_D10quantities10conversion__T16ConversionResultTdZQv8tryValueMxFNaNbNiNfJdZb>
+   b3a6d:	xor    al,0x1
+   b3a6f:	je     b3ac0 <r15DoubleDouble+0xa0>
+   b3a71:	lea    rdi,[rbp-0x50]
+   b3a75:	call   b4884 <_D10quantities10conversion__T16ConversionResultTdZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b3a7a:	mov    ebx,eax
+   b3a7c:	lea    rax,[rip+0x758fd]        # 129380 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs6__initZ>
+   b3a83:	mov    rdx,QWORD PTR [rax+0x8]
+   b3a87:	mov    rax,QWORD PTR [rax]
+   b3a8a:	mov    QWORD PTR [rbp-0x20],rax
+   b3a8e:	mov    QWORD PTR [rbp-0x18],rdx
+   b3a92:	cmp    ebx,0x2
+   b3a95:	jne    b3a9d <r15DoubleDouble+0x7d>
+   b3a97:	mov    BYTE PTR [rbp-0x20],0x3
+   b3a9b:	jmp    b3aa6 <r15DoubleDouble+0x86>
+   b3a9d:	cmp    ebx,0x3
+   b3aa0:	jne    b3aa6 <r15DoubleDouble+0x86>
+   b3aa2:	mov    BYTE PTR [rbp-0x20],0x4
+   b3aa6:	mov    rcx,QWORD PTR [rbp-0x20]
+   b3aaa:	mov    QWORD PTR [rbp-0x30],rcx
+   b3aae:	mov    rsi,QWORD PTR [rbp-0x18]
+   b3ab2:	mov    QWORD PTR [rbp-0x28],rsi
+   b3ab6:	mov    rdx,QWORD PTR [rbp-0x28]
+   b3aba:	mov    rax,QWORD PTR [rbp-0x30]
+   b3abe:	jmp    b3af0 <r15DoubleDouble+0xd0>
+   b3ac0:	movsd  xmm0,QWORD PTR [rip+0x505b0]        # 104078 <_TMP761+0x48>
+   b3ac8:	movsd  xmm1,QWORD PTR [rbp-0x40]
+   b3acd:	movsd  xmm0,xmm1
+   b3ad1:	movapd XMMWORD PTR [rbp-0x80],xmm0
+   b3ad6:	lea    rdi,[rbp-0x50]
+   b3ada:	call   b4884 <_D10quantities10conversion__T16ConversionResultTdZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   b3adf:	mov    edi,eax
+   b3ae1:	movapd xmm0,XMMWORD PTR [rbp-0x80]
+   b3ae6:	call   b5234 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   b3aeb:	movq   rdx,xmm0
+   b3af0:	mov    QWORD PTR [rbp-0x60],rax
+   b3af4:	mov    QWORD PTR [rbp-0x58],rdx
+   b3af8:	mov    rax,QWORD PTR [rbp-0x60]
+   b3afc:	mov    QWORD PTR [rbp-0x70],rax
+   b3b00:	mov    rcx,QWORD PTR [rbp-0x58]
+   b3b04:	mov    QWORD PTR [rbp-0x68],rcx
+   b3b08:	lea    rdx,[rip+0x78501]        # 12c010 <_D10quantities8quantity__T8QuantityTSQBj6length6LengthTdZQBf6__initZ>
+   b3b0f:	movsd  xmm0,QWORD PTR [rdx]
+   b3b13:	rex.W movsd QWORD PTR [rbp-0x10],xmm0
+   b3b19:	lea    rsi,[rbp-0x10]
+   b3b1d:	lea    rdi,[rbp-0x70]
+   b3b21:	call   b5348 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTdZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   b3b26:	test   al,al
+   b3b28:	je     b3b36 <r15DoubleDouble+0x116>
+   b3b2a:	movsd  xmm0,QWORD PTR [rbp-0x10]
+   b3b2f:	call   b9c2c <_D18r15_rescale_kernel__T10storedBitsTdZQpFNaNbNiNfdZm>
+   b3b34:	jmp    b3b3d <r15DoubleDouble+0x11d>
+   b3b36:	mov    rax,0xffffffffffffffff
+   b3b3d:	mov    rbx,QWORD PTR [rbp-0x88]
+   b3b44:	mov    rsp,rbp
+   b3b47:	pop    rbp
+   b3b48:	ret
+
+Disassembly of section .fini:
+
+ASSEMBLY_END r15DoubleDouble
