@@ -128,3 +128,7 @@ remain separate work. Cost qualification precedes a final public API freeze.
 ## Follow-up: integral identity cost
 
 [Probe 19](../r15-integral-identity-fast-path/README.md) specializes floating-source → long for equal normalized Unit ratios. It preserves this request contract and the Probe 18 floating target paths; its independent oracle, success/failure benchmark corpora and codegen are qualified on DMD/LDC. No new Rep pair or production promotion is included.
+
+## Follow-up: integral Source admission
+
+[Probe 20](../r15-integral-source-api/README.md) qualifies long/ulong → long for all six selected request forms, all rounding modes, exact Unit ratios, CTFE and runtime. It preserves the floating paths and records the resulting 5 × 3 pair matrix. Historical probes remain unchanged; promotion is selective.

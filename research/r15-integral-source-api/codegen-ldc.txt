@@ -1,0 +1,139 @@
+CODEGEN {"symbol": "r15LongLong", "disassembly_symbol": "r15LongLong", "instructions": 4, "calls": [], "reachable_functions": 1, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15LongLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000029bb0 <r15LongLong>:
+   29bb0:	mov    rax,rdi
+   29bb3:	ret
+   29bb4:	cs nop WORD PTR [rax+rax*1+0x0]
+   29bbe:	xchg   ax,ax
+
+ASSEMBLY_END r15LongLong
+CODEGEN {"symbol": "r15UlongLong", "disassembly_symbol": "r15UlongLong", "instructions": 8, "calls": [], "reachable_functions": 1, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15UlongLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000029bc0 <r15UlongLong>:
+   29bc0:	xor    ecx,ecx
+   29bc2:	test   rdi,rdi
+   29bc5:	cmovg  rcx,rdi
+   29bc9:	mov    rax,0xffffffffffffffff
+   29bd0:	cmovns rax,rcx
+   29bd4:	ret
+   29bd5:	cs nop WORD PTR [rax+rax*1+0x0]
+   29bdf:	nop
+
+ASSEMBLY_END r15UlongLong
+CODEGEN {"symbol": "r15UlongLongFloor", "disassembly_symbol": "r15UlongLongFloor", "instructions": 8, "calls": [], "reachable_functions": 1, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15UlongLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000029be0 <r15UlongLongFloor>:
+   29be0:	xor    ecx,ecx
+   29be2:	test   rdi,rdi
+   29be5:	cmovg  rcx,rdi
+   29be9:	mov    rax,0xffffffffffffffff
+   29bf0:	cmovns rax,rcx
+   29bf4:	ret
+   29bf5:	cs nop WORD PTR [rax+rax*1+0x0]
+   29bff:	nop
+
+ASSEMBLY_END r15UlongLongFloor
+CODEGEN {"symbol": "r15LongFootFloor", "disassembly_symbol": "r15LongFootFloor", "instructions": 71, "calls": ["29c2e:\tcall   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+ASSEMBLY_BEGIN r15LongFootFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000029c00 <r15LongFootFloor>:
+   29c00:	push   rbx
+   29c01:	mov    rdx,rdi
+   29c04:	neg    rdi
+   29c07:	cmovs  rdi,rdx
+   29c0b:	sub    rsp,0x8
+   29c0f:	shr    rdx,0x3f
+   29c13:	xor    ebx,ebx
+   29c15:	mov    ecx,0x17d
+   29c1a:	mov    r8d,0x4e2
+   29c20:	mov    r9d,0x1
+   29c26:	xor    esi,esi
+   29c28:	push   0x1
+   29c2a:	push   0x1
+   29c2c:	push   0x1
+   29c2e:	call   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>
+   29c33:	add    rsp,0x20
+   29c37:	cmp    eax,0x3
+   29c3a:	ja     29cd3 <r15LongFootFloor+0xd3>
+   29c40:	mov    ecx,eax
+   29c42:	lea    rsi,[rip+0x727f7]        # 9c440 <_fini+0x810>
+   29c49:	movsxd rcx,DWORD PTR [rsi+rcx*4]
+   29c4d:	add    rcx,rsi
+   29c50:	jmp    rcx
+   29c52:	mov    ecx,0x1
+   29c57:	mov    rbx,rdx
+   29c5a:	lea    eax,[rcx-0x1]
+   29c5d:	cmp    al,0x2
+   29c5f:	jb     29c7f <r15LongFootFloor+0x7f>
+   29c61:	jmp    29caa <r15LongFootFloor+0xaa>
+   29c63:	mov    ecx,0x3
+   29c68:	lea    eax,[rcx-0x1]
+   29c6b:	cmp    al,0x2
+   29c6d:	jb     29c7f <r15LongFootFloor+0x7f>
+   29c6f:	jmp    29caa <r15LongFootFloor+0xaa>
+   29c71:	mov    ecx,0x4
+   29c76:	xor    ebx,ebx
+   29c78:	lea    eax,[rcx-0x1]
+   29c7b:	cmp    al,0x2
+   29c7d:	jae    29caa <r15LongFootFloor+0xaa>
+   29c7f:	cmp    cl,0x1
+   29c82:	sete   cl
+   29c85:	mov    al,0x2
+   29c87:	sub    al,cl
+   29c89:	jmp    29cc2 <r15LongFootFloor+0xc2>
+   29c8b:	mov    rcx,rax
+   29c8e:	shr    rcx,0x1f
+   29c92:	shl    rax,0x1f
+   29c96:	sar    rax,0x3f
+   29c9a:	and    rax,rdx
+   29c9d:	and    ecx,0x2
+   29ca0:	mov    rbx,rax
+   29ca3:	lea    eax,[rcx-0x1]
+   29ca6:	cmp    al,0x2
+   29ca8:	jb     29c7f <r15LongFootFloor+0x7f>
+   29caa:	xor    eax,eax
+   29cac:	cmp    cl,0x3
+   29caf:	sete   al
+   29cb2:	lea    edx,[rax+rax*2]
+   29cb5:	cmp    cl,0x4
+   29cb8:	mov    eax,0x4
+   29cbd:	cmovne eax,edx
+   29cc0:	xor    ebx,ebx
+   29cc2:	dec    al
+   29cc4:	cmp    al,0x2
+   29cc6:	mov    rax,0xffffffffffffffff
+   29ccd:	cmovb  rax,rbx
+   29cd1:	pop    rbx
+   29cd2:	ret
+   29cd3:	ud2
+   29cd5:	cs nop WORD PTR [rax+rax*1+0x0]
+   29cdf:	nop
+
+ASSEMBLY_END r15LongFootFloor
+CODEGEN {"symbol": "r15BaselineLongLong", "disassembly_symbol": "r15BaselineLongLong", "instructions": 21, "calls": ["29d0c:\tcall   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineUlongLong", "disassembly_symbol": "r15BaselineUlongLong", "instructions": 18, "calls": ["29d50:\tcall   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineUlongLongFloor", "disassembly_symbol": "r15BaselineUlongLongFloor", "instructions": 18, "calls": ["29d90:\tcall   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineLongFootFloor", "disassembly_symbol": "r15BaselineLongFootFloor", "instructions": 21, "calls": ["29ddc:\tcall   28390 <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 5, "wide_kernel_reachable": true}

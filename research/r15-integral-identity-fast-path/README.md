@@ -43,3 +43,7 @@ Median three-round compile/link costs (wall seconds / peak RSS KiB):
 Reproduction is the **Probe 19** step in [the research workflow](../../.github/workflows/r15-exact-unit-rescale.yml): it lists exact modules, import precedence, build flags and executable commands. The benchmark source fixes both input procedures, ordering, rounds and observations. Historical kernels serve as unchanged controls. New code/benchmarks must rerun this matrix; the result-recording commit only changes documentation and retained evidence.
 
 Next scope: define the missing integral-source → integral-target pairs (`long` / `ulong` → `long`) under the same checked/exact/rounded request surface, then evaluate selective production promotion. Qualified real targets and broader pair semantics still belong to open R15 issue #42. No production API change or release qualification is implied by this result.
+
+## Follow-up: integral Source admission
+
+[Probe 20](../r15-integral-source-api/README.md) qualifies long/ulong → long for all six selected request forms, all rounding modes, exact Unit ratios, CTFE and runtime. It preserves the floating paths and records the resulting 5 × 3 pair matrix. Historical probes remain unchanged; promotion is selective.

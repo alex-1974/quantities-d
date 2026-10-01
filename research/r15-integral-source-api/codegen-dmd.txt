@@ -1,0 +1,288 @@
+CODEGEN {"symbol": "r15LongLong", "disassembly_symbol": "r15LongLong", "instructions": 60, "calls": ["ca008:\tcall   cb3dc <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTlZQBmFNaNbNiNflbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "ca023:\tcall   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "ca030:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca067:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca072:\tcall   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "ca0a2:\tcall   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 7, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15LongLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000c9ff0 <r15LongLong>:
+   c9ff0:	push   rbp
+   c9ff1:	mov    rbp,rsp
+   c9ff4:	sub    rsp,0x70
+   c9ff8:	mov    QWORD PTR [rbp-0x70],rbx
+   c9ffc:	mov    QWORD PTR [rbp-0x8],rdi
+   ca000:	mov    rdx,QWORD PTR [rbp-0x8]
+   ca004:	xor    esi,esi
+   ca006:	mov    edi,esi
+   ca008:	call   cb3dc <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTlZQBmFNaNbNiNflbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   ca00d:	mov    QWORD PTR [rbp-0x40],rax
+   ca011:	mov    QWORD PTR [rbp-0x38],rdx
+   ca015:	xor    eax,eax
+   ca017:	mov    QWORD PTR [rbp-0x30],rax
+   ca01b:	lea    rsi,[rbp-0x30]
+   ca01f:	lea    rdi,[rbp-0x40]
+   ca023:	call   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   ca028:	xor    al,0x1
+   ca02a:	je     ca05b <r15LongLong+0x6b>
+   ca02c:	lea    rdi,[rbp-0x40]
+   ca030:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca035:	mov    ebx,eax
+   ca037:	mov    QWORD PTR [rbp-0x20],0x0
+   ca03f:	cmp    ebx,0x2
+   ca042:	jne    ca04a <r15LongLong+0x5a>
+   ca044:	mov    BYTE PTR [rbp-0x20],0x3
+   ca048:	jmp    ca053 <r15LongLong+0x63>
+   ca04a:	cmp    ebx,0x3
+   ca04d:	jne    ca053 <r15LongLong+0x63>
+   ca04f:	mov    BYTE PTR [rbp-0x20],0x4
+   ca053:	mov    rax,QWORD PTR [rbp-0x20]
+   ca057:	xor    ecx,ecx
+   ca059:	jmp    ca07a <r15LongLong+0x8a>
+   ca05b:	mov    rsi,QWORD PTR [rbp-0x30]
+   ca05f:	mov    QWORD PTR [rbp-0x68],rsi
+   ca063:	lea    rdi,[rbp-0x40]
+   ca067:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca06c:	mov    edi,eax
+   ca06e:	mov    rsi,QWORD PTR [rbp-0x68]
+   ca072:	call   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   ca077:	mov    rcx,rdx
+   ca07a:	mov    QWORD PTR [rbp-0x50],rax
+   ca07e:	mov    QWORD PTR [rbp-0x48],rcx
+   ca082:	mov    rdx,QWORD PTR [rbp-0x50]
+   ca086:	mov    QWORD PTR [rbp-0x60],rdx
+   ca08a:	mov    rsi,QWORD PTR [rbp-0x48]
+   ca08e:	mov    QWORD PTR [rbp-0x58],rsi
+   ca092:	mov    QWORD PTR [rbp-0x10],0x0
+   ca09a:	lea    rsi,[rbp-0x10]
+   ca09e:	lea    rdi,[rbp-0x60]
+   ca0a2:	call   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   ca0a7:	test   al,al
+   ca0a9:	je     ca0b1 <r15LongLong+0xc1>
+   ca0ab:	mov    rax,QWORD PTR [rbp-0x10]
+   ca0af:	jmp    ca0b8 <r15LongLong+0xc8>
+   ca0b1:	mov    rax,0xffffffffffffffff
+   ca0b8:	mov    rbx,QWORD PTR [rbp-0x70]
+   ca0bc:	mov    rsp,rbp
+   ca0bf:	pop    rbp
+   ca0c0:	ret
+   ca0c1:	add    BYTE PTR [rax],al
+	...
+
+ASSEMBLY_END r15LongLong
+CODEGEN {"symbol": "r15UlongLong", "disassembly_symbol": "r15UlongLong", "instructions": 60, "calls": ["ca0dc:\tcall   cb6e0 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTmZQBmFNaNbNiNfmbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "ca0f7:\tcall   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "ca104:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca13b:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca146:\tcall   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "ca176:\tcall   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 7, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15UlongLong
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000ca0c4 <r15UlongLong>:
+   ca0c4:	push   rbp
+   ca0c5:	mov    rbp,rsp
+   ca0c8:	sub    rsp,0x70
+   ca0cc:	mov    QWORD PTR [rbp-0x70],rbx
+   ca0d0:	mov    QWORD PTR [rbp-0x8],rdi
+   ca0d4:	mov    rdx,QWORD PTR [rbp-0x8]
+   ca0d8:	xor    esi,esi
+   ca0da:	mov    edi,esi
+   ca0dc:	call   cb6e0 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTmZQBmFNaNbNiNfmbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   ca0e1:	mov    QWORD PTR [rbp-0x40],rax
+   ca0e5:	mov    QWORD PTR [rbp-0x38],rdx
+   ca0e9:	xor    eax,eax
+   ca0eb:	mov    QWORD PTR [rbp-0x30],rax
+   ca0ef:	lea    rsi,[rbp-0x30]
+   ca0f3:	lea    rdi,[rbp-0x40]
+   ca0f7:	call   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   ca0fc:	xor    al,0x1
+   ca0fe:	je     ca12f <r15UlongLong+0x6b>
+   ca100:	lea    rdi,[rbp-0x40]
+   ca104:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca109:	mov    ebx,eax
+   ca10b:	mov    QWORD PTR [rbp-0x20],0x0
+   ca113:	cmp    ebx,0x2
+   ca116:	jne    ca11e <r15UlongLong+0x5a>
+   ca118:	mov    BYTE PTR [rbp-0x20],0x3
+   ca11c:	jmp    ca127 <r15UlongLong+0x63>
+   ca11e:	cmp    ebx,0x3
+   ca121:	jne    ca127 <r15UlongLong+0x63>
+   ca123:	mov    BYTE PTR [rbp-0x20],0x4
+   ca127:	mov    rax,QWORD PTR [rbp-0x20]
+   ca12b:	xor    ecx,ecx
+   ca12d:	jmp    ca14e <r15UlongLong+0x8a>
+   ca12f:	mov    rsi,QWORD PTR [rbp-0x30]
+   ca133:	mov    QWORD PTR [rbp-0x68],rsi
+   ca137:	lea    rdi,[rbp-0x40]
+   ca13b:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca140:	mov    edi,eax
+   ca142:	mov    rsi,QWORD PTR [rbp-0x68]
+   ca146:	call   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   ca14b:	mov    rcx,rdx
+   ca14e:	mov    QWORD PTR [rbp-0x50],rax
+   ca152:	mov    QWORD PTR [rbp-0x48],rcx
+   ca156:	mov    rdx,QWORD PTR [rbp-0x50]
+   ca15a:	mov    QWORD PTR [rbp-0x60],rdx
+   ca15e:	mov    rsi,QWORD PTR [rbp-0x48]
+   ca162:	mov    QWORD PTR [rbp-0x58],rsi
+   ca166:	mov    QWORD PTR [rbp-0x10],0x0
+   ca16e:	lea    rsi,[rbp-0x10]
+   ca172:	lea    rdi,[rbp-0x60]
+   ca176:	call   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   ca17b:	test   al,al
+   ca17d:	je     ca185 <r15UlongLong+0xc1>
+   ca17f:	mov    rax,QWORD PTR [rbp-0x10]
+   ca183:	jmp    ca18c <r15UlongLong+0xc8>
+   ca185:	mov    rax,0xffffffffffffffff
+   ca18c:	mov    rbx,QWORD PTR [rbp-0x70]
+   ca190:	mov    rsp,rbp
+   ca193:	pop    rbp
+   ca194:	ret
+   ca195:	add    BYTE PTR [rax],al
+	...
+
+ASSEMBLY_END r15UlongLong
+CODEGEN {"symbol": "r15UlongLongFloor", "disassembly_symbol": "r15UlongLongFloor", "instructions": 59, "calls": ["ca1b3:\tcall   cb6e0 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTmZQBmFNaNbNiNfmbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>", "ca1ce:\tcall   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "ca1db:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca212:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca21d:\tcall   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "ca24d:\tcall   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 7, "wide_kernel_reachable": false}
+ASSEMBLY_BEGIN r15UlongLongFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000ca198 <r15UlongLongFloor>:
+   ca198:	push   rbp
+   ca199:	mov    rbp,rsp
+   ca19c:	sub    rsp,0x70
+   ca1a0:	mov    QWORD PTR [rbp-0x70],rbx
+   ca1a4:	mov    QWORD PTR [rbp-0x8],rdi
+   ca1a8:	mov    rdx,QWORD PTR [rbp-0x8]
+   ca1ac:	mov    esi,0x1
+   ca1b1:	mov    edi,esi
+   ca1b3:	call   cb6e0 <_D10quantities10conversion__T10r15ConvertTlTSQBr6length5MetreTQsTmZQBmFNaNbNiNfmbEQDcQCt12RoundingModeZSQDyQDp__T16ConversionResultTlZQv>
+   ca1b8:	mov    QWORD PTR [rbp-0x40],rax
+   ca1bc:	mov    QWORD PTR [rbp-0x38],rdx
+   ca1c0:	xor    eax,eax
+   ca1c2:	mov    QWORD PTR [rbp-0x30],rax
+   ca1c6:	lea    rsi,[rbp-0x30]
+   ca1ca:	lea    rdi,[rbp-0x40]
+   ca1ce:	call   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   ca1d3:	xor    al,0x1
+   ca1d5:	je     ca206 <r15UlongLongFloor+0x6e>
+   ca1d7:	lea    rdi,[rbp-0x40]
+   ca1db:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca1e0:	mov    ebx,eax
+   ca1e2:	mov    QWORD PTR [rbp-0x20],0x0
+   ca1ea:	cmp    ebx,0x2
+   ca1ed:	jne    ca1f5 <r15UlongLongFloor+0x5d>
+   ca1ef:	mov    BYTE PTR [rbp-0x20],0x3
+   ca1f3:	jmp    ca1fe <r15UlongLongFloor+0x66>
+   ca1f5:	cmp    ebx,0x3
+   ca1f8:	jne    ca1fe <r15UlongLongFloor+0x66>
+   ca1fa:	mov    BYTE PTR [rbp-0x20],0x4
+   ca1fe:	mov    rax,QWORD PTR [rbp-0x20]
+   ca202:	xor    ecx,ecx
+   ca204:	jmp    ca225 <r15UlongLongFloor+0x8d>
+   ca206:	mov    rsi,QWORD PTR [rbp-0x30]
+   ca20a:	mov    QWORD PTR [rbp-0x68],rsi
+   ca20e:	lea    rdi,[rbp-0x40]
+   ca212:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca217:	mov    edi,eax
+   ca219:	mov    rsi,QWORD PTR [rbp-0x68]
+   ca21d:	call   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   ca222:	mov    rcx,rdx
+   ca225:	mov    QWORD PTR [rbp-0x50],rax
+   ca229:	mov    QWORD PTR [rbp-0x48],rcx
+   ca22d:	mov    rdx,QWORD PTR [rbp-0x50]
+   ca231:	mov    QWORD PTR [rbp-0x60],rdx
+   ca235:	mov    rsi,QWORD PTR [rbp-0x48]
+   ca239:	mov    QWORD PTR [rbp-0x58],rsi
+   ca23d:	mov    QWORD PTR [rbp-0x10],0x0
+   ca245:	lea    rsi,[rbp-0x10]
+   ca249:	lea    rdi,[rbp-0x60]
+   ca24d:	call   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   ca252:	test   al,al
+   ca254:	je     ca25c <r15UlongLongFloor+0xc4>
+   ca256:	mov    rax,QWORD PTR [rbp-0x10]
+   ca25a:	jmp    ca263 <r15UlongLongFloor+0xcb>
+   ca25c:	mov    rax,0xffffffffffffffff
+   ca263:	mov    rbx,QWORD PTR [rbp-0x70]
+   ca267:	mov    rsp,rbp
+   ca26a:	pop    rbp
+   ca26b:	ret
+
+ASSEMBLY_END r15UlongLongFloor
+CODEGEN {"symbol": "r15LongFootFloor", "disassembly_symbol": "r15LongFootFloor", "instructions": 59, "calls": ["ca287:\tcall   cb9ac <_D10quantities10conversion__T10r15ConvertTlTSQBr6length17InternationalFootTSQCwQBf5MetreTlZQCkFNaNbNiNflbEQEaQDr12RoundingModeZSQEwQEn__T16ConversionResultTlZQv>", "ca2a2:\tcall   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>", "ca2af:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca2e6:\tcall   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>", "ca2f1:\tcall   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>", "ca321:\tcall   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>"], "reachable_functions": 46, "wide_kernel_reachable": true}
+ASSEMBLY_BEGIN r15LongFootFloor
+
+/tmp/r15-identity-cost:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000ca26c <r15LongFootFloor>:
+   ca26c:	push   rbp
+   ca26d:	mov    rbp,rsp
+   ca270:	sub    rsp,0x70
+   ca274:	mov    QWORD PTR [rbp-0x70],rbx
+   ca278:	mov    QWORD PTR [rbp-0x8],rdi
+   ca27c:	mov    rdx,QWORD PTR [rbp-0x8]
+   ca280:	mov    esi,0x1
+   ca285:	mov    edi,esi
+   ca287:	call   cb9ac <_D10quantities10conversion__T10r15ConvertTlTSQBr6length17InternationalFootTSQCwQBf5MetreTlZQCkFNaNbNiNflbEQEaQDr12RoundingModeZSQEwQEn__T16ConversionResultTlZQv>
+   ca28c:	mov    QWORD PTR [rbp-0x40],rax
+   ca290:	mov    QWORD PTR [rbp-0x38],rdx
+   ca294:	xor    eax,eax
+   ca296:	mov    QWORD PTR [rbp-0x30],rax
+   ca29a:	lea    rsi,[rbp-0x30]
+   ca29e:	lea    rdi,[rbp-0x40]
+   ca2a2:	call   cb0c0 <_D10quantities10conversion__T16ConversionResultTlZQv8tryValueMxFNaNbNiNfJlZb>
+   ca2a7:	xor    al,0x1
+   ca2a9:	je     ca2da <r15LongFootFloor+0x6e>
+   ca2ab:	lea    rdi,[rbp-0x40]
+   ca2af:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca2b4:	mov    ebx,eax
+   ca2b6:	mov    QWORD PTR [rbp-0x20],0x0
+   ca2be:	cmp    ebx,0x2
+   ca2c1:	jne    ca2c9 <r15LongFootFloor+0x5d>
+   ca2c3:	mov    BYTE PTR [rbp-0x20],0x3
+   ca2c7:	jmp    ca2d2 <r15LongFootFloor+0x66>
+   ca2c9:	cmp    ebx,0x3
+   ca2cc:	jne    ca2d2 <r15LongFootFloor+0x66>
+   ca2ce:	mov    BYTE PTR [rbp-0x20],0x4
+   ca2d2:	mov    rax,QWORD PTR [rbp-0x20]
+   ca2d6:	xor    ecx,ecx
+   ca2d8:	jmp    ca2f9 <r15LongFootFloor+0x8d>
+   ca2da:	mov    rsi,QWORD PTR [rbp-0x30]
+   ca2de:	mov    QWORD PTR [rbp-0x68],rsi
+   ca2e2:	lea    rdi,[rbp-0x40]
+   ca2e6:	call   cb094 <_D10quantities10conversion__T16ConversionResultTlZQv6statusMxFNaNbNiNfZEQCsQCj16ConversionStatus>
+   ca2eb:	mov    edi,eax
+   ca2ed:	mov    rsi,QWORD PTR [rbp-0x68]
+   ca2f1:	call   cb4a8 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs9withValueFNaNbNiNfQCvEQEtQEk16ConversionStatusZSQFtQFk__TQFbTQEmZQFj>
+   ca2f6:	mov    rcx,rdx
+   ca2f9:	mov    QWORD PTR [rbp-0x50],rax
+   ca2fd:	mov    QWORD PTR [rbp-0x48],rcx
+   ca301:	mov    rdx,QWORD PTR [rbp-0x50]
+   ca305:	mov    QWORD PTR [rbp-0x60],rdx
+   ca309:	mov    rsi,QWORD PTR [rbp-0x48]
+   ca30d:	mov    QWORD PTR [rbp-0x58],rsi
+   ca311:	mov    QWORD PTR [rbp-0x10],0x0
+   ca319:	lea    rsi,[rbp-0x10]
+   ca31d:	lea    rdi,[rbp-0x60]
+   ca321:	call   cb588 <_D10quantities10conversion__T16ConversionResultTSQBv8quantity__T8QuantityTSQCv6length6LengthTlZQBfZQCs8tryValueMxFNaNbNiNfJQCxZb>
+   ca326:	test   al,al
+   ca328:	je     ca330 <r15LongFootFloor+0xc4>
+   ca32a:	mov    rax,QWORD PTR [rbp-0x10]
+   ca32e:	jmp    ca337 <r15LongFootFloor+0xcb>
+   ca330:	mov    rax,0xffffffffffffffff
+   ca337:	mov    rbx,QWORD PTR [rbp-0x70]
+   ca33b:	mov    rsp,rbp
+   ca33e:	pop    rbp
+   ca33f:	ret
+
+ASSEMBLY_END r15LongFootFloor
+CODEGEN {"symbol": "r15BaselineLongLong", "disassembly_symbol": "r15BaselineLongLong", "instructions": 36, "calls": ["ca38e:\tcall   d061c <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 40, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineUlongLong", "disassembly_symbol": "r15BaselineUlongLong", "instructions": 26, "calls": ["ca3ea:\tcall   d061c <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 40, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineUlongLongFloor", "disassembly_symbol": "r15BaselineUlongLongFloor", "instructions": 26, "calls": ["ca442:\tcall   d061c <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 40, "wide_kernel_reachable": true}
+CODEGEN {"symbol": "r15BaselineLongFootFloor", "disassembly_symbol": "r15BaselineLongFootFloor", "instructions": 33, "calls": ["ca4b9:\tcall   d061c <_D19r15_composed_kernel19convertComposedLongFNaNbNiNfmibllllbEQCi20IntegralRoundingModeZSQDj14IntegralResult>"], "reachable_functions": 40, "wide_kernel_reachable": true}
