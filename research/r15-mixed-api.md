@@ -130,5 +130,7 @@ Head `962d42dcafa1b56ced98e82eca0982b1cedd7ddb` passes production CI
 compilers: 12 unit-test modules in debug/release, compile-negative tests, debug/
 release external consumers and release build. The private representation and
 required consumer rebuild are documented in ADR 0007 and the changelog. No mixed-
-Rep API/kernel or research files are included in that PR. It remains unmerged
-pending explicit user merge instruction.
+Rep API/kernel or research files are included in that PR. It was squash-merged after explicit user instruction as
+`73e8401c5ac7b1cedbaacf33dab1814acda98bbb` on develop. Issue #48 is closed completed; develop CI
+[36824495178](https://github.com/alex-1974/quantities-d/actions/runs/36824495178)
+passed on both baseline compilers.
