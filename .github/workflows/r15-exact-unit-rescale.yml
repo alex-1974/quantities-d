@@ -55,3 +55,21 @@ jobs:
             echo "Probe 14 $build"
             python3 research/r15-mixed-api/oracle.py /tmp/r15-probe-14
           done
+      - name: Probe 15 direct floating targets and integral API regression
+        shell: bash
+        run: |
+          sources=()
+          for source in source/quantities/*.d; do
+            if [[ "$source" != source/quantities/conversion.d ]]; then sources+=("$source"); fi
+          done
+          common=(-Iresearch/r15-floating-target-api -Isource -Iresearch/r15-mixed-api -Iresearch/r15-exact-unit-rescale -Iresearch/r15-composed-unit-rescale -Iresearch/r15-floating-source-integral)
+          kernels=(research/r15-floating-target-api/quantities/conversion.d research/r15-floating-target-api/kernel.d research/r15-floating-source-integral/kernel.d research/r15-composed-unit-rescale/kernel.d research/r15-exact-unit-rescale/kernel.d research/r15-mixed-api/consumer.d)
+          for build in debug release; do
+            flags=()
+            if [[ "$build" == release ]]; then flags+=(-release); fi
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-floating-target-api/runner.d research/r15-floating-target-api/consumer.d research/r15-floating-target-api/fixtures.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-15
+            echo "Probe 15 $build"
+            python3 research/r15-floating-target-api/oracle.py /tmp/r15-probe-15
+            "$DC" "${flags[@]}" "${common[@]}" research/r15-mixed-api/runner.d "${kernels[@]}" "${sources[@]}" -of=/tmp/r15-probe-14-under-15
+            python3 research/r15-mixed-api/oracle.py /tmp/r15-probe-14-under-15
+          done
