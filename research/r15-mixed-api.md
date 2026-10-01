@@ -1,20 +1,23 @@
 # R15 Probe 14 — real Unit/Spec API and existing result carriers
 
-Status: research candidate; baseline validation pending. Issue #42.
+Status: candidate validated in debug/release on both baseline compilers; not promoted. Issues #42 and #48.
 
 ## Integration seam
 
-This probe extends a verbatim copy of develop's quantities.conversion module in
-research/r15-mixed-api/quantities/conversion.d. It adds only an appended R15
-extension. CI compiles that research module in place of source/quantities/conversion.d;
+This probe starts from quantities.conversion at develop
+b59285885bb72e4dbc7250ea8b876017e87f3fd7, adds a result-carrier hardening
+candidate and appends an R15 extension in research/r15-mixed-api/quantities/conversion.d. CI compiles that research module in place of source/quantities/conversion.d;
 all other Quantity, Spec, Unit, ExactRatio and carrier dependencies are the actual
 production modules. Production files remain unchanged. The copied baseline and
 appended candidate make this integration experiment reproducible without making
-result factories public, weakening Quantity encapsulation or adding a second
-public result carrier. The appended R15 extension is the sole candidate implementation.
+result factories public or adding a second public result carrier. The appended R15 extension is the sole candidate implementation.
 
-The existing ConversionResult and ExactResult retain private state, safe default
-states, tryValue/tryFailure access, and no value on exact-required failure. The
+The existing public ConversionResult and ExactResult types retain safe default
+states, tryValue/tryFailure access, and no value on exact-required failure.
+Their private representation is hardened: presence and status share one private
+ubyte enum state rather than independent fields. This makes contradictory states
+unrepresentable through the supported carrier operations. Unknown raw tags have
+safe accessor fallbacks; no release invariant depends on assert. The
 extension can use ConversionResult's private factories because it lives in the
 same module, just as production conversion does. Research scalar aggregate
 results are mapped immediately into those carriers and never returned through
@@ -81,6 +84,39 @@ double-source CTFE. These gates compile in both debug and release. This is a
 focused API/result experiment, not a complete production release-gate run or a
 performance/ABI/compiler-cost qualification.
 
+## Carrier observation and correction
+
+The first external negative gate failed on both compilers: private fields do
+not prevent D positional struct construction. The unchanged production carrier
+accepts `ConversionResult!long(true,123,ConversionStatus.overflow)` and returns a
+payload with overflow status. An explicit disabled constructor alone blocks
+positional calls but leaves brace initialization accepted. Those failures are
+preserved at commits cfd272cabffa4494dc9bdbc6b272f37de283d66f and
+760c421215fbcf0394bfd127e533adecee6e002f, CI runs 36822420383 and 36822589354.
+They are OBSERVE evidence, never acceptance requirements.
+
+The final candidate uses a private typed discriminant and disables its positional
+constructor. External positional/brace construction with the old field values or
+ordinary integer tags, direct private tag naming and direct field/factory access
+are rejected. The new state encoding is a private layout change: consumers must
+rebuild; no ABI or performance claim is made. Unsafe casts and reflection-based
+representation manipulation are outside the encapsulation contract. Issue #48
+tracks selective production hardening separately from mixed-Rep API promotion.
+
 ## Results
 
-Pending DMD 2.111.0 and LDC 1.41.0 debug/release matrix.
+Tested code commit: `f640a98b8122bdc7bf3e10ad8e28374ee2f64bbf`.
+CI: https://github.com/alex-1974/quantities-d/actions/runs/36822995328.
+
+DMD 2.111.0 and LDC 1.41.0 each passed both debug and release builds. Each build
+compared 13,620 API pairs / 27,240 directions with zero mismatches: 729 checked/
+rounded exact values, 241 exact-required values, 10,798 inexact outcomes, 8,163
+exact-required failures, 6,729 overflow and 580 nonFinite outcomes. Carrier,
+attribute, CTFE-default and compile-negative consumer gates passed. The real
+platform is real80 (64,-16381,16384); a binary64-like real platform remains
+unqualified. Probes 10–13 also passed again on both compilers.
+
+The production OBSERVE runner confirmed the contradictory carrier behavior in
+both debug and release against the unchanged baseline. Next is the isolated #48
+fix, then broader target Rep integration and reconciliation of the candidate
+names with earlier R15 API research. No whole research branch promotion is intended.
