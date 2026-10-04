@@ -12,8 +12,9 @@ explicit rather than inferred from numeric magnitude.
 
 **M1 static core and M2 minimal linear-unit work are complete. M3 is in progress and now includes promoted integral and floating arithmetic semantics, derived dimensions, exact product/quotient relations, qualified nontrivial floating canonical rescale, and the first explicit TargetRep conversion matrix. No stable public release exists yet.**
 
-The repository now contains the first production quantity core and the checked
-conversion contract accepted by ADR 0007.
+The repository now contains the first production quantity core, the checked
+conversion contract accepted by ADR 0007, and the first explicit TargetRep
+conversion slice accepted by ADR 0012.
 
 Current production coverage includes:
 
