@@ -1,0 +1,37 @@
+name: R15 P3 cost and compatibility
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - tests/r15-p3/cost_minimal.d
+      - tests/r15-p3/cost.sh
+      - tests/r15-p3/xps-stable.sh
+      - tests/consumer/source/conversion_as_contract.d
+      - source/quantities/**
+      - .github/workflows/r15-p3-cost.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r15-p3-cost-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cost:
+    name: Cost / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [dmd-2.111.0, ldc-1.41.0]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Compile-time and object-size audit
+        shell: bash
+        run: bash tests/r15-p3/cost.sh "$DC"
