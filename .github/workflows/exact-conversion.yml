@@ -2,7 +2,7 @@ name: Exact conversion qualification
 
 on:
   pull_request:
-    branches: [develop, feature/r15-private-exact-conversion]
+    branches: [develop]
     paths:
       - source/quantities/**
       - tests/exact-conversion/**
