@@ -961,6 +961,10 @@ import r15Exact = quantities.exact_conversion;
 enum targetRepPair(T,S) = r15Exact.supportedSource!S &&
     (is(T == long) || is(T == float) || is(T == double));
 
+enum sameTargetScale(From, To) =
+    From.Scale.numerator == To.Scale.numerator &&
+    From.Scale.denominator == To.Scale.denominator;
+
 template validConversionUnits(Spec, Unit)
 {
     static assert(isQuantitySpec!Spec, "quantities-d: explicit target conversion requires a valid Spec.");
@@ -1003,12 +1007,35 @@ auto constructTargetRep(Spec,Unit,T,S)(S value,bool rounded,RoundingMode mode)
     @safe pure nothrow @nogc
 {
     static assert(validConversionUnits!(Spec,Unit));
-    const converted = convertTargetRep!(T,Unit,Spec.CanonicalUnit)(value,rounded,mode);
-    T canonical;
-    if (!converted.tryValue(canonical))
-        return ConversionResult!(Quantity!(Spec,T)).withoutValue(converted.status);
-    return ConversionResult!(Quantity!(Spec,T)).withValue(
-        Quantity!(Spec,T).fromCanonical(canonical),converted.status);
+
+    // Proven equal-scale integral construction is already exact. Build the
+    // final public carrier directly so DMD does not materialize an intermediate
+    // ConversionResult!long and then immediately extract it again.
+    static if (is(T == long) && sameTargetScale!(Unit, Spec.CanonicalUnit)
+        && (is(Unqual!S == long) || is(Unqual!S == ulong)))
+    {
+        static if (is(Unqual!S == ulong))
+        {
+            if (value > cast(ulong) long.max)
+                return ConversionResult!(Quantity!(Spec,long))
+                    .withoutValue(ConversionStatus.overflow);
+        }
+
+        return ConversionResult!(Quantity!(Spec,long)).withValue(
+            Quantity!(Spec,long).fromCanonical(cast(long) value),
+            ConversionStatus.exact);
+    }
+    else
+    {
+        const converted = convertTargetRep!(T,Unit,Spec.CanonicalUnit)(
+            value,rounded,mode);
+        T canonical;
+        if (!converted.tryValue(canonical))
+            return ConversionResult!(Quantity!(Spec,T))
+                .withoutValue(converted.status);
+        return ConversionResult!(Quantity!(Spec,T)).withValue(
+            Quantity!(Spec,T).fromCanonical(canonical),converted.status);
+    }
 }
 
 public:
