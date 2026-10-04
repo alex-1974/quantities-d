@@ -72,7 +72,7 @@ private ulong next(ref ulong state) @safe pure nothrow @nogc
     return state;
 }
 
-private ulong runLong(string mode, ulong iterations, ulong seed)
+private ulong runLong(string mode)(ulong iterations, ulong seed)
 {
     ulong state = seed;
     ulong checksum;
@@ -83,24 +83,23 @@ private ulong runLong(string mode, ulong iterations, ulong seed)
         if ((raw & 0x4000000000000000UL) != 0)
             value = -value;
 
-        long result;
-        if (mode == "ref-long-id")
-            result = p3RefLongIdentity(value);
-        else if (mode == "api-long-id")
-            result = p3ApiLongIdentity(value);
-        else if (mode == "kernel-long-id")
-            result = p3KernelLongIdentity(value);
-        else if (mode == "api-quarter")
-            result = p3ApiQuarter(value);
+        static if (mode == "ref-long-id")
+            const result = p3RefLongIdentity(value);
+        else static if (mode == "api-long-id")
+            const result = p3ApiLongIdentity(value);
+        else static if (mode == "kernel-long-id")
+            const result = p3KernelLongIdentity(value);
+        else static if (mode == "api-quarter")
+            const result = p3ApiQuarter(value);
         else
-            result = p3KernelQuarter(value);
+            const result = p3KernelQuarter(value);
 
         checksum = (checksum << 7) ^ (checksum >> 3) ^ cast(ulong)result;
     }
     return checksum;
 }
 
-private ulong runFloat(string mode, ulong iterations, ulong seed)
+private ulong runFloat(string mode)(ulong iterations, ulong seed)
 {
     ulong state = seed;
     ulong checksum;
@@ -108,9 +107,12 @@ private ulong runFloat(string mode, ulong iterations, ulong seed)
     {
         const raw = next(state);
         const double value = cast(double)(raw & 0x00ffffffUL);
-        const float result = mode == "api-double-float"
-            ? p3ApiDoubleToFloatIdentity(value)
-            : p3KernelDoubleToFloatIdentity(value);
+
+        static if (mode == "api-double-float")
+            const result = p3ApiDoubleToFloatIdentity(value);
+        else
+            const result = p3KernelDoubleToFloatIdentity(value);
+
         checksum = (checksum << 7) ^ (checksum >> 3) ^ cast(ulong)result;
     }
     return checksum;
@@ -128,8 +130,20 @@ void main(string[] args)
     const iterations = args[2].to!ulong;
     const seed = args[3].to!ulong;
 
-    if (mode == "api-double-float" || mode == "kernel-double-float")
-        writeln(runFloat(mode, iterations, seed));
+    if (mode == "ref-long-id")
+        writeln(runLong!"ref-long-id"(iterations, seed));
+    else if (mode == "kernel-long-id")
+        writeln(runLong!"kernel-long-id"(iterations, seed));
+    else if (mode == "api-long-id")
+        writeln(runLong!"api-long-id"(iterations, seed));
+    else if (mode == "kernel-quarter")
+        writeln(runLong!"kernel-quarter"(iterations, seed));
+    else if (mode == "api-quarter")
+        writeln(runLong!"api-quarter"(iterations, seed));
+    else if (mode == "kernel-double-float")
+        writeln(runFloat!"kernel-double-float"(iterations, seed));
+    else if (mode == "api-double-float")
+        writeln(runFloat!"api-double-float"(iterations, seed));
     else
-        writeln(runLong(mode, iterations, seed));
+        writeln("unknown mode");
 }
