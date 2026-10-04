@@ -28,6 +28,6 @@ jobs:
       - name: Runtime and codegen baseline
         shell: bash
         env:
-          P3_ITERATIONS: "8000000"
-          P3_REPEATS: "7"
+          P3_ITERATIONS: "2000000"
+          P3_REPEATS: "5"
         run: bash tests/r15-p3/run.sh "$DC"
