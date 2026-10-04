@@ -1,0 +1,43 @@
+name: R15 P3 compiler evolution
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - .github/workflows/r15-p3-evolution.yml
+      - tests/r15-p3/**
+      - source/quantities/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r15-p3-evolution-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evolution:
+    name: Evolution / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - dmd-2.112.1
+          - dmd-2.113.0
+          - ldc-1.41.0
+          - ldc-1.42.0
+          - ldc-1.43.0
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Short runtime and codegen comparison
+        shell: bash
+        env:
+          P3_ITERATIONS: "500000"
+          P3_REPEATS: "3"
+        run: bash tests/r15-p3/run.sh "$DC"
