@@ -1,5 +1,6 @@
 module conversion_as_contract;
 import quantities;
+import std.meta : AliasSeq;
 
 
 
@@ -104,9 +105,9 @@ static assert(!__traits(compiles, exactInAs!(Metre,long,Length)(1L.quantity!(Len
 static assert(!__traits(compiles, roundedInAs!(Metre,long,RoundingMode.floor,Length)(1L.quantity!(Length,Metre))));
 
 // All ordinary floating requests remain runtime-only, including identity and NF.
-static foreach (S; float, double, real)
+static foreach (S; AliasSeq!(float, double, real))
 {
-    static foreach (T; long, float, double)
+    static foreach (T; AliasSeq!(long, float, double))
     {
         static assert(!__traits(compiles, { enum r = (cast(S)1.0).checkedQuantityAs!(Length,Metre,T); }));
         static assert(!__traits(compiles, { enum r = (cast(S)1.0).exactQuantityAs!(Length,Metre,T); }));
@@ -122,9 +123,9 @@ static foreach (S; float, double, real)
         enum r = q.roundedInAs!(Metre,long,RoundingMode.floor);
     }));
 }
-static foreach (S; long, ulong)
+static foreach (S; AliasSeq!(long, ulong))
 {
-    static foreach (T; float, double)
+    static foreach (T; AliasSeq!(float, double))
     {
         static assert(!__traits(compiles, { enum r = (cast(S)1).checkedQuantityAs!(Length,Metre,T); }));
         static assert(!__traits(compiles, { enum r = (cast(S)1).exactQuantityAs!(Length,Metre,T); }));
@@ -137,13 +138,13 @@ static foreach (S; long, ulong)
 
 
 // Positive controls for the full selected matrix and public payload types.
-static foreach (S; long, ulong, float, double, real)
+static foreach (S; AliasSeq!(long, ulong, float, double, real))
 {
     static if (!is(S == real) ||
         (real.mant_dig == 64 && real.min_exp == -16381 && real.max_exp == 16384) ||
         (real.mant_dig == 53 && real.min_exp == -1021 && real.max_exp == 1024))
     {
-        static foreach (T; long, float, double)
+        static foreach (T; AliasSeq!(long, float, double))
         {
             static assert(is(typeof(checkedQuantityAs!(Length,Metre,T)(S.init)) == ConversionResult!(Quantity!(Length,T))));
             static assert(is(typeof(exactQuantityAs!(Length,Metre,T)(S.init)) == ExactResult!(Quantity!(Length,T))));
