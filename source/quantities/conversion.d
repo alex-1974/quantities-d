@@ -956,10 +956,9 @@ auto exactIn(Unit, Spec)(Quantity!(Spec, double) value)
 
 
 private:
-import quantities.exact_conversion : supportedSource, qualifiedReal,
-    convertIntegralUnits, convertFloatingUnits;
+import r15Exact = quantities.exact_conversion;
 
-enum targetRepPair(T,S) = supportedSource!S &&
+enum targetRepPair(T,S) = r15Exact.supportedSource!S &&
     (is(T == long) || is(T == float) || is(T == double));
 
 template validConversionUnits(Spec, Unit)
@@ -981,9 +980,9 @@ ConversionResult!T convertTargetRep(T,From,To,S)(S value,bool rounded,RoundingMo
     @safe pure nothrow @nogc
 {
     static if (is(T == long))
-        const converted = convertIntegralUnits!(From,To)(value,rounded,mode);
+        const converted = r15Exact.convertIntegralUnits!(From,To)(value,rounded,mode);
     else
-        const converted = convertFloatingUnits!(T,From,To)(value);
+        const converted = r15Exact.convertFloatingUnits!(T,From,To)(value);
     final switch (converted.status)
     {
         case ConversionStatus.exact:
@@ -1048,7 +1047,7 @@ template exactQuantityAs(Spec,Unit,TargetRep)
 template roundedQuantityAs(Spec,Unit,TargetRep,RoundingMode mode)
 {
     auto roundedQuantityAs(Source)(Source value)
-        @safe pure nothrow @nogc if (is(TargetRep == long) && supportedSource!Source)
+        @safe pure nothrow @nogc if (is(TargetRep == long) && r15Exact.supportedSource!Source)
     {
         static assert(mode == RoundingMode.towardZero || mode == RoundingMode.floor ||
             mode == RoundingMode.ceiling || mode == RoundingMode.nearestTiesAway,
@@ -1089,7 +1088,7 @@ template roundedInAs(Unit,TargetRep,RoundingMode mode)
 {
     auto roundedInAs(Spec,Source)(
         const(Quantity!(Spec,Source)) value)
-        @safe pure nothrow @nogc if (is(TargetRep == long) && supportedSource!Source)
+        @safe pure nothrow @nogc if (is(TargetRep == long) && r15Exact.supportedSource!Source)
     {
         static assert(validConversionUnits!(Spec,Unit));
         static assert(mode == RoundingMode.towardZero || mode == RoundingMode.floor ||
