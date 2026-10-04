@@ -135,23 +135,31 @@ rescale contract:
   coverage, independent rational-oracle validation, and DMD/LDC codegen/runtime
   qualification for the promoted floating paths.
 
+R15 has now promoted the first explicit TargetRep conversion matrix into
+production. PR #51 integrated the package-private exact conversion engine; PR
+#52 exposed the six explicit construction/extraction requests for selected
+`long` / `float` / `double` targets; PR #55 specialized the proven equal-scale
+`long` / `ulong` -> `long` construction path after P3 measurement exposed
+material DMD carrier overhead. ADR 0012 remains Proposed while P3 performance,
+codegen, compatibility, and stable-runner qualification continue in Issue #53.
+
 This is still a partial M3 implementation, not M3 completion. The remaining
 high-value research questions are now concentrated above the numerical
 arithmetic core:
 
-- floating and mixed-Rep conversion beyond the current signed-`long` and
-  binary64 conversion slices;
+- conversion beyond the selected R15 TargetRep matrix, including target `real`
+  and any further integral target representations;
 - general cross-Spec addition/subtraction beyond explicit semantic relations;
 - automatic/generic Dimensionless semantic result policy;
 - mixed-unit arithmetic ergonomics without weakening explicit conversion intent;
 - consumer-driven mathematical functions such as `abs`, `sqrt`, and `hypot`;
 - concrete Spec distinctions from R05 where consumer evidence justifies them.
 
-The next recommended numerical research slice is mixed-Rep / `float` / `real`
-conversion, tracked as R15 in Issue #42. R04.15–R04.17 established the represented-source floating
-decomposition, exact-rational, rounding, CTFE, and format-capability evidence
-needed to investigate that conversion problem without weakening the existing
-M1 conversion contract.
+The current numerical priority is R15 P3 qualification in Issue #53. The
+selected TargetRep matrix is already integrated; further conversion-surface
+expansion should not precede the remaining performance/codegen/compatibility
+evidence or ADR 0012 acceptance. R04.15-R04.17 remain the represented-source
+floating foundation for any later target-`real` or broader conversion work.
 
 ## Deferred until justified
 
