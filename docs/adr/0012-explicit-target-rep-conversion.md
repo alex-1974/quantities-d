@@ -1,6 +1,6 @@
 # ADR 0012 — Explicit TargetRep conversion and R15 promotion boundary
 
-- Status: Proposed; P1/P2 integrated, P3 qualification pending
+- Status: Accepted
 - Date: 2026-10-01
 - Research: R15, issue #42
 - Related: ADR 0004, ADR 0005, ADR 0007, ADR 0010, ADR 0011
@@ -18,7 +18,7 @@ ADR 0011 qualifies trait-driven real arithmetic. That does not establish the
 R15 conversion-to-real range, result-status, one-final-rounding and public API
 contract. Target real therefore needs a separate conversion qualification.
 
-## Proposed decision
+## Decision
 
 ### 1. Explicit request surface
 
@@ -161,6 +161,43 @@ points, not replacement files. Preserve arithmetic kernels and legacy API.
 Accepted production placement is left to the implementation review; avoid
 copying duplicate wide/representation helpers without checking their domains.
 
+## P3 acceptance evidence
+
+P3 completed the production-surface qualification without expanding the selected
+pair matrix or weakening semantics.
+
+- Hosted DMD 2.111 / LDC 1.41 runtime and codegen baselines established the
+  public/private cost envelope with bounds checks retained.
+- LDC reduces the representative equal-scale long identity abstraction to
+  effectively zero overhead.
+- DMD exposed material cheap-path carrier overhead; PR #55 retained a direct
+  equal-scale long/ulong -> long construction specialization, reducing the
+  measured hosted public/reference identity ratio from about 4.86x to about
+  1.55x in the matched P3 baseline.
+- DMD 2.111, 2.112.1, and 2.113 retain final checked-carrier calls; raising the
+  compiler floor is therefore not justified as a performance fix. LDC
+  1.41-1.43 remains effectively zero-overhead for the identity probe.
+- The full external-consumer TargetRep contract matrix compiles in about
+  0.07 s on DMD 2.111 and 0.10-0.11 s on LDC 1.41 on the hosted runner, with
+  modest peak-RSS and object-size cost. No API reduction is justified.
+- The previously noisy DMD nonidentity quarter case was repeated on a physical
+  Intel Core i7-9750H XPS runner at develop commit
+  `4faa91d9c3a0c8e89eaf6351a85e1480d511d4e6`, DMD 2.111.0, 100,000
+  iterations and 15 paired repeats. The paired public/private ratio had median
+  1.01933, range 0.93774-1.04073, and population standard deviation 0.03110.
+  The noise is bidirectional and does not establish a material systematic
+  public-wrapper penalty.
+- Package-root, free-function and UFCS forms, Source deduction, selected
+  Source/Target pairs, result-carrier types, negative admission, and CTFE
+  boundaries remain covered by external-consumer and normal CI gates.
+- Native R15 qualified `real` evidence is binary80. A binary64-like native
+  `real` platform remains explicitly unclaimed until its corresponding pair
+  corpus is run.
+
+These results support the selected production surface. Deferred TargetRep
+families, target `real`, broader integral targets, and convenience API remain
+separate future decisions rather than conditions of this ADR.
+
 ## Evidence and remaining work
 
 - [Probe 20, selected 5×3 matrix and CTFE](https://github.com/alex-1974/quantities-d/tree/dec29519ac28b8b7389b23126e56bdcd69cbe78f/research/r15-integral-source-api)
@@ -174,7 +211,7 @@ copying duplicate wide/representation helpers without checking their domains.
 - PR #55: retained direct final-carrier specialization reduced the DMD hosted public/reference identity ratio from about 4.86x to about 1.55x in the matched P3 baseline without changing semantics; LDC remained zero-overhead.
 - PR #56: research-only compiler-evolution probe found the remaining DMD carrier calls in 2.111, 2.112.1, and 2.113; LDC 1.41-1.43 remained effectively zero-overhead. Raising the DMD floor is therefore not a justified fix.
 
-Issue #42 remains open through ADR acceptance. P3 qualification is tracked concretely in Issue #53. Target
+Issue #53 records the completed P3 qualification. Issue #42 may continue to track deferred R15 expansion beyond this accepted first TargetRep slice. Target
 real deferral is explicit scope, not an assertion that R15 has no remaining
 work. This proposed ADR changes no production source and creates no feature or
 API freeze, release tag, package release or documentation publication.

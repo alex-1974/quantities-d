@@ -140,8 +140,8 @@ production. PR #51 integrated the package-private exact conversion engine; PR
 #52 exposed the six explicit construction/extraction requests for selected
 `long` / `float` / `double` targets; PR #55 specialized the proven equal-scale
 `long` / `ulong` -> `long` construction path after P3 measurement exposed
-material DMD carrier overhead. ADR 0012 remains Proposed while P3 performance,
-codegen, compatibility, and stable-runner qualification continue in Issue #53.
+material DMD carrier overhead. ADR 0012 is Accepted after P3 runtime, codegen, compatibility, compile-cost,
+and stable-runner qualification in Issue #53.
 
 This is still a partial M3 implementation, not M3 completion. The remaining
 high-value research questions are now concentrated above the numerical
@@ -155,10 +155,10 @@ arithmetic core:
 - consumer-driven mathematical functions such as `abs`, `sqrt`, and `hypot`;
 - concrete Spec distinctions from R05 where consumer evidence justifies them.
 
-The current numerical priority is R15 P3 qualification in Issue #53. The
-selected TargetRep matrix is already integrated; further conversion-surface
-expansion should not precede the remaining performance/codegen/compatibility
-evidence or ADR 0012 acceptance. R04.15-R04.17 remain the represented-source
+The selected first R15 TargetRep matrix is integrated and ADR 0012 is Accepted.
+Further conversion-surface expansion should proceed only through new evidence
+for deferred target `real`, broader integral targets, or other explicitly
+scoped follow-up requests. R04.15-R04.17 remain the represented-source
 floating foundation for any later target-`real` or broader conversion work.
 
 ## Deferred until justified
