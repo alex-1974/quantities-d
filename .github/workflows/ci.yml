@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - develop
-      - feature/r15-private-exact-conversion
   workflow_dispatch:
 
 permissions:
