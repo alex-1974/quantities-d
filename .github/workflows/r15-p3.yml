@@ -1,0 +1,37 @@
+name: R15 P3 qualification
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - source/quantities/**
+      - tests/r15-p3/**
+      - .github/workflows/r15-p3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r15-p3-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    name: P3 / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [dmd-2.111.0, ldc-1.41.0]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Runtime and codegen baseline
+        shell: bash
+        env:
+          P3_ITERATIONS: "2000000"
+          P3_REPEATS: "5"
+        run: bash tests/r15-p3/run.sh "$DC"
