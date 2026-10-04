@@ -1,6 +1,6 @@
 # ADR 0012 — Explicit TargetRep conversion and R15 promotion boundary
 
-- Status: Proposed; production integration pending
+- Status: Proposed; P1/P2 integrated, P3 qualification pending
 - Date: 2026-10-01
 - Research: R15, issue #42
 - Related: ADR 0004, ADR 0005, ADR 0007, ADR 0010, ADR 0011
@@ -145,6 +145,14 @@ forces the already-qualified long/float/double target matrix to expand.
 | P2 public requests | Integrate six names, package-root exports, carriers, explicit CTFE policy and proved identity specializations | all pair/status/rounding gates, root/module external consumers, compile-negative and debug/release checks on baseline DMD/LDC |
 | P3 qualification/docs | Record exact optimized commands/corpora; assess stable nonidentity costs; write source Ddoc and user examples | equivalent-semantics costs with bounds on, codegen, compatibility audit and normal CI; release-only matrix remains a later gate |
 
+Current integration state:
+
+- P1 private engine: integrated via PR #51;
+- P2 public requests: integrated via PR #52;
+- equal-scale `long` / `ulong` -> `long` construction specialization: integrated via PR #55 after P3 measurement exposed material DMD carrier overhead;
+- normal DMD 2.111 / LDC 1.41 CI and independent production/public-API Fraction qualification are green;
+- P3 remains open in Issue #53; ADR acceptance and API freeze have not occurred.
+
 P1 and P2 may be one implementation PR if this keeps the private engine and its
 consumer validation reviewable. Start from current develop and selectively
 adapt source; do not merge/cherry-pick the research shadow as a whole. Existing
@@ -160,8 +168,13 @@ copying duplicate wide/representation helpers without checking their domains.
 - [Probe 18 identity inclusion](https://github.com/alex-1974/quantities-d/tree/05cc790e5fcb0a869ef8ae02ef3597c14d1221b5/research/r15-identity-fast-path)
 - [Probe 19 floating→long identity](https://github.com/alex-1974/quantities-d/tree/87ada2ff152b9972ac2f8a0fd0c8eab76bc25c6d/research/r15-integral-identity-fast-path)
 - [Probe 21 qualified CI](https://github.com/alex-1974/quantities-d/actions/runs/36856511385), tested code `c4e752d9d47acb962cbd77f302198c9e0ea34551`: package-root free/UFCS forms, integral CTFE, explicit floating/real CTFE rejection and runtime contract; all retained Oracle corpora pass in six builds.
+- PR #51: P1 production engine with independent Fraction qualification.
+- PR #52: P2 public TargetRep requests with DMD/LDC CI, compile-negative, external-consumer, and public-API oracle qualification.
+- PR #54 / Issue #53: first hosted P3 runtime/codegen baseline; LDC public identity was zero-overhead while DMD exposed material checked-carrier overhead on the cheap equal-scale `long` path.
+- PR #55: retained direct final-carrier specialization reduced the DMD hosted public/reference identity ratio from about 4.86x to about 1.55x in the matched P3 baseline without changing semantics; LDC remained zero-overhead.
+- PR #56: research-only compiler-evolution probe found the remaining DMD carrier calls in 2.111, 2.112.1, and 2.113; LDC 1.41-1.43 remained effectively zero-overhead. Raising the DMD floor is therefore not a justified fix.
 
-Issue #42 remains open through selective implementation and acceptance. Target
+Issue #42 remains open through ADR acceptance. P3 qualification is tracked concretely in Issue #53. Target
 real deferral is explicit scope, not an assertion that R15 has no remaining
 work. This proposed ADR changes no production source and creates no feature or
 API freeze, release tag, package release or documentation publication.

@@ -10,7 +10,7 @@ explicit rather than inferred from numeric magnitude.
 
 ## Status
 
-**M1 static core and M2 minimal linear-unit work are complete. M3 is in progress and now includes promoted integral and floating arithmetic semantics, derived dimensions, exact product/quotient relations, and qualified nontrivial floating canonical rescale. No stable public release exists yet.**
+**M1 static core and M2 minimal linear-unit work are complete. M3 is in progress and now includes promoted integral and floating arithmetic semantics, derived dimensions, exact product/quotient relations, qualified nontrivial floating canonical rescale, and the first explicit TargetRep conversion matrix. No stable public release exists yet.**
 
 The repository now contains the first production quantity core and the checked
 conversion contract accepted by ADR 0007.
@@ -24,6 +24,7 @@ Current production coverage includes:
 - explicit checked / exact-required / rounded non-canonical conversion for
   signed `long`;
 - checked / exact-required non-canonical conversion for binary64 `double`;
+- explicit `checkedQuantityAs` / `exactQuantityAs` / `roundedQuantityAs` and matching extraction requests for the selected R15 TargetRep matrix (`long` / `float` / `double` targets from represented `long` / `ulong` / `float` / `double` / qualified `real` sources);
 - same-Spec integral and floating `+` / `-` under explicit representation-admission rules;
 - symmetric scalar multiplication and promoted `Quantity / scalar` for scalable Specs;
 - integral Class-W direct arithmetic plus Class-O64 `checkedAdd`, `checkedSub`, and `checkedMul`;
@@ -36,10 +37,7 @@ Current production coverage includes:
 - compile-negative API-boundary tests;
 - external-consumer tests on DMD 2.111 and LDC 1.41.
 
-M3 is not complete. Remaining research-first areas include mixed-Rep conversion,
-general cross-Spec additive semantics, automatic/generic Dimensionless result
-semantics, mixed-unit arithmetic ergonomics, consumer-driven mathematical
-functions, affine quantity points, and runtime-parsed unit metadata.
+M3 is not complete. Remaining research-first areas include conversion beyond the selected R15 TargetRep matrix (for example target `real` and further integral targets), general cross-Spec additive semantics, automatic/generic Dimensionless result semantics, mixed-unit arithmetic ergonomics, consumer-driven mathematical functions, affine quantity points, and runtime-parsed unit metadata.
 
 M1 and M2 are complete. PR #15 promoted the first evidence-backed R04
 arithmetic slice after DMD/LDC debug and release tests, external-consumer
@@ -192,8 +190,7 @@ rescaling and reports an inexact result rather than truncating.
 This is not the completion of M3. The integral core has since been extended by
 checked Class-O64 arithmetic and qualified floating arithmetic/rescale semantics.
 General cross-Spec addition/subtraction, automatic Dimensionless semantics,
-mixed-Rep conversion, and consumer-driven mathematical functions remain
-research-first work.
+conversion beyond the selected R15 TargetRep matrix, and consumer-driven mathematical functions remain research-first work.
 
 
 ### M3 exact Quantity quotient slice
