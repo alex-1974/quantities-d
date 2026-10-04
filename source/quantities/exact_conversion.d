@@ -4,6 +4,7 @@ module quantities.exact_conversion;
 // Existing arithmetic quantizers have different range/status contracts; they
 // remain unchanged. This module does not import the research tree.
 import core.stdc.string : memcpy;
+import core.bitop : bsr;
 import quantities.conversion : ConversionStatus, RoundingMode;
 import quantities.real_scale : supportsExactRealRescale;
 import std.math : frexp, ldexp;
@@ -509,4 +510,128 @@ Result!T convertFloating(T, S)(S value, long fn, long fd, long tn, long td)
         const nonFinite = convertFloating!float(double.infinity,1,1,1,1);
         assert(nonFinite.status == Status.nonFinite);
     }();
+}
+
+
+private IntegralResult identityLong(ulong sig,int exponent2,bool negative,bool rounded,
+    IntegralRoundingMode mode) @safe pure nothrow @nogc
+{
+    if (sig == 0) return IntegralResult(Status.exact,true,0);
+    const bound = cast(ulong)long.max + (negative ? 1UL : 0UL);
+    ulong magnitude, remainder;
+    bool fractional;
+    long shift;
+    if (exponent2 >= 0)
+    {
+        if (exponent2 >= 64 || sig > (bound >> exponent2))
+            return IntegralResult(Status.overflow,false,0);
+        magnitude = sig << exponent2;
+    }
+    else
+    {
+        shift = -cast(long)exponent2;
+        if (shift >= 64) { magnitude=0; fractional=true; }
+        else
+        {
+            magnitude = sig >> shift;
+            remainder = sig & ((1UL << shift)-1UL);
+            fractional = remainder != 0;
+        }
+        // Reject the exact rational outside the closed long range BEFORE rounding.
+        if (magnitude > bound || (magnitude == bound && fractional))
+            return IntegralResult(Status.overflow,false,0);
+    }
+    if (fractional && !rounded) return IntegralResult(Status.inexact,false,0);
+    if (fractional)
+    {
+        bool increment;
+        final switch (mode)
+        {
+            case IntegralRoundingMode.towardZero: break;
+            case IntegralRoundingMode.floor: increment=negative; break;
+            case IntegralRoundingMode.ceiling: increment=!negative; break;
+            case IntegralRoundingMode.nearestTiesAway:
+                if (shift == 64) increment = sig >= (1UL << 63);
+                else if (shift < 64) increment = remainder >= (1UL << (shift-1));
+                break;
+        }
+        if (increment) ++magnitude;
+    }
+    // Integer endpoints imply every supported rounded result remains in range.
+    const value = negative ? (magnitude == (1UL << 63) ? long.min : -cast(long)magnitude)
+                          : cast(long)magnitude;
+    return IntegralResult(fractional ? Status.inexact : Status.exact,true,value);
+}
+
+private enum sameScale(From, To) =
+    From.Scale.numerator == To.Scale.numerator &&
+    From.Scale.denominator == To.Scale.denominator;
+
+package(quantities):
+IntegralResult convertIntegralUnits(From, To, S)(S value, bool rounded, RoundingMode mode)
+    @safe pure nothrow @nogc if (supportedSource!S)
+{
+    static if (sameScale!(From,To))
+    {
+        static if (is(Unqual!S == long) || is(Unqual!S == ulong))
+        {
+            static if (is(Unqual!S == ulong))
+                if (value > cast(ulong)long.max)
+                    return IntegralResult(Status.overflow,false,0);
+            return IntegralResult(Status.exact,true,cast(long)value);
+        }
+        else
+        {
+            const source = representedSource(value); // Explicit floating CTFE guard.
+            if (source.nonFinite) return IntegralResult(Status.nonFinite,false,0);
+            return identityLong(source.significand, source.exponent2,
+                source.negative, rounded, mode);
+        }
+    }
+    else return convertIntegral(value, From.Scale.numerator, From.Scale.denominator,
+        To.Scale.numerator, To.Scale.denominator, rounded, mode);
+}
+
+Result!T convertFloatingUnits(T, From, To, S)(S value)
+    @safe pure nothrow @nogc
+    if ((is(T == float) || is(T == double)) && supportedSource!S)
+{
+    if (__ctfe)
+        assert(false, "quantities-d: floating target conversion requires runtime");
+    static if (sameScale!(From,To) &&
+        ((is(Unqual!S == float) && (is(T == float) || is(T == double))) ||
+         (is(Unqual!S == double) && is(T == double))))
+    {
+        const raw = storedBits(value);
+        static if (is(Unqual!S == double))
+        {
+            if (((raw >> 52) & 0x7ffUL) == 0x7ffUL)
+                return Result!T(Status.nonFinite,T.init);
+            return Result!T(Status.exact,fromBits!T(raw));
+        }
+        else
+        {
+            const ef = (raw >> 23) & 0xffUL;
+            if (ef == 0xffUL) return Result!T(Status.nonFinite,T.init);
+            static if (is(T == float)) return Result!T(Status.exact,fromBits!T(raw));
+            else
+            {
+                // Exact binary32 embedding, including signed zero/subnormals;
+                // integer construction avoids an ambient FP rounding dependency.
+                const sign = (raw >> 31) << 63;
+                const fraction = raw & 0x7fffffUL;
+                ulong bits = sign;
+                if (ef != 0) bits |= ((ef + 896UL) << 52) | (fraction << 29);
+                else if (fraction != 0)
+                {
+                    const top = bsr(fraction); // bsr requires nonzero input.
+                    bits |= (cast(ulong)(top + 874) << 52) |
+                        ((fraction - (1UL << top)) << (52 - top));
+                }
+                return Result!T(Status.exact,fromBits!T(bits));
+            }
+        }
+    }
+    else return convertFloating!T(value, From.Scale.numerator, From.Scale.denominator,
+        To.Scale.numerator, To.Scale.denominator);
 }

@@ -6,6 +6,8 @@ on:
     paths:
       - source/quantities/**
       - tests/exact-conversion/**
+      - tests/conversion-as/**
+      - tests/consumer/**
       - .github/workflows/exact-conversion.yml
   workflow_dispatch:
 
@@ -31,9 +33,15 @@ jobs:
             research/r15-composed-unit-rescale
             research/r15-floating-integral
             research/r15-floating-source-integral
+            research/r15-mixed-api
+            research/r15-floating-target-api
+            research/r15-integral-source-api
       - uses: dlang-community/setup-dlang@v2
         with:
           compiler: ${{ matrix.compiler }}
       - name: Qualify production kernel against Fraction oracles
         shell: bash
         run: bash tests/exact-conversion/run.sh "$DC" oracle-reference/research
+      - name: Qualify public APIs against pinned Fraction oracles
+        shell: bash
+        run: bash tests/conversion-as/run.sh "$DC" oracle-reference/research
